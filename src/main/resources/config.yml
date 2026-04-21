@@ -1,0 +1,136 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║           QuantumClan - config.yml                   ║
+# ║   Edit sesuai kebutuhan server. Reload: /qclanadmin reload ║
+# ╚══════════════════════════════════════════════════════╝
+
+# ── Clan Creation ─────────────────────────────────────────────
+clan-creation-cost: 5000.0
+max-name-length: 24
+max-tag-length: 8
+# Durasi tunggu chat input sebelum auto-cancel (detik)
+chat-input-timeout: 60
+
+# ── Economy Provider ──────────────────────────────────────────
+# Pilihan: VAULT | PLAYERPOINTS | GEMSECONOMY | COINS
+economy-provider: VAULT
+
+# Jika GemsEconomy, tentukan nama currency yang digunakan
+gemseconomy-currency: "dollars"
+
+# ── Chat Format ───────────────────────────────────────────────
+chat:
+  # Apakah tag clan tampil di chat
+  enabled: true
+  # PREFIX = tag di depan nama, SUFFIX = tag di belakang nama
+  position: PREFIX
+  # Format MiniMessage. Placeholder: {tag} {player} {message}
+  format: "<gray>[{tag}<gray>] <white>{player}<dark_gray>: <gray>{message}"
+
+# ── Teleport & Cooldown ───────────────────────────────────────
+teleport-cooldown: 3
+# Cooldown teleport clan home (detik)
+home-teleport-cooldown: 30
+
+# ── Bounty ────────────────────────────────────────────────────
+bounty-expire-hours: 48
+bounty-min-amount: 100.0
+
+# ── Clan Hall ─────────────────────────────────────────────────
+clan-hall:
+  enabled: false
+  # AUTO deteksi FAWE dulu, fallback NBT; paksa: NBT atau FAWE
+  engine: AUTO
+
+# ── Leaderboard Cache ─────────────────────────────────────────
+# Interval refresh cache leaderboard (ticks, 6000 = 5 menit)
+leaderboard-cache-interval: 6000
+# Jumlah clan di leaderboard
+leaderboard-size: 50
+
+# ── Reputation Weights ────────────────────────────────────────
+reputation-weights:
+  bounty-complete: 5
+  war-win: 20
+
+# ── Contribution Weights ──────────────────────────────────────
+contribution-weights:
+  # Poin per 1000 nominal deposit
+  deposit-per-thousand: 1
+  bounty-complete: 10
+  war-win: 25
+
+# ── Hologram ──────────────────────────────────────────────────
+hologram:
+  # Interval update hologram leaderboard (ticks, 6000 = 5 menit)
+  update-interval: 6000
+  # Lokasi hologram leaderboard (set via /qclanadmin)
+  location:
+    world: "world"
+    x: 0.0
+    y: 64.0
+    z: 0.0
+
+# ── XP Boost ──────────────────────────────────────────────────
+xp-boost-multiplier: 2.0
+
+# ── Death Protection ──────────────────────────────────────────
+# Cooldown death protection per player (detik)
+death-protection-cooldown: 3600
+
+# ── Spy Scroll ────────────────────────────────────────────────
+# Durasi spy scroll aktif (detik)
+spy-scroll-duration: 300
+# Interval update lokasi target (ticks, 60 = 3 detik)
+spy-scroll-update-interval: 60
+
+# ── Clan Announcement ─────────────────────────────────────────
+# Cooldown clan announcement (detik)
+announce-cooldown: 3600
+
+# ── Level Requirements ────────────────────────────────────────
+# Level naik dengan spend Clan Money
+# cost = jumlah Clan Money yang di-spend untuk naik ke level ini
+level-requirements:
+  - level: 1
+    cost: 0
+    max-members: 10
+    max-homes: 1
+  - level: 2
+    cost: 10000
+    max-members: 15
+    max-homes: 2
+  - level: 3
+    cost: 25000
+    max-members: 20
+    max-homes: 3
+  - level: 4
+    cost: 50000
+    max-members: 25
+    max-homes: 4
+  - level: 5
+    cost: 100000
+    max-members: 35
+    max-homes: 5
+  - level: 6
+    cost: 200000
+    max-members: 45
+    max-homes: 6
+  - level: 7
+    cost: 350000
+    max-members: 60
+    max-homes: 8
+  - level: 8
+    cost: 500000
+    max-members: 80
+    max-homes: 10
+  - level: 9
+    cost: 750000
+    max-members: 100
+    max-homes: 12
+  - level: 10
+    cost: 1000000
+    max-members: 150
+    max-homes: 15
+
+# Max level clan (harus sesuai jumlah entry level-requirements)
+max-level: 10

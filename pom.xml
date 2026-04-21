@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>me.bintanq</groupId>
+    <artifactId>QuantumClan</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>QuantumClan</name>
+    <description>Advanced Clan Plugin for Paper 1.21.1</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+    </properties>
+
+    <repositories>
+        <!-- Paper -->
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+
+        <!-- Vault -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+
+        <!-- PlaceholderAPI -->
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+
+        <!-- LuckPerms -->
+        <repository>
+            <id>luckperms</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+
+        <!-- DecentHolograms -->
+        <repository>
+            <id>decent-holograms-repo</id>
+            <url>https://repo.decentholograms.eu/</url>
+        </repository>
+
+        <!-- PlayerPoints -->
+        <repository>
+            <id>black-ink-repo</id>
+            <url>https://repo.rosewooddev.io/repository/public/</url>
+        </repository>
+
+        <!-- GemsEconomy -->
+        <repository>
+            <id>gemseconomy-repo</id>
+            <url>https://repo.glaremasters.me/repository/bloodshot/</url>
+        </repository>
+
+        <!-- WorldGuard / WorldEdit -->
+        <repository>
+            <id>enginehub-repo</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
+
+        <!-- FAWE (Intellectual Infusion) -->
+        <repository>
+            <id>fawe-repo</id>
+            <url>https://maven.intellectualsites.com/content/repositories/releases/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- Paper API -->
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.21.1-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- HikariCP (shaded) -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- SQLite JDBC (shaded) -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.46.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- SLF4J Simple (required by HikariCP, shaded) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.13</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Vault API -->
+        <dependency>
+            <groupId>com.github.MilkBowl</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.7</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PlaceholderAPI -->
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.11.6</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- LuckPerms API -->
+        <dependency>
+            <groupId>net.luckperms</groupId>
+            <artifactId>api</artifactId>
+            <version>5.4</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- DecentHolograms -->
+        <dependency>
+            <groupId>com.github.decentsoftware-eu</groupId>
+            <artifactId>decentholograms</artifactId>
+            <version>2.9.9</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- HolographicDisplays -->
+        <dependency>
+            <groupId>me.filoghost.holographicdisplays</groupId>
+            <artifactId>holographicdisplays-api</artifactId>
+            <version>3.0.5</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PlayerPoints -->
+        <dependency>
+            <groupId>org.black_ixx</groupId>
+            <artifactId>playerpoints</artifactId>
+            <version>3.2.7</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- GemsEconomy -->
+        <dependency>
+            <groupId>me.glaremasters</groupId>
+            <artifactId>GemsEconomy</artifactId>
+            <version>4.9.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- WorldGuard -->
+        <dependency>
+            <groupId>com.sk89q.worldguard</groupId>
+            <artifactId>worldguard-bukkit</artifactId>
+            <version>7.0.11</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- WorldEdit (required by WorldGuard) -->
+        <dependency>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-bukkit</artifactId>
+            <version>7.3.6</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- FAWE (FastAsyncWorldEdit) -->
+        <dependency>
+            <groupId>com.fastasyncworldedit</groupId>
+            <artifactId>FastAsyncWorldEdit-Core</artifactId>
+            <version>2.11.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fastasyncworldedit</groupId>
+            <artifactId>FastAsyncWorldEdit-Bukkit</artifactId>
+            <version>2.11.2</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fastasyncworldedit</groupId>
+                    <artifactId>FastAsyncWorldEdit-Core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Lombok (optional, compile-time only) -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.34</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.name}-${project.version}</finalName>
+        <plugins>
+            <!-- Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                    <encoding>UTF-8</encoding>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.34</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Shade Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <minimizeJar>false</minimizeJar>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <relocations>
+                                <!-- HikariCP relocation -->
+                                <relocation>
+                                    <pattern>com.zaxxer.hikari</pattern>
+                                    <shadedPattern>me.bintanq.quantumclan.libs.hikari</shadedPattern>
+                                </relocation>
+                                <!-- SQLite JDBC relocation -->
+                                <relocation>
+                                    <pattern>org.sqlite</pattern>
+                                    <shadedPattern>me.bintanq.quantumclan.libs.sqlite</shadedPattern>
+                                </relocation>
+                                <!-- SLF4J relocation -->
+                                <relocation>
+                                    <pattern>org.slf4j</pattern>
+                                    <shadedPattern>me.bintanq.quantumclan.libs.slf4j</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Resources plugin to handle encoding -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+</project>

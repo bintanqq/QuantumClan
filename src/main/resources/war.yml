@@ -1,0 +1,74 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║           QuantumClan - war.yml                      ║
+# ╚══════════════════════════════════════════════════════╝
+
+# ── Schedule ──────────────────────────────────────────────────
+schedule:
+  # type: DAILY | WEEKLY | MONTHLY
+  type: WEEKLY
+  # Jam mulai (format HH:mm, server timezone)
+  time: "20:00"
+  # Untuk WEEKLY: MONDAY TUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY
+  day: SATURDAY
+  # Untuk MONTHLY: angka 1-28
+  day-of-month: 1
+
+# ── War Settings ──────────────────────────────────────────────
+# Format: LAST_STANDING | KILL_COUNT
+format: KILL_COUNT
+
+# Durasi war dalam menit (untuk KILL_COUNT)
+duration-minutes: 20
+
+# Minimum member online agar clan bisa ikut war
+min-members-online: 3
+
+# Maksimum clan yang bisa ikut war (0 = tidak terbatas)
+max-clans: 0
+
+# Waktu registrasi sebelum war dimulai (menit)
+registration-open-minutes: 60
+
+# Waktu countdown setelah registrasi ditutup sebelum teleport (detik)
+countdown-seconds: 30
+
+# ── Arena ─────────────────────────────────────────────────────
+# Diset via /qclanadmin war setarena
+arena:
+  world: "world"
+  x: 0.0
+  y: 64.0
+  z: 0.0
+  yaw: 0.0
+  pitch: 0.0
+  # Radius arena (untuk WorldGuard region)
+  radius: 100
+
+# ── Reputation Reward ─────────────────────────────────────────
+reputation-reward: 20
+
+# ── Rewards ───────────────────────────────────────────────────
+rewards:
+  # Vault balance untuk setiap member clan pemenang
+  balance: 1000.0
+  # Built-in Coins untuk setiap member clan pemenang
+  coins: 500
+  # Item rewards (material + amount, diterima setiap member pemenang)
+  items:
+    - material: DIAMOND
+      amount: 3
+    - material: GOLDEN_APPLE
+      amount: 5
+
+# ── Broadcast ─────────────────────────────────────────────────
+# Interval broadcast kill count saat war (ticks, 200 = 10 detik)
+kill-broadcast-interval: 200
+
+# Format broadcast hasil war (MiniMessage)
+broadcast:
+  war-start: "<gold><bold>⚔ CLAN WAR DIMULAI!</bold></gold> <gray>Format: <yellow>{format}</yellow> | Durasi: <yellow>{duration} menit</yellow>"
+  war-end: "<gold><bold>⚔ CLAN WAR SELESAI!</bold></gold> <gray>Pemenang: <green><bold>{winner}</bold></green> dengan <yellow>{score}</yellow> poin!"
+  war-no-winner: "<gold><bold>⚔ CLAN WAR SELESAI!</bold></gold> <gray>Tidak ada pemenang!"
+  kill-count: "<dark_gray>[<gold>War</gold>]</dark_gray> <gray>Skor saat ini: {scores}"
+  registration-open: "<gold>[War]</gold> <gray>Registrasi war dibuka! Gunakan <yellow>/qclan war register</yellow> untuk mendaftar."
+  registration-closed: "<gold>[War]</gold> <gray>Registrasi war ditutup. War dimulai dalam <yellow>{seconds} detik</yellow>!"

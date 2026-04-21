@@ -1,0 +1,220 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║           QuantumClan - messages.yml                 ║
+# ║   Semua pesan dalam format MiniMessage               ║
+# ╚══════════════════════════════════════════════════════╝
+#
+# Placeholder umum:
+#   {player}   → nama player
+#   {clan}     → nama clan
+#   {tag}      → tag clan
+#   {value}    → nilai numerik / teks generik
+#   {role}     → nama role
+#   {target}   → nama target player
+
+prefix: "<dark_gray>[<gold>QuantumClan</gold>]</dark_gray> "
+
+# ── General / Error ───────────────────────────────────────────
+error:
+  no-permission: "<red>Kamu tidak memiliki izin untuk melakukan ini."
+  player-only: "<red>Command ini hanya bisa digunakan oleh player."
+  player-not-found: "<red>Player <yellow>{player}</yellow> tidak ditemukan."
+  invalid-number: "<red>Masukkan angka yang valid."
+  invalid-amount: "<red>Jumlah tidak valid. Minimal <yellow>{value}</yellow>."
+  unknown-subcommand: "<red>Subcommand tidak dikenal. Ketik <yellow>/qclan</yellow> untuk bantuan."
+  cooldown: "<red>Kamu harus menunggu <yellow>{value}</yellow> detik lagi."
+  not-enough-balance: "<red>Saldo tidak mencukupi. Kamu memiliki <yellow>{value}</yellow>."
+  not-enough-clan-money: "<red>Kas clan tidak mencukupi. Kas saat ini: <yellow>{value}</yellow>."
+  role-no-permission: "<red>Role kamu (<yellow>{role}</yellow>) tidak diizinkan melakukan ini."
+  transaction-processing: "<red>Ada transaksi yang sedang diproses. Mohon tunggu."
+
+# ── Clan Core ─────────────────────────────────────────────────
+clan:
+  # Create
+  create-prompt-name: "<gold>Masukkan nama clan (maks {value} karakter). Ketik <red>batal</red> untuk membatalkan."
+  create-prompt-tag: "<gold>Masukkan tag clan (maks {value} karakter, contoh: NWF). Ketik <red>batal</red> untuk membatalkan."
+  create-success: "<green>Clan <yellow>{clan}</yellow> <green>berhasil dibuat! Tag: <yellow>[{tag}]</yellow>"
+  create-cancelled: "<gray>Pembuatan clan dibatalkan."
+  create-already-in-clan: "<red>Kamu sudah bergabung di clan. Keluar dulu sebelum membuat clan baru."
+  create-name-taken: "<red>Nama clan <yellow>{clan}</yellow> sudah digunakan."
+  create-tag-taken: "<red>Tag <yellow>{tag}</yellow> sudah digunakan."
+  create-name-invalid: "<red>Nama clan hanya boleh berisi huruf, angka, spasi, dan underscore."
+  create-tag-invalid: "<red>Tag clan hanya boleh berisi huruf dan angka, tanpa spasi."
+  create-insufficient-funds: "<red>Kamu membutuhkan <yellow>{value}</yellow> untuk membuat clan."
+  create-timeout: "<red>Waktu input habis. Pembuatan clan dibatalkan."
+
+  # General
+  not-in-clan: "<red>Kamu belum bergabung di clan manapun."
+  already-in-clan: "<red>Player <yellow>{player}</yellow> sudah bergabung di sebuah clan."
+  target-not-in-clan: "<red>Player <yellow>{player}</yellow> tidak bergabung di clan manapun."
+  not-found: "<red>Clan <yellow>{clan}</yellow> tidak ditemukan."
+
+  # Invite
+  invite-sent: "<green>Undangan dikirim ke <yellow>{player}</yellow>."
+  invite-received: "<gold>Kamu mendapat undangan dari clan <yellow>{clan}</yellow>! Ketik <green>/qclan accept</green> atau <red>/qclan decline</red>."
+  invite-no-pending: "<red>Kamu tidak memiliki undangan yang tertunda."
+  invite-accepted: "<green>Kamu berhasil bergabung ke clan <yellow>{clan}</yellow>!"
+  invite-declined: "<gray>Undangan dari clan <yellow>{clan}</yellow> ditolak."
+  invite-accepted-broadcast: "<yellow>{player}</yellow> <green>bergabung ke clan!"
+  invite-declined-broadcast: "<yellow>{player}</yellow> <red>menolak undangan clan."
+  invite-already-sent: "<red>Undangan sudah dikirim ke <yellow>{player}</yellow>."
+  invite-clan-full: "<red>Clan sudah penuh! Upgrade level clan untuk menambah slot member."
+
+  # Kick
+  kick-success: "<green>Player <yellow>{player}</yellow> berhasil dikeluarkan dari clan."
+  kick-broadcast: "<yellow>{player}</yellow> <red>dikeluarkan dari clan oleh <yellow>{target}</yellow>."
+  kick-self: "<red>Kamu tidak bisa mengeluarkan dirimu sendiri. Gunakan /qclan leave."
+  kick-higher-role: "<red>Kamu tidak bisa mengeluarkan member dengan role lebih tinggi."
+  kick-not-in-your-clan: "<red>Player tersebut bukan anggota clan kamu."
+
+  # Leave
+  leave-success: "<green>Kamu berhasil keluar dari clan <yellow>{clan}</yellow>."
+  leave-broadcast: "<yellow>{player}</yellow> <red>keluar dari clan."
+  leave-leader: "<red>Kamu adalah Leader! Transfer kepemilikan dulu sebelum keluar."
+
+  # Disband
+  disband-success: "<green>Clan <yellow>{clan}</yellow> berhasil dibubarkan."
+  disband-broadcast: "<red>Clan <yellow>{clan}</yellow> telah dibubarkan."
+
+  # Transfer
+  transfer-success: "<green>Kepemilikan clan berhasil dipindahkan ke <yellow>{player}</yellow>."
+  transfer-broadcast: "<yellow>{player}</yellow> <green>kini menjadi Leader clan!"
+  transfer-self: "<red>Kamu tidak bisa mentransfer ke dirimu sendiri."
+
+  # Info
+  info-header: "<gold>━━━━━━━━ <yellow>{clan} <gold>━━━━━━━━"
+  info-tag: "<gray>Tag: <yellow>[{tag}]"
+  info-leader: "<gray>Leader: <yellow>{player}"
+  info-level: "<gray>Level: <yellow>{value}"
+  info-members: "<gray>Member: <yellow>{value}</yellow> / <yellow>{max}"
+  info-money: "<gray>Kas Clan: <gold>{value}"
+  info-reputation: "<gray>Reputasi: <aqua>{value}"
+  info-shield: "<gray>Shield: <green>Aktif hingga {value}"
+  info-shield-inactive: "<gray>Shield: <red>Tidak aktif"
+  info-footer: "<gold>━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # Role
+  role-set-success: "<green>Role <yellow>{player}</yellow> berhasil diubah menjadi <yellow>{role}</yellow>."
+  role-set-broadcast: "Role <yellow>{player}</yellow> diubah menjadi <yellow>{role}</yellow>."
+  role-invalid: "<red>Role <yellow>{role}</yellow> tidak ditemukan."
+  role-cannot-change-leader: "<red>Role Leader tidak bisa diubah."
+  role-higher: "<red>Kamu tidak bisa mengubah role member dengan hierarki lebih tinggi."
+
+  # Deposit
+  deposit-success: "<green>Berhasil menyetor <gold>{value}</gold> <green>ke kas clan."
+  deposit-invalid: "<red>Jumlah deposit tidak valid."
+
+  # Upgrade
+  upgrade-success: "<green>Clan berhasil naik ke Level <yellow>{value}</yellow>!"
+  upgrade-max: "<red>Clan sudah mencapai level maksimum."
+  upgrade-insufficient: "<red>Kas clan tidak mencukupi. Butuh <gold>{value}</gold> lagi."
+
+  # Announce
+  announce-broadcast: "<dark_gray>[<gold>Clan Announcement</gold>]</dark_gray> <yellow>[{tag}]</yellow> <white>{message}"
+  announce-cooldown: "<red>Announcement masih cooldown. Tersisa <yellow>{value}</yellow> detik."
+
+# ── Home ──────────────────────────────────────────────────────
+home:
+  set-success: "<green>Home <yellow>{value}</yellow> berhasil diset."
+  set-exists: "<red>Home dengan nama <yellow>{value}</yellow> sudah ada."
+  set-max: "<red>Slot home sudah penuh! Upgrade level clan untuk menambah slot."
+  delete-success: "<green>Home <yellow>{value}</yellow> berhasil dihapus."
+  delete-not-found: "<red>Home <yellow>{value}</yellow> tidak ditemukan."
+  teleport-success: "<green>Teleport ke home <yellow>{value}</yellow>..."
+  teleport-not-found: "<red>Home <yellow>{value}</yellow> tidak ditemukan."
+  teleport-cooldown: "<red>Cooldown teleport! Tunggu <yellow>{value}</yellow> detik."
+  no-homes: "<red>Clan belum memiliki home. Set home dengan /qclan sethome <nama>."
+
+# ── Shop ──────────────────────────────────────────────────────
+shop:
+  purchase-success: "<green>Berhasil membeli <yellow>{value}</yellow>!"
+  purchase-failed: "<red>Pembelian gagal. Kas clan dikembalikan."
+  purchase-cooldown: "<red>Item ini masih cooldown. Tunggu <yellow>{value}</yellow> detik."
+  buff-applied: "<green>Buff <yellow>{value}</yellow> berhasil diberikan ke semua member online."
+  buff-received: "<green>Clan membeli buff <yellow>{value}</yellow>! Efek aktif selama <yellow>{duration}</yellow>."
+  confirm-title: "<gold>Konfirmasi Pembelian"
+  inventory-full-drop: "<yellow>Inventori penuh! Item <yellow>{value}</yellow> dijatuhkan di lokasi kamu."
+
+# ── Bounty ────────────────────────────────────────────────────
+bounty:
+  place-prompt: "<gold>Masukkan jumlah bounty (min: {min}). Ketik <red>batal</red> untuk membatalkan."
+  place-success: "<green>Bounty sebesar <gold>{value}</gold> berhasil dipasang!"
+  place-cancelled: "<gray>Pemasangan bounty dibatalkan."
+  place-self: "<red>Kamu tidak bisa memasang bounty untuk dirimu sendiri."
+  place-same-clan: "<red>Kamu tidak bisa memasang bounty untuk member clan sendiri."
+  place-shielded: "<red>Clan target sedang dalam perlindungan Shield."
+  place-already-active: "<red>Player tersebut sudah memiliki bounty aktif."
+  place-insufficient: "<red>Saldo tidak mencukupi untuk memasang bounty."
+  place-timeout: "<red>Waktu input habis. Pemasangan bounty dibatalkan."
+  head-drop: "<dark_red>⚠ <yellow>{player}</yellow> tewas dengan bounty aktif! Ambil kepalanya untuk klaim bounty!"
+  submit-success: "<green>Bounty berhasil diklaim! Kamu menerima <gold>{value}</gold>."
+  submit-invalid: "<red>Item yang kamu pegang bukan kepala bounty yang valid."
+  submit-already-claimed: "<red>Bounty ini sudah diklaim."
+  submit-no-item: "<red>Pegang kepala bounty di tangan untuk submit."
+  expired: "<gray>Bounty pada <yellow>{player}</yellow> telah kedaluwarsa."
+  board-empty: "<gray>Tidak ada bounty aktif saat ini."
+  clan-reputation-gain: "<green>+{value} reputasi dari penyelesaian bounty!"
+
+# ── War ───────────────────────────────────────────────────────
+war:
+  register-success: "<green>Clan berhasil mendaftar untuk war!"
+  register-already: "<red>Clan sudah terdaftar untuk war."
+  register-no-war: "<red>Tidak ada war yang sedang dalam periode registrasi."
+  register-insufficient-members: "<red>Minimal <yellow>{value}</yellow> member online untuk ikut war."
+  leave-success: "<green>Clan berhasil keluar dari pendaftaran war."
+  leave-not-registered: "<red>Clan tidak terdaftar untuk war."
+  not-in-war: "<red>Tidak ada war yang sedang berlangsung."
+  teleport: "<gold>Kamu akan diteleport ke arena war dalam <yellow>{value}</yellow> detik!"
+  eliminated: "<red>Kamu tereliminasi dari war!"
+  disconnect-eliminated: "<yellow>{player}</yellow> <gray>disconnect dan tereliminasi dari war."
+  win: "<green><bold>Clan kamu memenangkan war!</bold></green>"
+  lose: "<red>Clan kamu kalah dalam war."
+  reward-balance: "<green>Kamu menerima <gold>{value}</gold> sebagai hadiah war!"
+  reward-coins: "<green>Kamu menerima <aqua>{value} Coins</aqua> sebagai hadiah war!"
+  reputation-gain: "<green>+{value} reputasi dari kemenangan war!"
+  arena-not-set: "<red>Arena war belum diset. Hubungi admin."
+  setarena-success: "<green>Arena war berhasil diset di lokasi kamu!"
+
+# ── Contribution ──────────────────────────────────────────────
+contribution:
+  points-gained: "<green>+{value} Contribution Points dari <yellow>{reason}</yellow>."
+  shop-purchase-success: "<green>Berhasil menukar <aqua>{value} poin</aqua> untuk <yellow>{item}</yellow>."
+  shop-insufficient: "<red>Poin tidak cukup. Kamu memiliki <aqua>{value} poin</aqua>."
+  shop-purchase-failed: "<red>Penukaran gagal. Poin dikembalikan."
+
+# ── Coins ─────────────────────────────────────────────────────
+coins:
+  balance: "<gray>Coins kamu: <aqua>{value}"
+  grant-success: "<green>Berhasil memberikan <aqua>{value} Coins</aqua> ke <yellow>{player}</yellow>."
+  grant-received: "<green>Kamu menerima <aqua>{value} Coins</aqua>!"
+  grant-invalid: "<red>Jumlah Coins tidak valid."
+
+# ── Admin ─────────────────────────────────────────────────────
+admin:
+  reload-success: "<green>QuantumClan berhasil di-reload!"
+  clan-deleted: "<green>Clan <yellow>{clan}</yellow> berhasil dihapus."
+  clan-level-set: "<green>Level clan <yellow>{clan}</yellow> diset ke <yellow>{value}</yellow>."
+  clan-reputation-set: "<green>Reputasi clan <yellow>{clan}</yellow> diset ke <yellow>{value}</yellow>."
+  war-started: "<green>War manual dimulai!"
+  war-ended: "<green>War berhasil diakhiri."
+  war-no-active: "<red>Tidak ada war yang sedang berlangsung."
+
+# ── Hook Status (ditampilkan saat onEnable) ───────────────────
+hook:
+  vault-enabled: "<green>[Hook] Vault: <white>Terhubung ✓"
+  vault-disabled: "<red>[Hook] Vault: <white>TIDAK DITEMUKAN - Ekonomi dinonaktifkan!"
+  playerpoints-enabled: "<green>[Hook] PlayerPoints: <white>Terhubung ✓"
+  playerpoints-disabled: "<gray>[Hook] PlayerPoints: <white>Tidak ditemukan (opsional)"
+  gemseconomy-enabled: "<green>[Hook] GemsEconomy: <white>Terhubung ✓"
+  gemseconomy-disabled: "<gray>[Hook] GemsEconomy: <white>Tidak ditemukan (opsional)"
+  placeholderapi-enabled: "<green>[Hook] PlaceholderAPI: <white>Terhubung ✓"
+  placeholderapi-disabled: "<gray>[Hook] PlaceholderAPI: <white>Tidak ditemukan (opsional)"
+  luckperms-enabled: "<green>[Hook] LuckPerms: <white>Terhubung ✓"
+  luckperms-disabled: "<gray>[Hook] LuckPerms: <white>Tidak ditemukan (opsional)"
+  decentholograms-enabled: "<green>[Hook] DecentHolograms: <white>Terhubung ✓"
+  decentholograms-disabled: "<gray>[Hook] DecentHolograms: <white>Tidak ditemukan (opsional)"
+  holographicdisplays-enabled: "<green>[Hook] HolographicDisplays: <white>Terhubung ✓"
+  holographicdisplays-disabled: "<gray>[Hook] HolographicDisplays: <white>Tidak ditemukan (opsional)"
+  worldguard-enabled: "<green>[Hook] WorldGuard: <white>Terhubung ✓"
+  worldguard-disabled: "<gray>[Hook] WorldGuard: <white>Tidak ditemukan (opsional)"
+  fawe-enabled: "<green>[Hook] FastAsyncWorldEdit: <white>Terhubung ✓"
+  fawe-disabled: "<gray>[Hook] FastAsyncWorldEdit: <white>Tidak ditemukan (opsional)"

@@ -1,0 +1,218 @@
+name: QuantumClan
+version: '${project.version}'
+main: me.bintanq.quantumclan.QuantumClan
+api-version: '1.21'
+description: Advanced Clan Plugin for Paper 1.21.1
+author: bintanq
+website: https://github.com/bintanq/QuantumClan
+
+softdepend:
+  - Vault
+  - PlayerPoints
+  - GemsEconomy
+  - PlaceholderAPI
+  - LuckPerms
+  - DecentHolograms
+  - HolographicDisplays
+  - WorldGuard
+  - FastAsyncWorldEdit
+
+libraries: []
+
+commands:
+  qclan:
+    description: Main QuantumClan command
+    usage: /qclan <subcommand>
+    aliases:
+      - clan
+    permission: quantumclan.use
+
+  qclanadmin:
+    description: QuantumClan admin command
+    usage: /qclanadmin <subcommand>
+    aliases:
+      - clanadmin
+      - cadmin
+    permission: quantumclan.admin
+
+permissions:
+  # ── General use ──────────────────────────────────────────────
+  quantumclan.use:
+    description: Allow usage of /qclan
+    default: true
+
+  quantumclan.admin:
+    description: Allow usage of /qclanadmin
+    default: op
+
+  # ── Clan creation / management ────────────────────────────────
+  quantumclan.clan.create:
+    description: Allow creating a clan
+    default: true
+
+  quantumclan.clan.invite:
+    description: Allow inviting players to clan
+    default: true
+
+  quantumclan.clan.kick:
+    description: Allow kicking members from clan
+    default: true
+
+  quantumclan.clan.leave:
+    description: Allow leaving a clan
+    default: true
+
+  quantumclan.clan.info:
+    description: Allow viewing clan info
+    default: true
+
+  quantumclan.clan.disband:
+    description: Allow disbanding own clan (leader only)
+    default: true
+
+  quantumclan.clan.transfer:
+    description: Allow transferring clan ownership
+    default: true
+
+  quantumclan.clan.upgrade:
+    description: Allow upgrading clan level
+    default: true
+
+  quantumclan.clan.announce:
+    description: Allow sending clan announcements
+    default: true
+
+  quantumclan.clan.deposit:
+    description: Allow depositing money into clan bank
+    default: true
+
+  quantumclan.clan.role:
+    description: Allow managing clan member roles
+    default: true
+
+  # ── Clan Home ─────────────────────────────────────────────────
+  quantumclan.home.use:
+    description: Allow teleporting to clan home
+    default: true
+
+  quantumclan.home.set:
+    description: Allow setting clan home
+    default: true
+
+  quantumclan.home.delete:
+    description: Allow deleting clan home
+    default: true
+
+  # ── Shop ──────────────────────────────────────────────────────
+  quantumclan.shop.use:
+    description: Allow using clan shop
+    default: true
+
+  # ── Bounty ────────────────────────────────────────────────────
+  quantumclan.bounty.place:
+    description: Allow placing a bounty
+    default: true
+
+  quantumclan.bounty.board:
+    description: Allow viewing bounty board
+    default: true
+
+  quantumclan.bounty.submit:
+    description: Allow submitting bounty head
+    default: true
+
+  # ── War ───────────────────────────────────────────────────────
+  quantumclan.war.register:
+    description: Allow registering for war
+    default: true
+
+  quantumclan.war.leave:
+    description: Allow leaving war registration
+    default: true
+
+  # ── Contribution ──────────────────────────────────────────────
+  quantumclan.contribution.view:
+    description: Allow viewing contribution points
+    default: true
+
+  quantumclan.contribution.shop:
+    description: Allow using contribution shop
+    default: true
+
+  # ── Leaderboard ───────────────────────────────────────────────
+  quantumclan.top:
+    description: Allow viewing clan leaderboard
+    default: true
+
+  # ── Admin sub-permissions ─────────────────────────────────────
+  quantumclan.admin.coins:
+    description: Allow giving coins to players
+    default: op
+
+  quantumclan.admin.war:
+    description: Allow managing war sessions
+    default: op
+
+  quantumclan.admin.clan:
+    description: Allow managing clans via admin commands
+    default: op
+
+  quantumclan.admin.reload:
+    description: Allow reloading plugin configuration
+    default: op
+
+  quantumclan.admin.setarena:
+    description: Allow setting war arena
+    default: op
+
+  # ── Bypass / Special ──────────────────────────────────────────
+  quantumclan.bypass.cooldown:
+    description: Bypass all cooldowns
+    default: op
+
+  quantumclan.bypass.cost:
+    description: Bypass all costs
+    default: false
+
+  quantumclan.bypass.war.minclan:
+    description: Bypass war minimum member requirement
+    default: op
+
+  # ── Wildcard ──────────────────────────────────────────────────
+  quantumclan.*:
+    description: Grants all QuantumClan permissions
+    default: false
+    children:
+      quantumclan.use: true
+      quantumclan.admin: true
+      quantumclan.clan.create: true
+      quantumclan.clan.invite: true
+      quantumclan.clan.kick: true
+      quantumclan.clan.leave: true
+      quantumclan.clan.info: true
+      quantumclan.clan.disband: true
+      quantumclan.clan.transfer: true
+      quantumclan.clan.upgrade: true
+      quantumclan.clan.announce: true
+      quantumclan.clan.deposit: true
+      quantumclan.clan.role: true
+      quantumclan.home.use: true
+      quantumclan.home.set: true
+      quantumclan.home.delete: true
+      quantumclan.shop.use: true
+      quantumclan.bounty.place: true
+      quantumclan.bounty.board: true
+      quantumclan.bounty.submit: true
+      quantumclan.war.register: true
+      quantumclan.war.leave: true
+      quantumclan.contribution.view: true
+      quantumclan.contribution.shop: true
+      quantumclan.top: true
+      quantumclan.admin.coins: true
+      quantumclan.admin.war: true
+      quantumclan.admin.clan: true
+      quantumclan.admin.reload: true
+      quantumclan.admin.setarena: true
+      quantumclan.bypass.cooldown: true
+      quantumclan.bypass.cost: true
+      quantumclan.bypass.war.minclan: true

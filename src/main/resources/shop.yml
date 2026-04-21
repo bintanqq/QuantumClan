@@ -1,0 +1,295 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║           QuantumClan - shop.yml                     ║
+# ╚══════════════════════════════════════════════════════╝
+#
+# TYPE:
+#   BUFF       → potion effect ke semua member clan
+#   CONSUMABLE → item khusus satu kali pakai / fungsional
+#   UTILITY    → upgrade permanen clan
+#
+# effect values: STRENGTH, SPEED, HASTE, REGENERATION, INVISIBILITY
+# amplifier: 0 = level I, 1 = level II, dst.
+# price: Clan Money (kas bersama)
+# duration: detik (untuk BUFF)
+# confirm: true = tampilkan GUI konfirmasi sebelum beli
+
+clan-shop:
+
+  # ── BUFF items ──────────────────────────────────────────────
+  - id: buff_strength_1
+    type: BUFF
+    name: "<red>Clan Strength I"
+    lore:
+      - "<gray>Berikan efek <red>Strength I</red>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>10 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: DIAMOND_SWORD
+    effect: STRENGTH
+    amplifier: 0
+    duration: 600
+    price: 2000
+    confirm: false
+
+  - id: buff_strength_2
+    type: BUFF
+    name: "<red>Clan Strength II"
+    lore:
+      - "<gray>Berikan efek <red>Strength II</red>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>10 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: NETHERITE_SWORD
+    effect: STRENGTH
+    amplifier: 1
+    duration: 600
+    price: 5000
+    confirm: true
+
+  - id: buff_speed_1
+    type: BUFF
+    name: "<aqua>Clan Speed I"
+    lore:
+      - "<gray>Berikan efek <aqua>Speed I</aqua>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>10 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: SUGAR
+    effect: SPEED
+    amplifier: 0
+    duration: 600
+    price: 1500
+    confirm: false
+
+  - id: buff_speed_2
+    type: BUFF
+    name: "<aqua>Clan Speed II"
+    lore:
+      - "<gray>Berikan efek <aqua>Speed II</aqua>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>10 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: RABBIT_FOOT
+    effect: SPEED
+    amplifier: 1
+    duration: 600
+    price: 4000
+    confirm: true
+
+  - id: buff_haste_1
+    type: BUFF
+    name: "<yellow>Clan Haste I"
+    lore:
+      - "<gray>Berikan efek <yellow>Haste I</yellow>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>15 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: GOLDEN_PICKAXE
+    effect: HASTE
+    amplifier: 0
+    duration: 900
+    price: 2000
+    confirm: false
+
+  - id: buff_haste_2
+    type: BUFF
+    name: "<yellow>Clan Haste II"
+    lore:
+      - "<gray>Berikan efek <yellow>Haste II</yellow>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>15 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: NETHERITE_PICKAXE
+    effect: HASTE
+    amplifier: 1
+    duration: 900
+    price: 5000
+    confirm: true
+
+  - id: buff_regen_1
+    type: BUFF
+    name: "<light_purple>Clan Regeneration I"
+    lore:
+      - "<gray>Berikan efek <light_purple>Regeneration I</light_purple>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>5 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: GLISTERING_MELON_SLICE
+    effect: REGENERATION
+    amplifier: 0
+    duration: 300
+    price: 3000
+    confirm: false
+
+  - id: buff_invis_1
+    type: BUFF
+    name: "<white>Clan Invisibility"
+    lore:
+      - "<gray>Berikan efek <white>Invisibility</white>"
+      - "<gray>kepada seluruh member clan."
+      - "<gray>Durasi: <yellow>3 menit"
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: GLASS_BOTTLE
+    effect: INVISIBILITY
+    amplifier: 0
+    duration: 180
+    price: 8000
+    confirm: true
+
+  # ── CONSUMABLE items ─────────────────────────────────────────
+  - id: clan_banner
+    type: CONSUMABLE
+    name: "<gold>Clan Banner"
+    lore:
+      - "<gray>Banner resmi clan yang bisa"
+      - "<gray>di-place sebagai dekorasi."
+      - "<gray>Ditandai dengan tag clan."
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: WHITE_BANNER
+    price: 500
+    confirm: false
+
+  - id: spy_scroll
+    type: CONSUMABLE
+    name: "<dark_aqua>Spy Scroll"
+    lore:
+      - "<gray>Reveal lokasi target player"
+      - "<gray>clan lain di actionbar + compass"
+      - "<gray>selama <yellow>5 menit</yellow>."
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: PAPER
+    price: 3000
+    confirm: true
+
+  - id: clan_announcement
+    type: CONSUMABLE
+    name: "<gold>Clan Announcement"
+    lore:
+      - "<gray>Broadcast pesan ke seluruh server."
+      - "<gray>Cooldown: <yellow>1 jam</yellow>."
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: BELL
+    price: 5000
+    confirm: true
+
+  - id: death_protection
+    type: CONSUMABLE
+    name: "<green>Death Protection"
+    lore:
+      - "<gray>Keep inventory sekali pakai"
+      - "<gray>saat kematian berikutnya."
+      - "<gray>Cooldown: <yellow>1 jam</yellow> per player."
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: TOTEM_OF_UNDYING
+    price: 10000
+    confirm: true
+
+  # ── UTILITY items ────────────────────────────────────────────
+  - id: xp_boost
+    type: UTILITY
+    name: "<green>XP Boost"
+    lore:
+      - "<gray>Multiplier XP x2 untuk semua"
+      - "<gray>member selama <yellow>30 menit</yellow>."
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: EXPERIENCE_BOTTLE
+    duration: 1800
+    price: 15000
+    confirm: true
+
+  - id: clan_shield
+    type: UTILITY
+    name: "<blue>Clan Shield"
+    lore:
+      - "<gray>Proteksi dari bounty selama"
+      - "<gray><yellow>24 jam</yellow>."
+      - ""
+      - "<gray>Harga: <gold>{price} Clan Money"
+    material: SHIELD
+    duration: 86400
+    price: 20000
+    confirm: true
+
+# ── Contribution Shop ────────────────────────────────────────
+# cost-points: Contribution Points yang dibutuhkan
+contribution-shop:
+
+  - id: contrib_strength
+    type: BUFF_PERSONAL
+    name: "<red>Personal Strength I"
+    lore:
+      - "<gray>Dapatkan efek <red>Strength I</red>"
+      - "<gray>untuk dirimu sendiri."
+      - "<gray>Durasi: <yellow>5 menit"
+      - ""
+      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+    material: BLAZE_POWDER
+    effect: STRENGTH
+    amplifier: 0
+    duration: 300
+    cost-points: 50
+
+  - id: contrib_speed
+    type: BUFF_PERSONAL
+    name: "<aqua>Personal Speed II"
+    lore:
+      - "<gray>Dapatkan efek <aqua>Speed II</aqua>"
+      - "<gray>untuk dirimu sendiri."
+      - "<gray>Durasi: <yellow>5 menit"
+      - ""
+      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+    material: FEATHER
+    effect: SPEED
+    amplifier: 1
+    duration: 300
+    cost-points: 40
+
+  - id: contrib_regen
+    type: BUFF_PERSONAL
+    name: "<light_purple>Personal Regeneration II"
+    lore:
+      - "<gray>Dapatkan efek <light_purple>Regeneration II</light_purple>"
+      - "<gray>untuk dirimu sendiri."
+      - "<gray>Durasi: <yellow>3 menit"
+      - ""
+      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+    material: GOLDEN_APPLE
+    effect: REGENERATION
+    amplifier: 1
+    duration: 180
+    cost-points: 60
+
+  - id: contrib_banner
+    type: ITEM
+    name: "<gold>Clan Banner"
+    lore:
+      - "<gray>Dapatkan 1x Clan Banner."
+      - ""
+      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+    material: WHITE_BANNER
+    amount: 1
+    cost-points: 30
+
+  - id: contrib_spy_scroll
+    type: ITEM
+    name: "<dark_aqua>Spy Scroll"
+    lore:
+      - "<gray>Dapatkan 1x Spy Scroll."
+      - ""
+      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+    material: PAPER
+    amount: 1
+    cost-points: 80

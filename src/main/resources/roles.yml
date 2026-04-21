@@ -1,0 +1,74 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║           QuantumClan - roles.yml                    ║
+# ╚══════════════════════════════════════════════════════╝
+#
+# Hierarki role berdasarkan urutan di sini (index 0 = tertinggi).
+# Leader selalu index 0 dan SELALU memiliki semua permission.
+# Tambah role baru di antara Officer dan Member sesuai kebutuhan.
+#
+# Permission nodes yang tersedia:
+#   can-kick, can-invite, can-upgrade, can-access-shop,
+#   can-set-home, can-delete-home, can-deposit,
+#   can-declare-bounty, can-manage-war, can-announce,
+#   can-set-role, can-transfer, can-disband
+#
+# true  = role ini boleh melakukan aksi tersebut
+# false = role ini tidak boleh (akan ditolak dengan pesan error)
+
+roles:
+
+  - name: leader
+    display-name: "<gold><bold>Leader"
+    color: "#FFD700"
+    # Leader selalu punya semua permission, list ini diabaikan oleh sistem
+    # tapi tetap ditulis untuk dokumentasi
+    permissions:
+      can-kick: true
+      can-invite: true
+      can-upgrade: true
+      can-access-shop: true
+      can-set-home: true
+      can-delete-home: true
+      can-deposit: true
+      can-declare-bounty: true
+      can-manage-war: true
+      can-announce: true
+      can-set-role: true
+      can-transfer: true
+      can-disband: true
+
+  - name: officer
+    display-name: "<aqua>Officer"
+    color: "#00BFFF"
+    permissions:
+      can-kick: true
+      can-invite: true
+      can-upgrade: false
+      can-access-shop: true
+      can-set-home: true
+      can-delete-home: true
+      can-deposit: true
+      can-declare-bounty: true
+      can-manage-war: true
+      can-announce: true
+      can-set-role: false
+      can-transfer: false
+      can-disband: false
+
+  - name: member
+    display-name: "<gray>Member"
+    color: "#AAAAAA"
+    permissions:
+      can-kick: false
+      can-invite: false
+      can-upgrade: false
+      can-access-shop: true
+      can-set-home: false
+      can-delete-home: false
+      can-deposit: true
+      can-declare-bounty: true
+      can-manage-war: false
+      can-announce: false
+      can-set-role: false
+      can-transfer: false
+      can-disband: false
