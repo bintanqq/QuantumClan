@@ -16,19 +16,20 @@ import java.util.stream.Collectors;
 
 /**
  * Routes /qclanadmin <subcommand> to the appropriate admin handler.
+ * No arguments → shows help from messages.yml (no more hardcoded strings).
  */
 public class QClanAdminCommand implements CommandExecutor, TabCompleter {
 
     private final QuantumClan plugin;
 
-    private final AdminReloadCommand  reload;
-    private final AdminCoinsCommand   coins;
-    private final AdminClanCommand    clan;
-    private final AdminWarCommand     war;
+    private final AdminReloadCommand   reload;
+    private final AdminCoinsCommand    coins;
+    private final AdminClanCommand     clan;
+    private final AdminWarCommand      war;
     private final AdminSetArenaCommand setArena;
 
     public QClanAdminCommand(QuantumClan plugin) {
-        this.plugin   = plugin;
+        this.plugin  = plugin;
         reload   = new AdminReloadCommand(plugin);
         coins    = new AdminCoinsCommand(plugin);
         clan     = new AdminClanCommand(plugin);
@@ -41,17 +42,25 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                              @NotNull String label, @NotNull String[] args) {
 
         if (!(sender instanceof Player player)) {
-            plugin.sendMessage(sender, "error.player-only"); return true;
+            plugin.sendMessage(sender, "error.player-only");
+            return true;
         }
         if (!player.hasPermission("quantumclan.admin")) {
-            plugin.sendMessage(player, "error.no-permission"); return true;
+            plugin.sendMessage(player, "error.no-permission");
+            return true;
         }
-        if (args.length == 0) { sendAdminHelp(player); return true; }
+
+        // No args → show help from messages.yml
+        if (args.length == 0) {
+            sendAdminHelp(player);
+            return true;
+        }
 
         String sub     = args[0].toLowerCase();
         String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 
         switch (sub) {
+            case "help"     -> sendAdminHelp(player);
             case "reload"   -> reload.execute(player, subArgs);
             case "give"     -> {
                 // /qclanadmin give coins <player> <amount>
@@ -69,6 +78,36 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    // ── Help ─────────────────────────────────────────────────────────────────
+
+    private void sendAdminHelp(Player player) {
+        var msg = plugin.getMessagesManager();
+
+        plugin.sendRaw(player, msg.get("help.admin-header"));
+
+        String entry = msg.getRaw("help.admin-entry");
+        if (entry == null) entry = "<gold>/qclanadmin {cmd} <dark_gray>- <gray>{desc}";
+
+        String[][] cmds = {
+                { "reload",                      msg.get("help.admin-cmd-reload") },
+                { "give coins <player> <amount>", msg.get("help.admin-cmd-give") },
+                { "setarena",                    msg.get("help.admin-cmd-setarena") },
+                { "war <start|end>",             msg.get("help.admin-cmd-war") },
+                { "clan <info|delete|setlevel|setreputation> <clan>",
+                        msg.get("help.admin-cmd-clan") },
+        };
+
+        for (String[] pair : cmds) {
+            plugin.sendRaw(player, entry
+                    .replace("{cmd}", pair[0])
+                    .replace("{desc}", pair[1]));
+        }
+
+        plugin.sendRaw(player, msg.get("help.footer"));
+    }
+
+    // ── Tab complete ─────────────────────────────────────────────────────────
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
                                                 @NotNull Command command,
@@ -77,7 +116,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player p) || !p.hasPermission("quantumclan.admin")) return List.of();
 
         if (args.length == 1) {
-            return List.of("reload", "give", "setarena", "war", "clan").stream()
+            return List.of("reload", "give", "setarena", "war", "clan", "help").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -90,15 +129,5 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             };
         }
         return List.of();
-    }
-
-    private void sendAdminHelp(Player player) {
-        plugin.sendRaw(player, "<gold>━━━━━━ <yellow>QuantumClan Admin <gold>━━━━━━");
-        plugin.sendRaw(player, "<yellow>/qclanadmin reload");
-        plugin.sendRaw(player, "<yellow>/qclanadmin give coins <player> <amount>");
-        plugin.sendRaw(player, "<yellow>/qclanadmin setarena");
-        plugin.sendRaw(player, "<yellow>/qclanadmin war <start|end>");
-        plugin.sendRaw(player, "<yellow>/qclanadmin clan <info|delete|setlevel|setreputation> <clan>");
-        plugin.sendRaw(player, "<gold>━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
 }

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 /**
  * Routes /qclan <subcommand> to the appropriate SubCommand handler.
  * With no arguments, opens the Main Menu GUI.
+ * /qclan help shows help text from messages.yml.
  */
 public class QClanCommand implements CommandExecutor, TabCompleter {
 
@@ -86,7 +87,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // BUG FIX #3: No args → open Main Menu GUI instead of text help
+        // No args → open Main Menu GUI
         if (args.length == 0) {
             MainMenuGUI.open(plugin, player);
             return true;
@@ -96,6 +97,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
 
         switch (sub) {
+            case "help"         -> sendHelp(player);
             case "create"       -> create.execute(player, subArgs);
             case "invite"       -> invite.execute(player, subArgs);
             case "accept"       -> accept.execute(player, subArgs);
@@ -126,6 +128,51 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    // ── Help ─────────────────────────────────────────────────────────────────
+
+    private void sendHelp(Player player) {
+        var msg = plugin.getMessagesManager();
+        plugin.sendRaw(player, msg.get("help.header"));
+
+        String entry = msg.getRaw("help.entry");
+        if (entry == null) entry = "<aqua>/qclan {cmd} <dark_gray>- <gray>{desc}";
+
+        String[][] cmds = {
+                { "create",       msg.get("help.cmd-create") },
+                { "invite",       msg.get("help.cmd-invite") },
+                { "accept",       msg.get("help.cmd-accept") },
+                { "decline",      msg.get("help.cmd-decline") },
+                { "kick",         msg.get("help.cmd-kick") },
+                { "leave",        msg.get("help.cmd-leave") },
+                { "info",         msg.get("help.cmd-info") },
+                { "home",         msg.get("help.cmd-home") },
+                { "sethome",      msg.get("help.cmd-sethome") },
+                { "delhome",      msg.get("help.cmd-delhome") },
+                { "deposit",      msg.get("help.cmd-deposit") },
+                { "shop",         msg.get("help.cmd-shop") },
+                { "bounty",       msg.get("help.cmd-bounty") },
+                { "war",          msg.get("help.cmd-war") },
+                { "upgrade",      msg.get("help.cmd-upgrade") },
+                { "top",          msg.get("help.cmd-top") },
+                { "role",         msg.get("help.cmd-role") },
+                { "transfer",     msg.get("help.cmd-transfer") },
+                { "disband",      msg.get("help.cmd-disband") },
+                { "announce",     msg.get("help.cmd-announce") },
+                { "contribution", msg.get("help.cmd-contribution") },
+                { "coins",        msg.get("help.cmd-coins") },
+        };
+
+        for (String[] pair : cmds) {
+            plugin.sendRaw(player, entry
+                    .replace("{cmd}", pair[0])
+                    .replace("{desc}", pair[1]));
+        }
+
+        plugin.sendRaw(player, msg.get("help.footer"));
+    }
+
+    // ── Tab complete ─────────────────────────────────────────────────────────
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
                                                 @NotNull Command command,
@@ -138,7 +185,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                     "create", "invite", "accept", "decline", "kick", "leave", "info",
                     "home", "sethome", "delhome", "deposit", "shop", "bounty",
                     "war", "upgrade", "top", "role", "transfer", "disband",
-                    "announce", "contribution", "coins", "menu"
+                    "announce", "contribution", "coins", "menu", "help"
             );
             String partial = args[0].toLowerCase();
             return subs.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
