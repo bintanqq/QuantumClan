@@ -69,7 +69,9 @@ public class QuantumClan extends JavaPlugin {
     // ── MiniMessage ───────────────────────────────────────────
     private final MiniMessage mm = MiniMessage.miniMessage();
 
-    // ── onEnable ──────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────
+    // onEnable
+    // ─────────────────────────────────────────────────────────
 
     @Override
     public void onEnable() {
@@ -119,8 +121,7 @@ public class QuantumClan extends JavaPlugin {
         initSchematicProvider();
 
         // 9. Init ClanManager and load cache
-        clanManager = new ClanManager(this, clanDAO, memberDAO,
-                configManager, rolesConfigManager);
+        clanManager = new ClanManager(this, clanDAO, memberDAO, configManager, rolesConfigManager);
         try {
             clanManager.loadAll().get(); // block until loaded (startup only)
         } catch (Exception e) {
@@ -153,26 +154,24 @@ public class QuantumClan extends JavaPlugin {
         getLogger().info("╚══════════════════════════════════════╝");
     }
 
-    // ── onDisable ─────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────
+    // onDisable
+    // ─────────────────────────────────────────────────────────
 
     @Override
     public void onDisable() {
         getLogger().info("[QuantumClan] Shutting down...");
 
-        // End any active war gracefully
         if (warManager != null) {
             warManager.endWarGracefully();
         }
 
-        // Cancel all schedulers
         Bukkit.getScheduler().cancelTasks(this);
 
-        // Shutdown clan manager (cancels leaderboard scheduler)
         if (clanManager != null) {
             clanManager.shutdown();
         }
 
-        // Shutdown database pool
         if (databaseManager != null) {
             databaseManager.shutdown();
         }
@@ -180,7 +179,9 @@ public class QuantumClan extends JavaPlugin {
         getLogger().info("[QuantumClan] Disabled successfully.");
     }
 
-    // ── Private init helpers ──────────────────────────────────
+    // ─────────────────────────────────────────────────────────
+    // Private init helpers
+    // ─────────────────────────────────────────────────────────
 
     private void saveDefaultConfigs() {
         saveDefaultConfig();
@@ -213,6 +214,11 @@ public class QuantumClan extends JavaPlugin {
         contributionDAO = new ContributionDAO(databaseManager, getLogger());
     }
 
+    /**
+     * Selects the economy provider based on config.
+     * Always falls back to Vault (which is required).
+     * GemsEconomy has been removed — only VAULT, PLAYERPOINTS, and COINS are supported.
+     */
     private boolean initEconomyProvider() {
         String providerName = configManager.getEconomyProvider().toUpperCase();
 
@@ -225,22 +231,9 @@ public class QuantumClan extends JavaPlugin {
                 }
                 getLogger().warning("[Economy] PlayerPoints not available, falling back to Vault.");
             }
-            case "GEMSECONOMY" -> {
-                if (hookManager.isGemsEconomyEnabled()) {
-                    economyProvider = new GemsEconomyProvider(
-                            hookManager.getGemsEconomy(),
-                            configManager.getGemsEconomyCurrency());
-                    getLogger().info("[Economy] Provider: GemsEconomy ("
-                            + configManager.getGemsEconomyCurrency() + ")");
-                    return true;
-                }
-                getLogger().warning("[Economy] GemsEconomy not available, falling back to Vault.");
-            }
             case "COINS" -> {
-                // CoinsProvider initialized after DAOs — use it directly
-                getLogger().info("[Economy] Provider: Built-in Coins");
-                // Will be set after coinsProvider is initialized
-                // For now fall through to Vault as primary
+                // CoinsProvider will be initialised after DAOs; handled below as fallback
+                getLogger().info("[Economy] Provider: Built-in Coins (using Vault as fallback)");
             }
         }
 
@@ -276,11 +269,7 @@ public class QuantumClan extends JavaPlugin {
             }
             case "NBT" -> schematicProvider = nbt;
             default -> { // AUTO
-                if (hookManager.isFaweEnabled() && fawe.isAvailable()) {
-                    schematicProvider = fawe;
-                } else {
-                    schematicProvider = nbt;
-                }
+                schematicProvider = (hookManager.isFaweEnabled() && fawe.isAvailable()) ? fawe : nbt;
             }
         }
 
@@ -296,11 +285,10 @@ public class QuantumClan extends JavaPlugin {
         warManager          = new WarManager(this);
         warScheduler        = new WarScheduler(this);
 
-        // Start schedulers
         bountyManager.startExpiryScheduler();
         warScheduler.schedule();
 
-        // Start hologram updater if any hologram plugin is available
+        // Hologram updater — only DecentHolograms now
         if (hookManager.isAnyHologramEnabled()) {
             warManager.startHologramUpdater();
         }
@@ -308,16 +296,13 @@ public class QuantumClan extends JavaPlugin {
 
     private void registerListeners() {
         var pm = Bukkit.getPluginManager();
-
-        pm.registerEvents(new PlayerLoginListener(this),      this);
-        pm.registerEvents(new PlayerQuitListener(this),       this);
-        pm.registerEvents(new ChatListener(this),             this);
-        pm.registerEvents(new PlayerDeathListener(this),      this);
-        pm.registerEvents(new InventoryClickListener(this),   this);
-        pm.registerEvents(new WarListener(this),              this);
-
-        // PlayerMoveListener only if spy scroll feature can be active
-        pm.registerEvents(new PlayerMoveListener(this),       this);
+        pm.registerEvents(new PlayerLoginListener(this),    this);
+        pm.registerEvents(new PlayerQuitListener(this),     this);
+        pm.registerEvents(new ChatListener(this),           this);
+        pm.registerEvents(new PlayerDeathListener(this),    this);
+        pm.registerEvents(new InventoryClickListener(this), this);
+        pm.registerEvents(new WarListener(this),            this);
+        pm.registerEvents(new PlayerMoveListener(this),     this);
     }
 
     private void registerCommands() {
@@ -337,7 +322,9 @@ public class QuantumClan extends JavaPlugin {
         }
     }
 
-    // ── Public reload ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────
+    // Public reload
+    // ─────────────────────────────────────────────────────────
 
     public void reload() {
         reloadConfig();
@@ -346,14 +333,12 @@ public class QuantumClan extends JavaPlugin {
         getLogger().info("[QuantumClan] Configuration reloaded.");
     }
 
-    // ── Message helper ────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────
+    // Message helpers
+    // ─────────────────────────────────────────────────────────
 
-    /**
-     * Sends a MiniMessage formatted message to a player,
-     * prepending the configured prefix.
-     */
     public void sendMessage(org.bukkit.command.CommandSender sender, String messageKey,
-                            Object... replacements) {
+                            String... replacements) {
         String raw = messagesManager.get(messageKey, replacements);
         if (raw == null || raw.isBlank()) return;
         String prefix = messagesManager.getRaw("prefix");
@@ -361,30 +346,26 @@ public class QuantumClan extends JavaPlugin {
         sender.sendMessage(mm.deserialize(full));
     }
 
-    /**
-     * Sends a raw MiniMessage string (no prefix).
-     */
     public void sendRaw(org.bukkit.command.CommandSender sender, String miniMessage) {
         sender.sendMessage(mm.deserialize(miniMessage));
     }
 
-    /**
-     * Broadcasts a MiniMessage formatted message to all online players.
-     */
     public void broadcast(String miniMessage) {
         Component component = mm.deserialize(miniMessage);
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(component));
     }
 
-    // ── Getters ───────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────
+    // Getters
+    // ─────────────────────────────────────────────────────────
 
-    public static QuantumClan getInstance()             { return instance; }
-    public ConfigManager      getConfigManager()        { return configManager; }
-    public MessagesManager    getMessagesManager()      { return messagesManager; }
-    public ShopConfigManager  getShopConfigManager()    { return shopConfigManager; }
-    public WarConfigManager   getWarConfigManager()     { return warConfigManager; }
-    public RolesConfigManager getRolesConfigManager()   { return rolesConfigManager; }
-    public DatabaseManager    getDatabaseManager()      { return databaseManager; }
+    public static QuantumClan getInstance()              { return instance; }
+    public ConfigManager      getConfigManager()         { return configManager; }
+    public MessagesManager    getMessagesManager()       { return messagesManager; }
+    public ShopConfigManager  getShopConfigManager()     { return shopConfigManager; }
+    public WarConfigManager   getWarConfigManager()      { return warConfigManager; }
+    public RolesConfigManager getRolesConfigManager()    { return rolesConfigManager; }
+    public DatabaseManager    getDatabaseManager()       { return databaseManager; }
     public ClanDAO            getClanDAO()               { return clanDAO; }
     public MemberDAO          getMemberDAO()             { return memberDAO; }
     public BountyDAO          getBountyDAO()             { return bountyDAO; }

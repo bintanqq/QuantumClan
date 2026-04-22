@@ -14,9 +14,6 @@ chat-input-timeout: 60
 # Pilihan: VAULT | PLAYERPOINTS | GEMSECONOMY | COINS
 economy-provider: VAULT
 
-# Jika GemsEconomy, tentukan nama currency yang digunakan
-gemseconomy-currency: "dollars"
-
 # ── Chat Format ───────────────────────────────────────────────
 chat:
   # Apakah tag clan tampil di chat

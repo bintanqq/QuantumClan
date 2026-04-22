@@ -6,9 +6,23 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
-// Optional hook imports — wrapped in try/catch at class level via isPresent checks
-// so the plugin compiles even when these are not on the classpath at runtime.
-
+/**
+ * Manages all optional plugin hooks for QuantumClan.
+ *
+ * REQUIRED:
+ *   - Vault (Economy)
+ *
+ * OPTIONAL:
+ *   - PlayerPoints
+ *   - PlaceholderAPI
+ *   - LuckPerms
+ *   - DecentHolograms
+ *   - WorldGuard
+ *   - FastAsyncWorldEdit (FAWE)
+ *
+ * Each hook is null-checked before use. If a hook fails to load,
+ * the related feature is gracefully disabled with a console log.
+ */
 public class HookManager {
 
     private final QuantumClan plugin;
@@ -19,40 +33,34 @@ public class HookManager {
     private boolean vaultEnabled = false;
 
     // ── Optional ──────────────────────────────────────────────
-    private boolean playerPointsEnabled = false;
-    private boolean gemsEconomyEnabled  = false;
+    private boolean playerPointsEnabled   = false;
     private boolean placeholderApiEnabled = false;
-    private boolean luckPermsEnabled    = false;
+    private boolean luckPermsEnabled      = false;
     private boolean decentHologramsEnabled = false;
-    private boolean holographicDisplaysEnabled = false;
-    private boolean worldGuardEnabled   = false;
-    private boolean faweEnabled         = false;
+    private boolean worldGuardEnabled     = false;
+    private boolean faweEnabled           = false;
 
-    // Cached hook instances (raw Object to avoid hard compile-time dependency)
-    private Object playerPointsApi      = null;
-    private Object gemsEconomyApi       = null;
-    private Object luckPermsApi         = null;
-    private Object decentHologramsApi   = null;
-    private Object holographicDisplaysApi = null;
-    private Object worldGuardPlugin     = null;
-    private Object fawePlugin           = null;
+    // Raw instances (avoid hard compile-time dep on optional plugins)
+    private Object playerPointsApi     = null;
+    private Object luckPermsApi        = null;
+    private Object decentHologramsApi  = null;
+    private Object worldGuardPlugin    = null;
+    private Object fawePlugin          = null;
 
     public HookManager(QuantumClan plugin) {
         this.plugin = plugin;
     }
 
     /**
-     * Initialise all hooks. Call once from onEnable().
+     * Initialises all hooks. Call once from onEnable().
      * Logs the status of every hook to console.
      */
     public void init() {
         hookVault();
         hookPlayerPoints();
-        hookGemsEconomy();
         hookPlaceholderAPI();
         hookLuckPerms();
         hookDecentHolograms();
-        hookHolographicDisplays();
         hookWorldGuard();
         hookFawe();
     }
@@ -62,14 +70,12 @@ public class HookManager {
     private void hookVault() {
         if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
             logHook("vault-disabled");
-            vaultEnabled = false;
             return;
         }
         RegisteredServiceProvider<Economy> rsp =
                 Bukkit.getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
             logHook("vault-disabled");
-            vaultEnabled = false;
             return;
         }
         vaultEconomy = rsp.getProvider();
@@ -85,38 +91,14 @@ public class HookManager {
             return;
         }
         try {
-            Class<?> apiClass = Class.forName(
-                    "org.black_ixx.playerpoints.PlayerPointsAPI");
             org.bukkit.plugin.Plugin pp =
                     Bukkit.getPluginManager().getPlugin("PlayerPoints");
-            // Retrieve API via PlayerPoints#getAPI()
             playerPointsApi = pp.getClass().getMethod("getAPI").invoke(pp);
             playerPointsEnabled = (playerPointsApi != null);
         } catch (Exception e) {
-            playerPointsEnabled = false;
             plugin.getLogger().warning("[Hook] PlayerPoints: Failed to load API — " + e.getMessage());
         }
         logHook(playerPointsEnabled ? "playerpoints-enabled" : "playerpoints-disabled");
-    }
-
-    // ── GemsEconomy ───────────────────────────────────────────
-
-    private void hookGemsEconomy() {
-        if (!isPluginPresent("GemsEconomy")) {
-            logHook("gemseconomy-disabled");
-            return;
-        }
-        try {
-            org.bukkit.plugin.Plugin ge =
-                    Bukkit.getPluginManager().getPlugin("GemsEconomy");
-            // GemsEconomy exposes getAPI() on its main class
-            gemsEconomyApi = ge.getClass().getMethod("getAPI").invoke(ge);
-            gemsEconomyEnabled = (gemsEconomyApi != null);
-        } catch (Exception e) {
-            gemsEconomyEnabled = false;
-            plugin.getLogger().warning("[Hook] GemsEconomy: Failed to load API — " + e.getMessage());
-        }
-        logHook(gemsEconomyEnabled ? "gemseconomy-enabled" : "gemseconomy-disabled");
     }
 
     // ── PlaceholderAPI ────────────────────────────────────────
@@ -126,7 +108,6 @@ public class HookManager {
             logHook("placeholderapi-disabled");
             return;
         }
-        // No API instance needed — PAPI expansion is registered separately
         placeholderApiEnabled = true;
         logHook("placeholderapi-enabled");
     }
@@ -147,7 +128,6 @@ public class HookManager {
                 luckPermsEnabled = true;
             }
         } catch (Exception e) {
-            luckPermsEnabled = false;
             plugin.getLogger().warning("[Hook] LuckPerms: Failed to load API — " + e.getMessage());
         }
         logHook(luckPermsEnabled ? "luckperms-enabled" : "luckperms-disabled");
@@ -161,37 +141,13 @@ public class HookManager {
             return;
         }
         try {
-            org.bukkit.plugin.Plugin dh =
-                    Bukkit.getPluginManager().getPlugin("DecentHolograms");
-            // DecentHolograms exposes DHAPI static utility — no instance needed
             Class.forName("eu.decentsoftware.holograms.api.DHAPI");
-            decentHologramsApi = dh;
+            decentHologramsApi = Bukkit.getPluginManager().getPlugin("DecentHolograms");
             decentHologramsEnabled = true;
         } catch (Exception e) {
-            decentHologramsEnabled = false;
             plugin.getLogger().warning("[Hook] DecentHolograms: Failed to load API — " + e.getMessage());
         }
         logHook(decentHologramsEnabled ? "decentholograms-enabled" : "decentholograms-disabled");
-    }
-
-    // ── HolographicDisplays ───────────────────────────────────
-
-    private void hookHolographicDisplays() {
-        if (!isPluginPresent("HolographicDisplays")) {
-            logHook("holographicdisplays-disabled");
-            return;
-        }
-        try {
-            Class.forName("com.gmail.filoghost.holographicdisplays.api.HologramsAPI");
-            holographicDisplaysApi =
-                    Bukkit.getPluginManager().getPlugin("HolographicDisplays");
-            holographicDisplaysEnabled = true;
-        } catch (Exception e) {
-            holographicDisplaysEnabled = false;
-            plugin.getLogger().warning("[Hook] HolographicDisplays: Failed to load API — " + e.getMessage());
-        }
-        logHook(holographicDisplaysEnabled
-                ? "holographicdisplays-enabled" : "holographicdisplays-disabled");
     }
 
     // ── WorldGuard ────────────────────────────────────────────
@@ -203,11 +159,9 @@ public class HookManager {
         }
         try {
             Class.forName("com.sk89q.worldguard.WorldGuard");
-            worldGuardPlugin =
-                    Bukkit.getPluginManager().getPlugin("WorldGuard");
+            worldGuardPlugin = Bukkit.getPluginManager().getPlugin("WorldGuard");
             worldGuardEnabled = true;
         } catch (Exception e) {
-            worldGuardEnabled = false;
             plugin.getLogger().warning("[Hook] WorldGuard: Failed to load API — " + e.getMessage());
         }
         logHook(worldGuardEnabled ? "worldguard-enabled" : "worldguard-disabled");
@@ -222,11 +176,9 @@ public class HookManager {
         }
         try {
             Class.forName("com.fastasyncworldedit.core.FaweAPI");
-            fawePlugin =
-                    Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit");
+            fawePlugin = Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit");
             faweEnabled = true;
         } catch (Exception e) {
-            faweEnabled = false;
             plugin.getLogger().warning("[Hook] FAWE: Failed to load API — " + e.getMessage());
         }
         logHook(faweEnabled ? "fawe-enabled" : "fawe-disabled");
@@ -242,79 +194,37 @@ public class HookManager {
     private void logHook(String messageKey) {
         String raw = plugin.getMessagesManager().getRaw("hook." + messageKey);
         if (raw == null) return;
-        // Strip MiniMessage tags for console output (console doesn't render colour)
-        String plain = mm.stripTags(raw);
-        plugin.getLogger().info(plain);
+        plugin.getLogger().info(mm.stripTags(raw));
     }
 
     // ── Public API ────────────────────────────────────────────
 
-    /** Vault Economy instance. Null if Vault is not present. */
-    public Economy getVaultEconomy() { return vaultEconomy; }
-    public boolean isVaultEnabled()  { return vaultEnabled; }
+    public Economy getVaultEconomy()         { return vaultEconomy; }
+    public boolean isVaultEnabled()          { return vaultEnabled; }
 
-    /** Raw PlayerPoints API instance (cast to PlayerPointsAPI when needed). */
-    public Object getPlayerPointsApi()      { return playerPointsApi; }
-    public boolean isPlayerPointsEnabled()  { return playerPointsEnabled; }
+    public boolean isPlayerPointsEnabled()   { return playerPointsEnabled; }
+    public boolean isPlaceholderApiEnabled() { return placeholderApiEnabled; }
+    public boolean isLuckPermsEnabled()      { return luckPermsEnabled; }
+    public boolean isDecentHologramsEnabled(){ return decentHologramsEnabled; }
+    public boolean isWorldGuardEnabled()     { return worldGuardEnabled; }
+    public boolean isFaweEnabled()           { return faweEnabled; }
 
-    /** Raw GemsEconomy API instance. */
-    public Object getGemsEconomyApi()      { return gemsEconomyApi; }
-    public boolean isGemsEconomyEnabled()  { return gemsEconomyEnabled; }
+    /** Returns true if DecentHolograms is available (the only hologram plugin now). */
+    public boolean isAnyHologramEnabled()    { return decentHologramsEnabled; }
 
-    public boolean isPlaceholderApiEnabled()       { return placeholderApiEnabled; }
+    public Object  getDecentHologramsApi()   { return decentHologramsApi; }
+    public Object  getWorldGuardPlugin()     { return worldGuardPlugin; }
+    public Object  getFawePlugin()           { return fawePlugin; }
 
-    /** Raw LuckPerms API instance (cast to net.luckperms.api.LuckPerms). */
-    public Object getLuckPermsApi()        { return luckPermsApi; }
-    public boolean isLuckPermsEnabled()    { return luckPermsEnabled; }
-
-    /** DecentHolograms plugin instance (use DHAPI static methods). */
-    public Object getDecentHologramsApi()       { return decentHologramsApi; }
-    public boolean isDecentHologramsEnabled()   { return decentHologramsEnabled; }
-
-    /** HolographicDisplays plugin instance (use HologramsAPI static methods). */
-    public Object getHolographicDisplaysApi()       { return holographicDisplaysApi; }
-    public boolean isHolographicDisplaysEnabled()   { return holographicDisplaysEnabled; }
-
-    /**
-     * Returns true if ANY hologram plugin is available.
-     * DecentHolograms takes priority over HolographicDisplays.
-     */
-    public boolean isAnyHologramEnabled() {
-        return decentHologramsEnabled || holographicDisplaysEnabled;
-    }
-
-    /** WorldGuard plugin instance. */
-    public Object getWorldGuardPlugin()    { return worldGuardPlugin; }
-    public boolean isWorldGuardEnabled()   { return worldGuardEnabled; }
-
-    /** FAWE plugin instance. */
-    public Object getFawePlugin()          { return fawePlugin; }
-    public boolean isFaweEnabled()         { return faweEnabled; }
-
-    /**
-     * Convenience: typed LuckPerms API.
-     * Returns null if LuckPerms is not present.
-     */
+    /** Typed LuckPerms API. Null if not present. */
     public net.luckperms.api.LuckPerms getLuckPerms() {
         if (!luckPermsEnabled || luckPermsApi == null) return null;
         return (net.luckperms.api.LuckPerms) luckPermsApi;
     }
 
-    /**
-     * Convenience: typed PlayerPoints API.
-     * Returns null if PlayerPoints is not present.
-     */
+    /** Typed PlayerPoints API. Null if not present. */
     public org.black_ixx.playerpoints.PlayerPointsAPI getPlayerPoints() {
         if (!playerPointsEnabled || playerPointsApi == null) return null;
         return (org.black_ixx.playerpoints.PlayerPointsAPI) playerPointsApi;
-    }
-
-    /**
-     * Convenience: typed GemsEconomy API.
-     * Returns null if GemsEconomy is not present.
-     */
-    public me.glaremasters.gemseconomy.api.GemsEconomyAPI getGemsEconomy() {
-        if (!gemsEconomyEnabled || gemsEconomyApi == null) return null;
-        return (me.glaremasters.gemseconomy.api.GemsEconomyAPI) gemsEconomyApi;
     }
 }

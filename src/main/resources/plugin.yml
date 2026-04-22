@@ -9,11 +9,9 @@ website: https://github.com/bintanq/QuantumClan
 softdepend:
   - Vault
   - PlayerPoints
-  - GemsEconomy
   - PlaceholderAPI
   - LuckPerms
   - DecentHolograms
-  - HolographicDisplays
   - WorldGuard
   - FastAsyncWorldEdit
 
@@ -36,7 +34,6 @@ commands:
     permission: quantumclan.admin
 
 permissions:
-  # ── General use ──────────────────────────────────────────────
   quantumclan.use:
     description: Allow usage of /qclan
     default: true
@@ -45,7 +42,6 @@ permissions:
     description: Allow usage of /qclanadmin
     default: op
 
-  # ── Clan creation / management ────────────────────────────────
   quantumclan.clan.create:
     description: Allow creating a clan
     default: true
@@ -90,7 +86,6 @@ permissions:
     description: Allow managing clan member roles
     default: true
 
-  # ── Clan Home ─────────────────────────────────────────────────
   quantumclan.home.use:
     description: Allow teleporting to clan home
     default: true
@@ -103,12 +98,10 @@ permissions:
     description: Allow deleting clan home
     default: true
 
-  # ── Shop ──────────────────────────────────────────────────────
   quantumclan.shop.use:
     description: Allow using clan shop
     default: true
 
-  # ── Bounty ────────────────────────────────────────────────────
   quantumclan.bounty.place:
     description: Allow placing a bounty
     default: true
@@ -121,7 +114,6 @@ permissions:
     description: Allow submitting bounty head
     default: true
 
-  # ── War ───────────────────────────────────────────────────────
   quantumclan.war.register:
     description: Allow registering for war
     default: true
@@ -130,7 +122,6 @@ permissions:
     description: Allow leaving war registration
     default: true
 
-  # ── Contribution ──────────────────────────────────────────────
   quantumclan.contribution.view:
     description: Allow viewing contribution points
     default: true
@@ -139,12 +130,10 @@ permissions:
     description: Allow using contribution shop
     default: true
 
-  # ── Leaderboard ───────────────────────────────────────────────
   quantumclan.top:
     description: Allow viewing clan leaderboard
     default: true
 
-  # ── Admin sub-permissions ─────────────────────────────────────
   quantumclan.admin.coins:
     description: Allow giving coins to players
     default: op
@@ -165,7 +154,6 @@ permissions:
     description: Allow setting war arena
     default: op
 
-  # ── Bypass / Special ──────────────────────────────────────────
   quantumclan.bypass.cooldown:
     description: Bypass all cooldowns
     default: op
@@ -178,7 +166,6 @@ permissions:
     description: Bypass war minimum member requirement
     default: op
 
-  # ── Wildcard ──────────────────────────────────────────────────
   quantumclan.*:
     description: Grants all QuantumClan permissions
     default: false
