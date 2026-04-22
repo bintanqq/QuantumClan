@@ -6,6 +6,27 @@
 # DO NOT CHANGE IF YOU DONT UNDERSTAND
 config-version: 1
 
+# ── Database ──────────────────────────────────────────────────
+database:
+  # SQLITE (default, zero-config) or MYSQL (requires credentials below)
+  type: SQLITE
+
+  sqlite:
+    file: quantumclan.db
+
+  mysql:
+    host: localhost
+    port: 3306
+    database: quantumclan
+    username: root
+    password: ""
+    pool-size: 10
+    connection-timeout: 30000
+    properties:
+      useSSL: false
+      autoReconnect: true
+      characterEncoding: utf8mb4
+
 # ── Clan Creation ─────────────────────────────────────────────
 clan-creation-cost: 5000.0
 max-name-length: 24
@@ -18,50 +39,30 @@ chat-input-timeout: 60
 economy-provider: VAULT
 
 # ── Coins (Built-in secondary currency) ───────────────────────
-# Customizable display name for the built-in coin currency
 coins-name: "Coins"
 
 # ── Feature Toggles ───────────────────────────────────────────
-# Enable or disable specific features entirely
 features:
-  # Clan announcement system (/qclan announce)
   announcements: true
-  # Bounty system (/qclan bounty)
   bounties: true
-  # Clan war system (/qclan war)
   wars: true
-  # Clan leveling/upgrade system (/qclan upgrade)
   leveling: true
-  # Clan homes (/qclan home, sethome, delhome)
   homes: true
-  # Clan shop (/qclan shop)
   clan-shop: true
-  # Contribution points and shop (/qclan contribution)
   contributions: true
-  # Coins shop (/qclan coins)
   coins-shop: true
-  # Clan Hall (schematic placement)
   clan-hall: false
-  # XP Boost from clan shop
   xp-boost: true
-  # Spy Scroll from clan shop
   spy-scroll: true
-  # Death Protection from clan shop
   death-protection: true
-  # Clan Shield utility from clan shop
   clan-shield: true
-  # Reputation system (tracks clan ranking)
   reputation: true
-  # Clan Vault Storage System
   vault: true
 
 # ── Chat Tag ──────────────────────────────────────────────────
 chat:
   tag-enabled: true
-  # PREFIX = tag before player name | SUFFIX = tag after player name
   tag-position: PREFIX
-  # {tag} = colored tag WITHOUT brackets. Add brackets in format if desired.
-  # Example: "<gray>[{tag}<gray>] " → [NWF] Steve: hello
   tag-format: "<gray>[{tag}<gray>] "
 
 # ── Cooldowns ─────────────────────────────────────────────────
@@ -75,19 +76,13 @@ bounty-expire-hours: 48
 bounty-min-amount: 100.0
 
 # ── Clan Hall ─────────────────────────────────────────────────
-# NOTE: Each clan has its own Hall location. An admin places the schematic
-# for a clan at a specific location using the schematic engine below.
-# The 'features.clan-hall' toggle above must also be true.
 clan-hall:
   enabled: false
-  # AUTO detects FAWE first, falls back to NBT. Force: NBT or FAWE
   engine: AUTO
 
 # ── Disband ───────────────────────────────────────────────────
 disband:
-  # If true, clan treasury is refunded to the leader when disbanded
   refund-treasury: true
-  # If true, also refund the clan creation cost to the leader
   refund-creation-cost: false
 
 # ── Leaderboard Cache ─────────────────────────────────────────
@@ -101,10 +96,7 @@ reputation-weights:
 
 # ── Contribution Weights ──────────────────────────────────────
 contribution-weights:
-  # Points awarded per deposit-amount-unit deposited
   deposit-per-unit: 1
-  # The denomination unit for deposit contribution calculation
-  # e.g. 1000 = 1 point per 1000 deposited
   deposit-amount-unit: 1000
   bounty-complete: 10
   war-win: 25

@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Clan Shop GUI — Bug 4: "Kas" replaced with "Treasury", Bug 7: back button support.
+ * Clan Shop GUI.
  */
 public class ClanShopGUI implements InventoryHolder {
 
@@ -102,7 +102,6 @@ public class ClanShopGUI implements InventoryHolder {
         }
 
         lore.add(Component.empty());
-        // BUG FIX #4: Use "Treasury" not "Kas"
         if (clan.hasMoney(shopItem.getPrice())) {
             lore.add(mm.deserialize("<!italic>" + msg.get("shop.can-afford")));
         } else {
@@ -123,7 +122,6 @@ public class ClanShopGUI implements InventoryHolder {
         var msg = plugin.getMessagesManager();
         int totalPages = getTotalPages();
 
-        // BUG FIX #7: Back button if from menu
         String closeName = backAction != null ? msg.get("gui.back") : msg.get("gui.close");
         inventory.setItem(gc.getClanShopCloseSlot(),
                 makeItem(gc.getClanShopCloseMat(), closeName, Collections.emptyList()));
@@ -146,13 +144,22 @@ public class ClanShopGUI implements InventoryHolder {
 
     private void setTreasuryDisplay() {
         var gc  = plugin.getGuiConfigManager();
-        // BUG FIX #4: Use "Treasury" in the display name, not "Kas"
+        var msg = plugin.getMessagesManager();
+
+        // BUG FIX 6: Treasury display shows NEUTRAL info only.
+        // "cannot-afford" used to leak here as lore. Now we show the balance
+        // as the item name and a neutral description as lore.
         String treasuryName = gc.getClanShopTreasuryName()
                 .replace("{money}", plugin.getEconomyProvider().format(clan.getMoney()));
-        List<Component> kasLore = List.of(
-                mm.deserialize(plugin.getMessagesManager().get("shop.treasury-insufficient")));
+
+        // Neutral lore: just explain what the treasury is
+        List<Component> lore = List.of(
+                mm.deserialize(msg.get("shop.treasury-lore",
+                        "{money}", plugin.getEconomyProvider().format(clan.getMoney())))
+        );
+
         inventory.setItem(gc.getClanShopTreasurySlot(),
-                makeItem(gc.getClanShopTreasuryMat(), treasuryName, kasLore));
+                makeItem(gc.getClanShopTreasuryMat(), treasuryName, lore));
     }
 
     public void handleClick(Player player, int slot, ClickType click) {

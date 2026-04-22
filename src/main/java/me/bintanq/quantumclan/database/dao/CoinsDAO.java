@@ -43,18 +43,15 @@ public class CoinsDAO {
             try (Connection conn = db.getConnection()) {
                 conn.setAutoCommit(false);
                 try {
-                    // Upsert balance
-                    String upsertSql = """
-                        INSERT INTO coins_balance (uuid, balance) VALUES (?,?)
-                        ON CONFLICT(uuid) DO UPDATE SET balance=excluded.balance
-                        """;
+                    // Dialect-aware upsert
+                    String upsertSql = db.getDialect().upsertCoinsBalance();
                     try (PreparedStatement ps = conn.prepareStatement(upsertSql)) {
                         ps.setString(1, uuid.toString());
                         ps.setLong(2,   newBalance);
                         ps.executeUpdate();
                     }
 
-                    // Append ledger entry
+                    // Append ledger entry — timestamp handled by DB default
                     String ledgerSql = """
                         INSERT INTO coins_ledger (uuid, amount, reason)
                         VALUES (?,?,?)
@@ -86,9 +83,7 @@ public class CoinsDAO {
 
     public CompletableFuture<Boolean> ensureExists(UUID uuid) {
         return db.supplyAsync(() -> {
-            String sql = """
-                INSERT OR IGNORE INTO coins_balance (uuid, balance) VALUES (?,0)
-                """;
+            String sql = db.getDialect().insertIgnoreCoinsBalance();
             try (Connection conn = db.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, uuid.toString());

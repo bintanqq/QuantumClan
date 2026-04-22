@@ -15,9 +15,9 @@ import org.bukkit.inventory.InventoryHolder;
 /**
  * Central inventory click handler for all QuantumClan GUIs.
  *
- * Key addition for ClanVaultGUI:
- * Storage slots must NOT be cancelled so items can actually move.
- * The vault GUI exposes isNavSlot(int) to distinguish nav bar from storage.
+ * FIX: ClanVaultGUI storage slots are now properly NOT cancelled so items
+ *      can actually move in/out. Only destructive click types and nav bar
+ *      clicks are cancelled.
  */
 public class InventoryClickListener implements Listener {
 
@@ -36,44 +36,52 @@ public class InventoryClickListener implements Listener {
 
         if (!isQCHolder(holder)) return;
 
-        int slot   = event.getRawSlot();
+        int slot        = event.getRawSlot();
         ClickType click = event.getClick();
 
         // ── Vault GUI: special handling ──────────────────────
         if (holder instanceof ClanVaultGUI vaultGui) {
-            // Always cancel shift-click in nav bar
+
+            // Always block destructive click types everywhere in the vault
+            if (click == ClickType.MIDDLE
+                    || click == ClickType.NUMBER_KEY
+                    || click == ClickType.CREATIVE
+                    || click == ClickType.SWAP_OFFHAND
+                    || click == ClickType.UNKNOWN) {
+                event.setCancelled(true);
+                return;
+            }
+
+            // Nav bar area: cancel and delegate
             if (vaultGui.isNavSlot(slot)) {
                 event.setCancelled(true);
                 vaultGui.handleClick(player, slot, click);
                 return;
             }
 
-            // Storage area:
-            // Admin mode → always cancel
+            // Admin inspect mode: block everything in storage
             if (plugin.getClanVaultManager().isAdminInspector(player.getUniqueId())) {
                 event.setCancelled(true);
                 return;
             }
 
-            // For regular players: allow LEFT, RIGHT, SHIFT_LEFT, SHIFT_RIGHT
-            // (standard Bukkit inventory mechanics) but block destructive types
-            if (click == ClickType.MIDDLE
-                    || click == ClickType.DROP
-                    || click == ClickType.CONTROL_DROP
-                    || click == ClickType.NUMBER_KEY
-                    || click == ClickType.CREATIVE
-                    || click == ClickType.SWAP_OFFHAND
-                    || click == ClickType.UNKNOWN
-                    || click == ClickType.DOUBLE_CLICK) {
+            // Storage area — DO NOT cancel; let Bukkit handle item movement.
+            // vaultGui.handleClick will check permissions and cancel internally
+            // for DROP/CONTROL_DROP, but for standard left/right/shift clicks
+            // the event must NOT be cancelled so items actually move.
+            if (click == ClickType.DROP || click == ClickType.CONTROL_DROP) {
                 event.setCancelled(true);
                 return;
             }
 
-            // Check permission before allowing the click
-            // (vaultGui.handleClick does the permission check and can abort,
-            //  but we need the click NOT cancelled for items to actually move)
-            // So: let the event proceed; vaultGui.handleClick will cancel if needed
-            vaultGui.handleClick(player, slot, click);
+            // Valid storage interaction — delegate permission check to GUI.
+            // The GUI does NOT cancel the event itself; it just checks perms
+            // and sends a message. If perm fails we cancel here.
+            boolean allowed = vaultGui.checkStoragePermission(player, slot, click);
+            if (!allowed) {
+                event.setCancelled(true);
+            }
+            // If allowed: event is NOT cancelled → Bukkit handles the item move normally.
             return;
         }
 
@@ -102,14 +110,12 @@ public class InventoryClickListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onDrag(InventoryDragEvent event) {
-        if (!(event.getWhoClicked() instanceof Player)) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
         InventoryHolder holder = event.getInventory().getHolder();
         if (!isQCHolder(holder)) return;
 
-        // For vault GUI: allow drags in storage area only
         if (holder instanceof ClanVaultGUI vaultGui) {
-            if (plugin.getClanVaultManager().isAdminInspector(
-                    event.getWhoClicked().getUniqueId())) {
+            if (plugin.getClanVaultManager().isAdminInspector(player.getUniqueId())) {
                 event.setCancelled(true);
                 return;
             }
@@ -120,7 +126,7 @@ public class InventoryClickListener implements Listener {
                     return;
                 }
             }
-            // Allow drag in storage area
+            // Allow drag in storage area — permission check not needed for drag
             return;
         }
 
@@ -143,7 +149,7 @@ public class InventoryClickListener implements Listener {
             case CoinsShopGUI gui          -> gui.handleClick(player, slot, click);
             case ClanHallGUI gui           -> gui.handleClick(player, slot, click);
             case ClanHallConfirmGUI gui    -> gui.handleClick(player, slot, click);
-            case ClanVaultGUI gui          -> gui.handleClick(player, slot, click); // NEW
+            case ClanVaultGUI gui          -> gui.handleClick(player, slot, click);
             default -> { /* Unrecognised QC GUI — already cancelled */ }
         }
     }
@@ -163,6 +169,6 @@ public class InventoryClickListener implements Listener {
                 || holder instanceof CoinsShopGUI
                 || holder instanceof ClanHallGUI
                 || holder instanceof ClanHallConfirmGUI
-                || holder instanceof ClanVaultGUI; // NEW
+                || holder instanceof ClanVaultGUI;
     }
 }

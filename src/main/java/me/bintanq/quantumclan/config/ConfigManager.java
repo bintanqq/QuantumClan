@@ -1,41 +1,3 @@
-// ═══════════════════════════════════════════════════════════════════════
-// PATCH for ConfigManager.java
-// Tambahkan field vaultRowsMap dan method getVaultRows() ke class yang ada.
-// ═══════════════════════════════════════════════════════════════════════
-//
-// 1. Tambahkan ke field declarations di atas levelDataMap:
-//
-//    private final Map<Integer, Integer> vaultRowsMap = new HashMap<>();
-//
-// 2. Di dalam loadLevelRequirements(), di dalam loop setelah int maxHomes:
-//
-//    int vaultRows = toInt(map.get("vault-rows"), 1);
-//    vaultRowsMap.put(level, vaultRows);
-//
-// 3. Tambahkan method baru setelah getMaxHomes():
-//
-//    /**
-//     * Returns the number of vault rows for the given clan level.
-//     * Defaults to 1 if not configured for that level.
-//     * Clamped to 1-6 (9-54 slots).
-//     */
-//    public int getVaultRows(int level) {
-//        Integer rows = vaultRowsMap.get(level);
-//        if (rows == null) {
-//            // Find highest level entry <= requested level
-//            int best = 1;
-//            for (Map.Entry<Integer, Integer> e : vaultRowsMap.entrySet()) {
-//                if (e.getKey() <= level) best = Math.max(best, e.getValue());
-//            }
-//            return Math.max(1, Math.min(6, best));
-//        }
-//        return Math.max(1, Math.min(6, rows));
-//    }
-//
-// ═══════════════════════════════════════════════════════════════════════
-// FULL REPLACEMENT FILE (complete ConfigManager with vault rows added):
-// ═══════════════════════════════════════════════════════════════════════
-
 package me.bintanq.quantumclan.config;
 
 import me.bintanq.quantumclan.QuantumClan;
@@ -77,7 +39,7 @@ public class ConfigManager {
             long cost      = toLong(map.get("cost"), 0L);
             int maxMembers = toInt(map.get("max-members"), 10);
             int maxHomes   = toInt(map.get("max-homes"), 1);
-            int vaultRows  = toInt(map.get("vault-rows"), 1); // NEW
+            int vaultRows  = toInt(map.get("vault-rows"), 1);
             levelDataMap.put(level, new LevelData(level, cost, maxMembers, maxHomes));
             vaultRowsMap.put(level, Math.max(1, Math.min(6, vaultRows)));
         }
@@ -97,13 +59,24 @@ public class ConfigManager {
     public int getVaultRows(int level) {
         Integer rows = vaultRowsMap.get(level);
         if (rows != null) return rows;
-        // Find highest configured level that is <= requested level
         int best = 1;
         for (Map.Entry<Integer, Integer> e : vaultRowsMap.entrySet()) {
             if (e.getKey() <= level) best = Math.max(best, e.getValue());
         }
         return Math.max(1, Math.min(6, best));
     }
+
+    // ── Database ──────────────────────────────────────────────
+
+    public String getDatabaseType()         { return cfg.getString("database.type", "SQLITE").toUpperCase(); }
+    public String getSqliteFile()           { return cfg.getString("database.sqlite.file", "quantumclan.db"); }
+    public String getMysqlHost()            { return cfg.getString("database.mysql.host", "localhost"); }
+    public int    getMysqlPort()            { return cfg.getInt("database.mysql.port", 3306); }
+    public String getMysqlDatabase()        { return cfg.getString("database.mysql.database", "quantumclan"); }
+    public String getMysqlUsername()        { return cfg.getString("database.mysql.username", "root"); }
+    public String getMysqlPassword()        { return cfg.getString("database.mysql.password", ""); }
+    public int    getMysqlPoolSize()        { return cfg.getInt("database.mysql.pool-size", 10); }
+    public long   getMysqlConnectionTimeout(){ return cfg.getLong("database.mysql.connection-timeout", 30_000L); }
 
     // ── Feature Toggles ───────────────────────────────────────
 

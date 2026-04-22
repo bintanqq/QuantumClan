@@ -22,15 +22,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Main Menu GUI — opened when a player types /qclan with no arguments.
+ * Main Menu GUI.
  *
- * BUG FIX #6: When an action fails (e.g. no homes), the GUI no longer closes —
- * the error message is sent and the player stays in the GUI.
- *
- * BUG FIX #7: Sub-GUIs opened FROM the main menu receive a back-button
- * supplier so they can return here instead of just closing.
- *
- * All text from messages.yml — no hardcoded strings.
+ * BUG FIX 3: Added "clan-vault" entry to the main menu for in-clan players.
+ *            The vault slot is configured in gui.yml (main-menu.items.clan-vault).
  */
 public class MainMenuGUI implements InventoryHolder {
 
@@ -43,23 +38,21 @@ public class MainMenuGUI implements InventoryHolder {
     private final boolean isInClan;
     private final String clanId;
 
-    // Slot for the "Create Clan" button when not in a clan
     private static final int SLOT_CREATE_CLAN = 13;
 
     public MainMenuGUI(QuantumClan plugin, Player viewer) {
-        this.plugin    = plugin;
-        this.mm        = plugin.getMiniMessage();
-        this.viewer    = viewer;
-        Clan clan = plugin.getClanManager().getClanByPlayer(viewer.getUniqueId());
-        this.isInClan  = (clan != null);
-        this.clanId    = (clan != null) ? clan.getId() : null;
+        this.plugin   = plugin;
+        this.mm       = plugin.getMiniMessage();
+        this.viewer   = viewer;
+        Clan clan     = plugin.getClanManager().getClanByPlayer(viewer.getUniqueId());
+        this.isInClan = (clan != null);
+        this.clanId   = (clan != null) ? clan.getId() : null;
     }
 
     public Inventory build() {
-        var gc = plugin.getGuiConfigManager();
-        String title = gc.getMainMenuTitle();
-        int size     = gc.getMainMenuSize();
-        Inventory inventory = Bukkit.createInventory(this, size, mm.deserialize(title));
+        var gc  = plugin.getGuiConfigManager();
+        int size = gc.getMainMenuSize();
+        Inventory inventory = Bukkit.createInventory(this, size, mm.deserialize(gc.getMainMenuTitle()));
         this.inventory = inventory;
 
         Material filler = gc.getMainMenuFiller();
@@ -82,14 +75,16 @@ public class MainMenuGUI implements InventoryHolder {
         Clan clan = clanId != null ? plugin.getClanManager().getClanById(clanId) : null;
 
         placeConfigItem("clan-info");
-        if (plugin.getConfigManager().isClanShopEnabled()) placeConfigItem("clan-shop");
-        if (plugin.getConfigManager().isHomesEnabled())    placeConfigItem("clan-home");
-        if (plugin.getConfigManager().isLevelingEnabled()) placeConfigItem("clan-upgrade");
+        if (plugin.getConfigManager().isClanShopEnabled())       placeConfigItem("clan-shop");
+        if (plugin.getConfigManager().isHomesEnabled())           placeConfigItem("clan-home");
+        if (plugin.getConfigManager().isLevelingEnabled())        placeConfigItem("clan-upgrade");
         placeConfigItem("clan-top");
-        if (plugin.getConfigManager().isBountiesEnabled())     placeConfigItem("bounty-board");
-        if (plugin.getConfigManager().isWarsEnabled())         placeConfigItem("war-menu");
-        if (plugin.getConfigManager().isContributionsEnabled()) placeConfigItem("contribution-shop");
-        if (plugin.getConfigManager().isCoinsShopEnabled())    placeConfigItem("coins-shop");
+        if (plugin.getConfigManager().isBountiesEnabled())        placeConfigItem("bounty-board");
+        if (plugin.getConfigManager().isWarsEnabled())            placeConfigItem("war-menu");
+        if (plugin.getConfigManager().isContributionsEnabled())   placeConfigItem("contribution-shop");
+        if (plugin.getConfigManager().isCoinsShopEnabled())       placeConfigItem("coins-shop");
+        // BUG FIX 3: Vault entry in main menu
+        if (plugin.getConfigManager().isVaultEnabled())           placeConfigItem("clan-vault");
 
         if (clan != null && clan.getLeaderUuid().equals(viewer.getUniqueId())) {
             placeConfigItem("disband");
@@ -150,7 +145,6 @@ public class MainMenuGUI implements InventoryHolder {
         if (slot == gc.getMainMenuSlot("clan-info")) {
             if (latestClan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
             player.closeInventory();
-            // BUG FIX #7: Pass back-supplier so ClanInfoGUI can return to main menu
             ClanInfoGUI.openFromMenu(plugin, player, latestClan, () -> open(plugin, player));
 
         } else if (slot == gc.getMainMenuSlot("clan-shop")) {
@@ -165,10 +159,9 @@ public class MainMenuGUI implements InventoryHolder {
 
         } else if (slot == gc.getMainMenuSlot("clan-home")) {
             if (latestClan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
-            // BUG FIX #6: Don't close if no homes — send message and stay in GUI
             if (latestClan.getHomes().isEmpty()) {
                 plugin.sendMessage(player, "home.no-homes");
-                return; // Stay in main menu
+                return;
             }
             player.closeInventory();
             ClanHomeGUI.openFromMenu(plugin, player, latestClan, () -> open(plugin, player));
@@ -203,6 +196,17 @@ public class MainMenuGUI implements InventoryHolder {
         } else if (slot == gc.getMainMenuSlot("coins-shop")) {
             player.closeInventory();
             CoinsShopGUI.openFromMenu(plugin, player, () -> open(plugin, player));
+
+        } else if (slot == gc.getMainMenuSlot("clan-vault")) {
+            // BUG FIX 3: Handle vault click from main menu
+            if (latestClan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
+            if (!plugin.getClanManager().hasRolePermission(uuid, "can-open-vault")) {
+                plugin.sendMessage(player, "error.role-no-permission",
+                        "{role}", plugin.getClanManager().getMember(uuid).getRole());
+                return;
+            }
+            player.closeInventory();
+            plugin.getClanVaultManager().openVault(player, latestClan);
 
         } else if (slot == gc.getMainMenuSlot("disband")) {
             if (latestClan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }

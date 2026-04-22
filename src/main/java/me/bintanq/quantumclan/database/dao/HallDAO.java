@@ -11,45 +11,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * DAO for the clan_hall_access table.
- *
- * Table DDL (added to DatabaseManager.createTables()):
- * CREATE TABLE IF NOT EXISTS clan_hall_access (
- *     clan_id      VARCHAR(36) PRIMARY KEY,
- *     purchased_at TIMESTAMP   NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
- *     expires_at   TIMESTAMP   NULL,
- *     active       INTEGER     NOT NULL DEFAULT 1
- * )
- */
 public class HallDAO {
 
     private final DatabaseManager db;
     private final Logger logger;
 
     public HallDAO(DatabaseManager db, Logger logger) {
-        this.db = db;
+        this.db     = db;
         this.logger = logger;
     }
 
     // ── Insert / Upsert ───────────────────────────────────────
 
-    /**
-     * Inserts or replaces an access record for the given clan.
-     *
-     * @param clanId    The clan's UUID string
-     * @param expiresAt null = permanent, or a future Instant for DURATION mode
-     */
     public CompletableFuture<Boolean> insertAccess(String clanId, Instant expiresAt) {
         return db.supplyAsync(() -> {
-            String sql = """
-                INSERT INTO clan_hall_access (clan_id, purchased_at, expires_at, active)
-                VALUES (?, strftime('%Y-%m-%dT%H:%M:%SZ','now'), ?, 1)
-                ON CONFLICT(clan_id) DO UPDATE SET
-                    purchased_at = strftime('%Y-%m-%dT%H:%M:%SZ','now'),
-                    expires_at   = excluded.expires_at,
-                    active       = 1
-                """;
+            String sql = db.getDialect().upsertHallAccess();
             try (Connection conn = db.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, clanId);
@@ -65,9 +41,6 @@ public class HallDAO {
 
     // ── Revoke ────────────────────────────────────────────────
 
-    /**
-     * Marks a clan's hall access as inactive (revoked).
-     */
     public CompletableFuture<Boolean> revokeAccess(String clanId) {
         return db.supplyAsync(() -> {
             try (Connection conn = db.getConnection();
@@ -85,17 +58,15 @@ public class HallDAO {
 
     // ── Query ─────────────────────────────────────────────────
 
-    /**
-     * Returns true if the clan currently has valid (active + not expired) access.
-     */
     public CompletableFuture<Boolean> hasAccess(String clanId) {
         return db.supplyAsync(() -> {
+            String now = db.getDialect().nowExpression();
             String sql = """
                 SELECT 1 FROM clan_hall_access
                 WHERE clan_id=? AND active=1
-                  AND (expires_at IS NULL OR expires_at > strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+                  AND (expires_at IS NULL OR expires_at > %s)
                 LIMIT 1
-                """;
+                """.formatted(now);
             try (Connection conn = db.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, clanId);
@@ -109,9 +80,6 @@ public class HallDAO {
         });
     }
 
-    /**
-     * Loads a single access record, or null if not found.
-     */
     public CompletableFuture<HallAccess> findByClan(String clanId) {
         return db.supplyAsync(() -> {
             try (Connection conn = db.getConnection();
@@ -128,18 +96,15 @@ public class HallDAO {
         });
     }
 
-    /**
-     * Loads all currently active (and not expired) access records.
-     * Used during startup to populate the in-memory cache.
-     */
     public CompletableFuture<List<HallAccess>> loadAllActive() {
         return db.supplyAsync(() -> {
             List<HallAccess> list = new ArrayList<>();
+            String now = db.getDialect().nowExpression();
             String sql = """
                 SELECT * FROM clan_hall_access
                 WHERE active=1
-                  AND (expires_at IS NULL OR expires_at > strftime('%Y-%m-%dT%H:%M:%SZ','now'))
-                """;
+                  AND (expires_at IS NULL OR expires_at > %s)
+                """.formatted(now);
             try (Connection conn = db.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql);
                  ResultSet rs = ps.executeQuery()) {
@@ -151,24 +116,17 @@ public class HallDAO {
         });
     }
 
-    /**
-     * Marks all expired records as inactive.
-     * Run hourly via the ClanHallManager scheduler.
-     */
     public CompletableFuture<Void> cleanExpired() {
         return db.runAsync(() -> {
+            String now = db.getDialect().nowExpression();
             String sql = """
                 UPDATE clan_hall_access SET active=0
                 WHERE active=1 AND expires_at IS NOT NULL
-                  AND expires_at <= strftime('%Y-%m-%dT%H:%M:%SZ','now')
-                """;
+                  AND expires_at <= %s
+                """.formatted(now);
             try (Connection conn = db.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
-                int rows = ps.executeUpdate();
-                if (rows > 0) {
-                    // Logger is not directly accessible here in runAsync lambda,
-                    // but we log from the manager. Just silently complete.
-                }
+                ps.executeUpdate();
             } catch (SQLException e) {
                 logger.log(Level.WARNING, "[HallDAO] cleanExpired failed", e);
             }
@@ -179,10 +137,14 @@ public class HallDAO {
 
     private HallAccess mapRow(ResultSet rs) throws SQLException {
         String expiresStr = rs.getString("expires_at");
-        Instant expiresAt = (expiresStr != null) ? Instant.parse(expiresStr) : null;
+        Instant expiresAt = (expiresStr != null && !expiresStr.isEmpty())
+                ? Instant.parse(expiresStr) : null;
+        String purchasedStr = rs.getString("purchased_at");
+        Instant purchasedAt = (purchasedStr != null && !purchasedStr.isEmpty())
+                ? Instant.parse(purchasedStr) : Instant.now();
         return new HallAccess(
                 rs.getString("clan_id"),
-                Instant.parse(rs.getString("purchased_at")),
+                purchasedAt,
                 expiresAt,
                 rs.getInt("active") == 1
         );

@@ -19,16 +19,7 @@ import java.util.logging.Logger;
 
 /**
  * DAO for the clan_vault table.
- *
- * Items are serialized as Base64-encoded BukkitObjectOutputStream byte arrays.
- * This preserves all NBT data, custom names, enchantments, etc.
- *
- * Table DDL (added via DatabaseManager):
- * CREATE TABLE IF NOT EXISTS clan_vault (
- *     clan_id    VARCHAR(36) PRIMARY KEY,
- *     contents   TEXT        NOT NULL DEFAULT '',
- *     updated_at TIMESTAMP   NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
- * )
+ * Uses SqlDialect for upsert compatibility between SQLite and MySQL.
  */
 public class VaultDAO {
 
@@ -36,20 +27,12 @@ public class VaultDAO {
     private final Logger logger;
 
     public VaultDAO(DatabaseManager db, Logger logger) {
-        this.db = db;
+        this.db     = db;
         this.logger = logger;
     }
 
     // ── Load ──────────────────────────────────────────────────
 
-    /**
-     * Loads vault contents for a clan asynchronously.
-     * Returns an empty ItemStack array (size = slot count) if no data found.
-     *
-     * @param clanId The clan's UUID string
-     * @param slotCount The number of slots to allocate if no data exists
-     * @return CompletableFuture resolving to an ItemStack array
-     */
     public CompletableFuture<ItemStack[]> loadVault(String clanId, int slotCount) {
         return db.supplyAsync(() -> {
             String sql = "SELECT contents FROM clan_vault WHERE clan_id = ?";
@@ -65,8 +48,6 @@ public class VaultDAO {
                         ItemStack[] items = deserialize(encoded);
                         if (items == null) return new ItemStack[slotCount];
 
-                        // If stored array is smaller than current slot count
-                        // (clan levelled up) — pad with nulls so items are preserved
                         if (items.length < slotCount) {
                             ItemStack[] expanded = new ItemStack[slotCount];
                             System.arraycopy(items, 0, expanded, 0, items.length);
@@ -84,14 +65,6 @@ public class VaultDAO {
 
     // ── Save ──────────────────────────────────────────────────
 
-    /**
-     * Saves vault contents for a clan asynchronously.
-     * Uses UPSERT so it works for both new and existing vaults.
-     *
-     * @param clanId   The clan's UUID string
-     * @param contents The ItemStack array to persist
-     * @return CompletableFuture<Boolean> — true on success
-     */
     public CompletableFuture<Boolean> saveVault(String clanId, ItemStack[] contents) {
         return db.supplyAsync(() -> {
             String encoded = serialize(contents);
@@ -100,13 +73,8 @@ public class VaultDAO {
                 return false;
             }
 
-            String sql = """
-                    INSERT INTO clan_vault (clan_id, contents, updated_at)
-                    VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now'))
-                    ON CONFLICT(clan_id) DO UPDATE SET
-                        contents   = excluded.contents,
-                        updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
-                    """;
+            // Use dialect-aware upsert
+            String sql = db.getDialect().upsertVault();
             try (Connection conn = db.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, clanId);
@@ -122,19 +90,9 @@ public class VaultDAO {
 
     // ── Clear ─────────────────────────────────────────────────
 
-    /**
-     * Clears all items from a clan's vault.
-     * @return CompletableFuture<Boolean> — true on success
-     */
     public CompletableFuture<Boolean> clearVault(String clanId) {
         return db.supplyAsync(() -> {
-            String sql = """
-                    INSERT INTO clan_vault (clan_id, contents, updated_at)
-                    VALUES (?, '', strftime('%Y-%m-%dT%H:%M:%SZ','now'))
-                    ON CONFLICT(clan_id) DO UPDATE SET
-                        contents   = '',
-                        updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
-                    """;
+            String sql = db.getDialect().upsertVaultClear();
             try (Connection conn = db.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, clanId);
@@ -149,11 +107,6 @@ public class VaultDAO {
 
     // ── Serialization helpers ─────────────────────────────────
 
-    /**
-     * Serializes an ItemStack array to a Base64 string.
-     * Uses BukkitObjectOutputStream to preserve full NBT data.
-     * Returns null on failure.
-     */
     public static String serialize(ItemStack[] items) {
         if (items == null) return "";
         try {
@@ -172,10 +125,6 @@ public class VaultDAO {
         }
     }
 
-    /**
-     * Deserializes a Base64 string back to an ItemStack array.
-     * Returns null on failure.
-     */
     public static ItemStack[] deserialize(String encoded) {
         if (encoded == null || encoded.isBlank()) return null;
         try {

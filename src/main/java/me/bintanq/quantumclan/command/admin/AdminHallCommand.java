@@ -12,18 +12,8 @@ import java.util.Arrays;
 /**
  * Handles /qclanadmin hall <subcommand>
  *
- * Subcommands:
- *   setregion               → two-step corner selection
- *   setschematic <file>     → select schematic file
- *   paste                   → paste schematic at defined origin
- *   addnpc <type> [name]    → spawn NPC at player location + save to config
- *   removenpc <type>        → remove NPC point
- *   listnpc                 → list all NPC points
- *   setcost <amount>        → update purchase cost
- *   grant <clan>            → grant permanent access
- *   revoke <clan>           → revoke access
- *   info                    → show hall status
- *   reload                  → reload halls.yml
+ * BUG FIX 7: All help text now comes from messages.yml instead of being
+ *            hardcoded with arbitrary colors and symbols.
  */
 public class AdminHallCommand {
 
@@ -59,18 +49,15 @@ public class AdminHallCommand {
 
     private void handleSetRegion(Player player) {
         if (!plugin.getClanHallManager().hasPendingCorner1(player.getUniqueId())) {
-            // First call: set corner 1
             plugin.getClanHallManager().setPendingCorner1(player.getUniqueId(), player.getLocation());
             plugin.sendMessage(player, "hall.admin.setregion-corner1",
                     "{x}", String.valueOf(player.getLocation().getBlockX()),
                     "{y}", String.valueOf(player.getLocation().getBlockY()),
                     "{z}", String.valueOf(player.getLocation().getBlockZ()));
         } else {
-            // Second call: set corner 2
             Location corner1 = plugin.getClanHallManager().consumePendingCorner1(player.getUniqueId());
             Location corner2 = player.getLocation();
 
-            // Ensure min/max ordering
             double minX = Math.min(corner1.getBlockX(), corner2.getBlockX());
             double minY = Math.min(corner1.getBlockY(), corner2.getBlockY());
             double minZ = Math.min(corner1.getBlockZ(), corner2.getBlockZ());
@@ -84,6 +71,27 @@ public class AdminHallCommand {
             plugin.getHallConfigManager().setRegionCorner1(min);
             plugin.getHallConfigManager().setRegionCorner2(max);
 
+            if (plugin.getHookManager().isWorldGuardEnabled()) {
+                try {
+                    com.sk89q.worldguard.WorldGuard wg = com.sk89q.worldguard.WorldGuard.getInstance();
+                    com.sk89q.worldguard.protection.managers.RegionManager rm =
+                            wg.getPlatform().getRegionContainer().get(
+                                    com.sk89q.worldedit.bukkit.BukkitAdapter.adapt(min.getWorld()));
+                    if (rm != null) {
+                        String regionName = plugin.getHallConfigManager().getWorldGuardRegionName();
+                        com.sk89q.worldedit.math.BlockVector3 bv1 = com.sk89q.worldedit.math.BlockVector3.at(min.getX(), min.getY(), min.getZ());
+                        com.sk89q.worldedit.math.BlockVector3 bv2 = com.sk89q.worldedit.math.BlockVector3.at(max.getX(), max.getY(), max.getZ());
+                        com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion region =
+                                new com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion(regionName, bv1, bv2);
+                        rm.addRegion(region);
+                        rm.saveChanges();
+                        plugin.sendMessage(player, "hall.admin.worldguard-region-created", "{region}", regionName);
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().warning("[ClanHall] Failed to auto-create WorldGuard region: " + e.getMessage());
+                }
+            }
+
             plugin.sendMessage(player, "hall.admin.setregion-done",
                     "{x1}", String.valueOf((int)minX), "{y1}", String.valueOf((int)minY), "{z1}", String.valueOf((int)minZ),
                     "{x2}", String.valueOf((int)maxX), "{y2}", String.valueOf((int)maxY), "{z2}", String.valueOf((int)maxZ));
@@ -94,7 +102,7 @@ public class AdminHallCommand {
 
     private void handleSetSchematic(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin hall setschematic <filename>");
+            plugin.sendMessage(player, "hall.admin.usage-setschematic");
             return;
         }
         String filename = args[0];
@@ -133,11 +141,7 @@ public class AdminHallCommand {
 
         plugin.sendMessage(player, "hall.admin.paste-started", "{file}", filename);
 
-        // Auto-select provider based on file extension
-        String ext = filename.contains(".") ? filename.substring(filename.lastIndexOf('.') + 1) : "";
-        var provider = plugin.getSchematicProvider();
-
-        provider.paste(schematicFile, origin, false).thenAccept(ok ->
+        plugin.getSchematicProvider().paste(schematicFile, origin, false).thenAccept(ok ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (ok) plugin.sendMessage(player, "hall.admin.paste-success");
                     else    plugin.sendMessage(player, "hall.admin.paste-failed");
@@ -148,13 +152,11 @@ public class AdminHallCommand {
 
     private void handleAddNpc(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin hall addnpc <TYPE> [name]");
-            plugin.sendRaw(player, "<gray>Types: CLAN_SHOP, CONTRIBUTION_SHOP, COINS_SHOP, WAR_REGISTER, CLAN_INFO, UPGRADE, HALL_INFO");
+            plugin.sendMessage(player, "hall.admin.usage-addnpc");
             return;
         }
         String type = args[0].toUpperCase();
         String name = args.length > 1 ? String.join(" ", Arrays.copyOfRange(args, 1, args.length)) : type + " NPC";
-
         plugin.getHallNPCManager().addNpcPoint(player, type, name);
     }
 
@@ -162,7 +164,7 @@ public class AdminHallCommand {
 
     private void handleRemoveNpc(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin hall removenpc <type>");
+            plugin.sendMessage(player, "hall.admin.usage-removenpc");
             return;
         }
         plugin.getHallNPCManager().removeNpcPoint(player, args[0]);
@@ -178,10 +180,11 @@ public class AdminHallCommand {
         }
         plugin.sendMessage(player, "hall.admin.npc-list-header");
         for (var npc : npcs) {
-            plugin.sendRaw(player, "<gray> - <white>" + npc.key
-                    + "<dark_gray>: <aqua>" + npc.type
-                    + " <dark_gray>@ <gray>" + npc.world
-                    + " " + String.format("%.0f,%.0f,%.0f", npc.x, npc.y, npc.z));
+            plugin.sendRaw(player,
+                    "<gray> - <white>" + npc.key
+                            + "<dark_gray>: <aqua>" + npc.type
+                            + " <dark_gray>@ <gray>" + npc.world
+                            + " " + String.format("%.0f,%.0f,%.0f", npc.x, npc.y, npc.z));
         }
     }
 
@@ -189,7 +192,7 @@ public class AdminHallCommand {
 
     private void handleSetCost(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin hall setcost <amount>");
+            plugin.sendMessage(player, "hall.admin.usage-setcost");
             return;
         }
         try {
@@ -207,7 +210,7 @@ public class AdminHallCommand {
 
     private void handleGrant(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin hall grant <clan>");
+            plugin.sendMessage(player, "hall.admin.usage-grant");
             return;
         }
         String clanQuery = String.join(" ", args);
@@ -227,7 +230,7 @@ public class AdminHallCommand {
 
     private void handleRevoke(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin hall revoke <clan>");
+            plugin.sendMessage(player, "hall.admin.usage-revoke");
             return;
         }
         String clanQuery = String.join(" ", args);
@@ -247,22 +250,22 @@ public class AdminHallCommand {
 
     private void handleInfo(Player player) {
         var cfg = plugin.getHallConfigManager();
-        plugin.sendRaw(player, "<dark_gray>━━━ <gold>Clan Hall Info <dark_gray>━━━");
-        plugin.sendRaw(player, "<gray>Enabled: <white>" + cfg.isEnabled());
-        plugin.sendRaw(player, "<gray>Cost: <white>" + plugin.getEconomyProvider().format(cfg.getPurchaseCost()));
-        plugin.sendRaw(player, "<gray>Mode: <white>" + (cfg.isPermanentMode() ? "PERMANENT" : "DURATION (" + cfg.getDurationDays() + " days)"));
-        plugin.sendRaw(player, "<gray>Region: <white>" + cfg.getRegionWorld()
-                + " [" + (int)cfg.getRegionMinX() + "," + (int)cfg.getRegionMinY() + "," + (int)cfg.getRegionMinZ()
-                + "] → [" + (int)cfg.getRegionMaxX() + "," + (int)cfg.getRegionMaxY() + "," + (int)cfg.getRegionMaxZ() + "]");
-        plugin.sendRaw(player, "<gray>Schematic: <white>" + cfg.getSchematicFile());
-        plugin.sendRaw(player, "<gray>Clans with access: <white>" + plugin.getClanHallManager().getAccessClanIds().size());
-        plugin.sendRaw(player, "<gray>Players inside: <white>" + plugin.getClanHallManager().getPlayersInsideHall().size());
-        plugin.sendRaw(player, "<gray>NPC Points: <white>" + plugin.getHallNPCManager().listNpcPoints().size());
-        plugin.sendRaw(player, "<gray>Discounts: <white>" + cfg.isDiscountsEnabled()
-                + " (shop=" + cfg.getDiscountPercent("clan-shop") + "%, contrib="
-                + cfg.getDiscountPercent("contribution-shop") + "%, coins="
-                + cfg.getDiscountPercent("coins-shop") + "%, upgrade="
-                + cfg.getDiscountPercent("upgrade") + "%)");
+        plugin.sendMessage(player, "hall.admin.info-header");
+        plugin.sendMessage(player, "hall.admin.info-enabled",    "{value}", String.valueOf(cfg.isEnabled()));
+        plugin.sendMessage(player, "hall.admin.info-cost",       "{value}", plugin.getEconomyProvider().format(cfg.getPurchaseCost()));
+        plugin.sendMessage(player, "hall.admin.info-mode",       "{value}", cfg.isPermanentMode() ? "PERMANENT" : "DURATION (" + cfg.getDurationDays() + " days)");
+        plugin.sendMessage(player, "hall.admin.info-region",
+                "{world}", cfg.getRegionWorld(),
+                "{x1}", String.valueOf((int)cfg.getRegionMinX()),
+                "{y1}", String.valueOf((int)cfg.getRegionMinY()),
+                "{z1}", String.valueOf((int)cfg.getRegionMinZ()),
+                "{x2}", String.valueOf((int)cfg.getRegionMaxX()),
+                "{y2}", String.valueOf((int)cfg.getRegionMaxY()),
+                "{z2}", String.valueOf((int)cfg.getRegionMaxZ()));
+        plugin.sendMessage(player, "hall.admin.info-schematic",  "{value}", cfg.getSchematicFile());
+        plugin.sendMessage(player, "hall.admin.info-clans",      "{value}", String.valueOf(plugin.getClanHallManager().getAccessClanIds().size()));
+        plugin.sendMessage(player, "hall.admin.info-players",    "{value}", String.valueOf(plugin.getClanHallManager().getPlayersInsideHall().size()));
+        plugin.sendMessage(player, "hall.admin.info-npcs",       "{value}", String.valueOf(plugin.getHallNPCManager().listNpcPoints().size()));
     }
 
     // ── reload ────────────────────────────────────────────────
@@ -272,20 +275,20 @@ public class AdminHallCommand {
         plugin.sendMessage(player, "hall.admin.reload-success");
     }
 
-    // ── Help ──────────────────────────────────────────────────
+    // ── Help (BUG FIX 7) ──────────────────────────────────────
 
     private void sendHelp(Player player) {
-        plugin.sendRaw(player, "<dark_gray>━━ <gold>/qclanadmin hall <dark_gray>━━");
-        plugin.sendRaw(player, "<gold>setregion <dark_gray>- <gray>Set hall region (2-step)");
-        plugin.sendRaw(player, "<gold>setschematic <file> <dark_gray>- <gray>Select schematic");
-        plugin.sendRaw(player, "<gold>paste <dark_gray>- <gray>Paste schematic at origin");
-        plugin.sendRaw(player, "<gold>addnpc <type> [name] <dark_gray>- <gray>Add NPC at your location");
-        plugin.sendRaw(player, "<gold>removenpc <type> <dark_gray>- <gray>Remove NPC point");
-        plugin.sendRaw(player, "<gold>listnpc <dark_gray>- <gray>List all NPC points");
-        plugin.sendRaw(player, "<gold>setcost <amount> <dark_gray>- <gray>Set purchase cost");
-        plugin.sendRaw(player, "<gold>grant <clan> <dark_gray>- <gray>Grant hall access");
-        plugin.sendRaw(player, "<gold>revoke <clan> <dark_gray>- <gray>Revoke hall access");
-        plugin.sendRaw(player, "<gold>info <dark_gray>- <gray>Show hall status");
-        plugin.sendRaw(player, "<gold>reload <dark_gray>- <gray>Reload halls.yml");
+        plugin.sendMessage(player, "hall.admin.help-header");
+        plugin.sendMessage(player, "hall.admin.help-setregion");
+        plugin.sendMessage(player, "hall.admin.help-setschematic");
+        plugin.sendMessage(player, "hall.admin.help-paste");
+        plugin.sendMessage(player, "hall.admin.help-addnpc");
+        plugin.sendMessage(player, "hall.admin.help-removenpc");
+        plugin.sendMessage(player, "hall.admin.help-listnpc");
+        plugin.sendMessage(player, "hall.admin.help-setcost");
+        plugin.sendMessage(player, "hall.admin.help-grant");
+        plugin.sendMessage(player, "hall.admin.help-revoke");
+        plugin.sendMessage(player, "hall.admin.help-info");
+        plugin.sendMessage(player, "hall.admin.help-reload");
     }
 }

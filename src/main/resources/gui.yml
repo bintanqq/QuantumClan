@@ -101,6 +101,16 @@ main-menu:
         - "<gray>Only available to the Leader."
         - ""
         - "<white>» Left click to disband"
+    clan-vault:
+      slot: 24
+      material: CHEST
+      name: "<gold>Clan Vault"
+      lore:
+        - "<gray>Access your clan's shared"
+        - "<gray>item storage."
+        - ""
+        - "<white>» Left click to open"
+
 
 # ── Clan Info GUI ─────────────────────────────────────────────
 clan-info:
