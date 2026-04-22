@@ -5,7 +5,7 @@ import me.bintanq.quantumclan.gui.DisbandConfirmGUI;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.entity.Player;
 
-public class DisbandCommand {
+public class DisbandCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -14,16 +14,10 @@ public class DisbandCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.disband")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.clan.disband")) return;
 
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
 
         if (!clan.getLeaderUuid().equals(player.getUniqueId())) {
             plugin.sendMessage(player, "gui.disband-leader-only");

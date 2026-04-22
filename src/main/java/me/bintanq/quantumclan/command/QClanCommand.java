@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -23,58 +25,39 @@ import java.util.stream.Collectors;
 public class QClanCommand implements CommandExecutor, TabCompleter {
 
     private final QuantumClan plugin;
-
-    private final CreateCommand       create;
-    private final InviteCommand       invite;
-    private final KickCommand         kick;
-    private final LeaveCommand        leave;
-    private final InfoCommand         info;
-    private final HomeCommand         home;
-    private final SetHomeCommand      sethome;
-    private final DelHomeCommand      delhome;
-    private final DepositCommand      deposit;
-    private final ShopCommand         shop;
-    private final BountyCommand       bounty;
-    private final WarCommand          war;
-    private final UpgradeCommand      upgrade;
-    private final TopCommand          top;
-    private final RoleCommand         role;
-    private final TransferCommand     transfer;
-    private final DisbandCommand      disband;
-    private final AnnounceCommand     announce;
-    private final ContributionCommand contribution;
-    private final AcceptCommand       accept;
-    private final DeclineCommand      decline;
-    private final CoinsCommand        coins;
-    private final HallCommand         hall;       // NEW
-    private final VaultCommand        vault;
+    private final Map<String, SubCommand> subCommands = new HashMap<>();
 
     public QClanCommand(QuantumClan plugin) {
-        this.plugin       = plugin;
-        create       = new CreateCommand(plugin);
-        invite       = new InviteCommand(plugin);
-        kick         = new KickCommand(plugin);
-        leave        = new LeaveCommand(plugin);
-        info         = new InfoCommand(plugin);
-        home         = new HomeCommand(plugin);
-        sethome      = new SetHomeCommand(plugin);
-        delhome      = new DelHomeCommand(plugin);
-        deposit      = new DepositCommand(plugin);
-        shop         = new ShopCommand(plugin);
-        bounty       = new BountyCommand(plugin);
-        war          = new WarCommand(plugin);
-        upgrade      = new UpgradeCommand(plugin);
-        top          = new TopCommand(plugin);
-        role         = new RoleCommand(plugin);
-        transfer     = new TransferCommand(plugin);
-        disband      = new DisbandCommand(plugin);
-        announce     = new AnnounceCommand(plugin);
-        contribution = new ContributionCommand(plugin);
-        accept       = new AcceptCommand(plugin);
-        decline      = new DeclineCommand(plugin);
-        coins        = new CoinsCommand(plugin);
-        hall         = new HallCommand(plugin);    // NEW
-        vault = new VaultCommand(plugin);
+        this.plugin = plugin;
+        register("create",       new CreateCommand(plugin));
+        register("invite",       new InviteCommand(plugin));
+        register("kick",         new KickCommand(plugin));
+        register("leave",        new LeaveCommand(plugin));
+        register("info",         new InfoCommand(plugin));
+        register("home",         new HomeCommand(plugin));
+        register("sethome",      new SetHomeCommand(plugin));
+        register("delhome",      new DelHomeCommand(plugin));
+        register("deposit",      new DepositCommand(plugin));
+        register("shop",         new ShopCommand(plugin));
+        register("bounty",       new BountyCommand(plugin));
+        register("war",          new WarCommand(plugin));
+        register("upgrade",      new UpgradeCommand(plugin));
+        register("top",          new TopCommand(plugin));
+        register("role",         new RoleCommand(plugin));
+        register("transfer",     new TransferCommand(plugin));
+        register("disband",      new DisbandCommand(plugin));
+        register("announce",     new AnnounceCommand(plugin));
+        register("contribution", new ContributionCommand(plugin));
+        register("contrib",      new ContributionCommand(plugin)); // Alias
+        register("accept",       new AcceptCommand(plugin));
+        register("decline",      new DeclineCommand(plugin));
+        register("coins",        new CoinsCommand(plugin));
+        register("hall",         new HallCommand(plugin));
+        register("vault",        new VaultCommand(plugin));
+    }
+
+    private void register(String name, SubCommand cmd) {
+        subCommands.put(name.toLowerCase(), cmd);
     }
 
     @Override
@@ -96,38 +79,24 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String sub = args[0].toLowerCase();
-        String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+        String subName = args[0].toLowerCase();
 
-        switch (sub) {
-            case "help"         -> sendHelp(player);
-            case "create"       -> create.execute(player, subArgs);
-            case "invite"       -> invite.execute(player, subArgs);
-            case "accept"       -> accept.execute(player, subArgs);
-            case "decline"      -> decline.execute(player, subArgs);
-            case "kick"         -> kick.execute(player, subArgs);
-            case "leave"        -> leave.execute(player, subArgs);
-            case "info"         -> info.execute(player, subArgs);
-            case "home"         -> home.execute(player, subArgs);
-            case "sethome"      -> sethome.execute(player, subArgs);
-            case "delhome"      -> delhome.execute(player, subArgs);
-            case "deposit"      -> deposit.execute(player, subArgs);
-            case "shop"         -> shop.execute(player, subArgs);
-            case "bounty"       -> bounty.execute(player, subArgs);
-            case "war"          -> war.execute(player, subArgs);
-            case "upgrade"      -> upgrade.execute(player, subArgs);
-            case "top"          -> top.execute(player, subArgs);
-            case "role"         -> role.execute(player, subArgs);
-            case "transfer"     -> transfer.execute(player, subArgs);
-            case "disband"      -> disband.execute(player, subArgs);
-            case "announce"     -> announce.execute(player, subArgs);
-            case "contribution",
-                 "contrib"      -> contribution.execute(player, subArgs);
-            case "coins"        -> coins.execute(player, subArgs);
-            case "hall"         -> hall.execute(player, subArgs);    // NEW
-            case "menu"         -> MainMenuGUI.open(plugin, player);
-            case "vault" -> vault.execute(player, subArgs);
-            default             -> plugin.sendMessage(player, "error.unknown-subcommand");
+        if (subName.equals("help")) {
+            sendHelp(player);
+            return true;
+        }
+        
+        if (subName.equals("menu")) {
+            MainMenuGUI.open(plugin, player);
+            return true;
+        }
+
+        SubCommand cmd = subCommands.get(subName);
+        if (cmd != null) {
+            String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+            cmd.execute(player, subArgs);
+        } else {
+            plugin.sendMessage(player, "error.unknown-subcommand");
         }
 
         return true;

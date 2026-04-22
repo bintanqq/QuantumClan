@@ -24,18 +24,14 @@ import java.util.stream.Collectors;
  * If disband.refund-treasury is true in config, refunds the clan treasury to the leader.
  * If disband.refund-creation-cost is true, also refunds the creation cost.
  */
-public class DisbandConfirmGUI implements InventoryHolder {
+public class DisbandConfirmGUI extends AbstractClanGUI {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Clan clan;
-    private Inventory inventory;
 
     public DisbandConfirmGUI(QuantumClan plugin, Clan clan) {
-        this.plugin = plugin;
-        this.mm     = plugin.getMiniMessage();
+        super(plugin);
         this.clan   = clan;
     }
 
@@ -143,22 +139,4 @@ public class DisbandConfirmGUI implements InventoryHolder {
         player.openInventory(gui.build());
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) {
-            List<Component> noItalic = lore.stream()
-                    .map(c -> Component.empty().append(c)
-                            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))
-                    .collect(Collectors.toList());
-            meta.lore(noItalic);
-        }
-        item.setItemMeta(meta);
-        return item;
-    }
 }

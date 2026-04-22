@@ -71,8 +71,10 @@ public class SpyScrollManager {
             observer.setCompassTarget(target.getLocation());
         }
 
-        observer.sendActionBar(mm.deserialize("<dark_aqua>🔍 Melacak: <yellow>" + target.getName()
-                + " <gray>| Durasi: <yellow>" + durationSec / 60 + " menit"));
+        String trackingMsg = plugin.getMessagesManager().get("spy-scroll.tracking",
+                "{player}", target.getName(),
+                "{duration}", String.valueOf(durationSec / 60));
+        observer.sendActionBar(mm.deserialize(trackingMsg));
 
         plugin.getLogger().info("[SpyScroll] " + observer.getName() + " tracking " + target.getName());
     }
@@ -135,7 +137,8 @@ public class SpyScrollManager {
                 }
                 Player observer = Bukkit.getPlayer(observerUuid);
                 if (observer != null) {
-                    observer.sendActionBar(mm.deserialize("<gray>Spy Scroll habis."));
+                    String expiredMsg = plugin.getMessagesManager().get("spy-scroll.expired");
+                    observer.sendActionBar(mm.deserialize(expiredMsg));
                 }
                 return true; // remove
             }
@@ -149,24 +152,26 @@ public class SpyScrollManager {
             }
 
             if (target == null || !target.isOnline()) {
-                observer.sendActionBar(mm.deserialize("<gray>Target <yellow>" +
-                        Bukkit.getOfflinePlayer(session.targetUuid).getName() + " <gray>offline."));
+                String offlineMsg = plugin.getMessagesManager().get("spy-scroll.target-offline",
+                        "{player}", Bukkit.getOfflinePlayer(session.targetUuid).getName() != null
+                                ? Bukkit.getOfflinePlayer(session.targetUuid).getName()
+                                : session.targetUuid.toString().substring(0, 8));
+                observer.sendActionBar(mm.deserialize(offlineMsg));
                 return false; // keep session — target may come back
             }
 
             // Update compass
             observer.setCompassTarget(target.getLocation());
 
-            // Update actionbar
             long remainingSec = (session.expiryMillis - now) / 1000L;
-            String world = target.getWorld().getName();
-            observer.sendActionBar(mm.deserialize(
-                    "<dark_aqua>🔍 <yellow>" + target.getName()
-                            + " <gray>| " + world
-                            + " <dark_gray>(" + (int)target.getLocation().getX()
-                            + ", " + (int)target.getLocation().getY()
-                            + ", " + (int)target.getLocation().getZ() + ")"
-                            + " <gray>| <yellow>" + remainingSec + "s"));
+            String actionbarMsg = plugin.getMessagesManager().get("spy-scroll.actionbar",
+                    "{player}", target.getName(),
+                    "{world}",  target.getWorld().getName(),
+                    "{x}",      String.valueOf((int) target.getLocation().getX()),
+                    "{y}",      String.valueOf((int) target.getLocation().getY()),
+                    "{z}",      String.valueOf((int) target.getLocation().getZ()),
+                    "{time}",   String.valueOf(remainingSec));
+            observer.sendActionBar(mm.deserialize(actionbarMsg));
 
             return false;
         });

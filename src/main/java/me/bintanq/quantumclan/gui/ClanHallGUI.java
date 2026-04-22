@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * All text sourced from messages.yml — zero hardcoded strings.
  */
-public class ClanHallGUI implements InventoryHolder {
+public class ClanHallGUI extends AbstractClanGUI {
 
     private static final int SIZE          = 27;
     private static final int SLOT_INFO     = 11;
@@ -41,14 +41,10 @@ public class ClanHallGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Player viewer;
-    private Inventory inventory;
 
     public ClanHallGUI(QuantumClan plugin, Player viewer) {
-        this.plugin = plugin;
-        this.mm     = plugin.getMiniMessage();
+        super(plugin);
         this.viewer = viewer;
     }
 
@@ -187,16 +183,4 @@ public class ClanHallGUI implements InventoryHolder {
         player.openInventory(new ClanHallGUI(plugin, player).build());
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

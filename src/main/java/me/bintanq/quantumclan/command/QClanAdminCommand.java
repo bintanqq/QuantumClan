@@ -2,6 +2,7 @@ package me.bintanq.quantumclan.command;
 
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.command.admin.*;
+import me.bintanq.quantumclan.command.sub.SubCommand;
 import me.bintanq.quantumclan.command.sub.VaultCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -13,7 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -23,30 +26,21 @@ import java.util.stream.Collectors;
 public class QClanAdminCommand implements CommandExecutor, TabCompleter {
 
     private final QuantumClan plugin;
-
-    private final AdminReloadCommand   reload;
-    private final AdminCoinsCommand    coins;
-    private final AdminClanCommand     clan;
-    private final AdminWarCommand      war;
-    private final AdminSetArenaCommand setArena;
-    private final AdminVaultCommand    vault;
-    private AdminHallCommand           hall;
+    private final Map<String, SubCommand> subCommands = new HashMap<>();
 
     public QClanAdminCommand(QuantumClan plugin) {
-        this.plugin  = plugin;
-        reload   = new AdminReloadCommand(plugin);
-        coins    = new AdminCoinsCommand(plugin);
-        clan     = new AdminClanCommand(plugin);
-        war      = new AdminWarCommand(plugin);
-        setArena = new AdminSetArenaCommand(plugin);
-        vault    = new AdminVaultCommand(plugin);
+        this.plugin = plugin;
+        register("reload",   new AdminReloadCommand(plugin));
+        register("coins",    new AdminCoinsCommand(plugin));
+        register("setarena", new AdminSetArenaCommand(plugin));
+        register("war",      new AdminWarCommand(plugin));
+        register("clan",     new AdminClanCommand(plugin));
+        register("hall",     new AdminHallCommand(plugin));
+        register("vault",    new AdminVaultCommand(plugin));
     }
 
-    private AdminHallCommand getHallCommand() {
-        if (hall == null) {
-            hall = new AdminHallCommand(plugin);
-        }
-        return hall;
+    private void register(String name, SubCommand cmd) {
+        subCommands.put(name.toLowerCase(), cmd);
     }
 
     @Override
@@ -67,25 +61,32 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String sub     = args[0].toLowerCase();
-        String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+        String subName = args[0].toLowerCase();
 
-        switch (sub) {
-            case "help"     -> sendAdminHelp(player);
-            case "reload"   -> reload.execute(player, subArgs);
-            case "give"     -> {
-                if (subArgs.length > 0 && subArgs[0].equalsIgnoreCase("coins")) {
-                    coins.execute(player, Arrays.copyOfRange(subArgs, 1, subArgs.length));
-                } else {
-                    plugin.sendMessage(player, "admin.help-give-usage");
+        if (subName.equals("help")) {
+            sendAdminHelp(player);
+            return true;
+        }
+
+        if (subName.equals("give")) {
+            String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+            if (subArgs.length > 0 && subArgs[0].equalsIgnoreCase("coins")) {
+                SubCommand coinsCmd = subCommands.get("coins");
+                if (coinsCmd != null) {
+                    coinsCmd.execute(player, Arrays.copyOfRange(subArgs, 1, subArgs.length));
                 }
+            } else {
+                plugin.sendMessage(player, "admin.help-give-usage");
             }
-            case "setarena" -> setArena.execute(player, subArgs);
-            case "war"      -> war.execute(player, subArgs);
-            case "clan"     -> clan.execute(player, subArgs);
-            case "hall"     -> getHallCommand().execute(player, subArgs);
-            case "vault"    -> vault.execute(player, subArgs);
-            default         -> sendAdminHelp(player);
+            return true;
+        }
+
+        SubCommand cmd = subCommands.get(subName);
+        if (cmd != null) {
+            String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+            cmd.execute(player, subArgs);
+        } else {
+            sendAdminHelp(player);
         }
         return true;
     }

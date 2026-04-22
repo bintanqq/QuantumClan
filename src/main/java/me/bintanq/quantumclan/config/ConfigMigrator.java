@@ -129,32 +129,6 @@ public class ConfigMigrator {
                 plugin.getLogger().info("[ConfigMigrator] v1: baseline, no changes needed.");
             }
 
-            // ── TEMPLATE for future migrations ───────────────
-            // case 2 -> {
-            //     // Example: rename a key in config.yml
-            //     renameKey(configFile, "old-key-name", "new-key-name");
-            //
-            //     // Example: remove a key that no longer exists
-            //     removeKey(configFile, "deprecated-key");
-            //
-            //     // Example: set a new key with a default value
-            //     //          (syncMissingKeys already handles this,
-            //     //           but useful if you need a specific value
-            //     //           based on existing data)
-            //     setKeyIfAbsent(configFile, "new-feature.enabled", true);
-            //
-            //     // Example: rename a key in messages.yml
-            //     File msgFile = new File(plugin.getDataFolder(), "messages.yml");
-            //     renameKey(msgFile, "contribution.old-key", "contribution.new-key");
-            // }
-            //
-            // case 3 -> {
-            //     // Restructure: move key from one section to another
-            //     File shopFile = new File(plugin.getDataFolder(), "shop.yml");
-            //     copyKeyValue(shopFile, "old.section.key", "new.section.key");
-            //     removeKey(shopFile, "old.section.key");
-            // }
-
             default -> plugin.getLogger().warning(
                     "[ConfigMigrator] No migration defined for version " + targetVersion);
         }

@@ -22,11 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ClanTopGUI — leaderboard of top clans by reputation.
- *
- * BUG FIX #2: All text from messages.yml.
- * BUG FIX #7: Back button when opened from main menu.
  */
-public class ClanTopGUI implements InventoryHolder {
+public class ClanTopGUI extends AbstractClanGUI {
 
     private static final int SIZE = 54;
     private static final int[] ENTRY_SLOTS = {
@@ -37,16 +34,12 @@ public class ClanTopGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final int page;
     private final List<Clan> leaderboard;
     private final GUINavigation backAction;
-    private Inventory inventory;
 
     public ClanTopGUI(QuantumClan plugin, int page, GUINavigation backAction) {
-        this.plugin      = plugin;
-        this.mm          = plugin.getMiniMessage();
+        super(plugin);
         this.page        = Math.max(0, page);
         this.leaderboard = new ArrayList<>(plugin.getClanManager().getLeaderboard());
         this.backAction  = backAction;
@@ -196,15 +189,4 @@ public class ClanTopGUI implements InventoryHolder {
         return false;
     }
 
-    @Override public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material m, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(m);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

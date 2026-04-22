@@ -23,15 +23,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Upgrade GUI — shows current level stats and next level upgrade info.
  *
- * BUG FIX #1: After upgrade, the success message used latest.getLevel() + 1
- * which was wrong because upgradeClan() already mutates the level in memory.
- * Now we capture newLevel = currentLevel + 1 before the async call and use that.
- *
  * ADDITION: backAction field + openFromMenu() static method.
  * When backAction is non-null, closing the GUI calls backAction.run() instead
  * of player.closeInventory() — useful for returning to a parent menu.
  */
-public class UpgradeGUI implements InventoryHolder {
+public class UpgradeGUI extends AbstractClanGUI {
 
     private static final int SIZE         = 27;
     private static final int SLOT_CURRENT = 11;
@@ -41,18 +37,14 @@ public class UpgradeGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage  mm;
     private final Clan         clan;
-    private final Runnable     backAction; // null = just close inventory
-    private Inventory          inventory;
+    private final GUINavigation backAction; // null = just close inventory
 
     // ── Constructors ────────────────────────────────────────────────────────
 
     /** Full constructor with backAction support. */
-    public UpgradeGUI(QuantumClan plugin, Clan clan, Runnable backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+    public UpgradeGUI(QuantumClan plugin, Clan clan, GUINavigation backAction) {
+        super(plugin);
         this.clan       = clan;
         this.backAction = backAction;
     }
@@ -147,7 +139,7 @@ public class UpgradeGUI implements InventoryHolder {
             if (slot == SLOT_CLOSE) {
                 // If a backAction is registered, delegate to it (e.g. reopen parent menu).
                 // Otherwise just close the inventory normally.
-                if (backAction != null) backAction.run();
+                if (backAction != null) backAction.navigate();
                 else player.closeInventory();
                 return;
             }
@@ -161,7 +153,7 @@ public class UpgradeGUI implements InventoryHolder {
                 plugin.sendMessage(player, "clan.upgrade-max"); return;
             }
 
-            // BUG FIX #1: Capture the intended new level BEFORE the async call.
+            // Capture the intended new level BEFORE the async call.
             // upgradeClan() mutates latest.level in memory, so after the call
             // latest.getLevel() is already the new level. Capturing newLevel here
             // gives us the correct value to display in the success message.
@@ -172,7 +164,7 @@ public class UpgradeGUI implements InventoryHolder {
                     .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () -> {
                         if (ok) {
                             plugin.sendMessage(player, "clan.upgrade-success",
-                                    "{value}", String.valueOf(newLevel));
+                                     "{value}", String.valueOf(newLevel));
                         } else {
                             long cost    = plugin.getConfigManager().getLevelCost(newLevel);
                             long deficit = cost - latest.getMoney();
@@ -205,24 +197,8 @@ public class UpgradeGUI implements InventoryHolder {
      *         () -> ClanMainGUI.open(plugin, player, clan));
      * }</pre>
      */
-    public static void openFromMenu(QuantumClan plugin, Player player, Clan clan, Runnable backAction) {
+    public static void openFromMenu(QuantumClan plugin, Player player, Clan clan, GUINavigation backAction) {
         player.openInventory(new UpgradeGUI(plugin, clan, backAction).build());
     }
 
-    // ── InventoryHolder ──────────────────────────────────────────────────────
-
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    private ItemStack makeItem(Material m, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(m);
-        ItemMeta  meta = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

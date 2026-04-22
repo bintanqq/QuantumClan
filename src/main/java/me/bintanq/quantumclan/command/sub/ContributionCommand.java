@@ -4,7 +4,7 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.gui.ContributionShopGUI;
 import org.bukkit.entity.Player;
 
-public class ContributionCommand {
+public class ContributionCommand implements SubCommand {
     private final QuantumClan plugin;
     public ContributionCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {

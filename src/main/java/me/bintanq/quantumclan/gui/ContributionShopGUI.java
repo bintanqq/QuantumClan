@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Contribution Shop GUI — Bug 7: back button support.
  */
-public class ContributionShopGUI implements InventoryHolder {
+public class ContributionShopGUI extends AbstractClanGUI {
 
     private static final int SIZE = 54;
     private static final int[] ITEM_SLOTS = {
@@ -35,17 +35,13 @@ public class ContributionShopGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Player viewer;
     private final int page;
     private final List<ContribItem> items;
     private final GUINavigation backAction;
-    private Inventory inventory;
 
     public ContributionShopGUI(QuantumClan plugin, Player viewer, int page, GUINavigation backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+        super(plugin);
         this.viewer     = viewer;
         this.page       = Math.max(0, page);
         this.items      = plugin.getShopConfigManager().getContributionShopItems();
@@ -190,15 +186,4 @@ public class ContributionShopGUI implements InventoryHolder {
     }
 
     private boolean isItemSlot(int s) { for (int x : ITEM_SLOTS) if (x == s) return true; return false; }
-    @Override public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material m, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(m);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

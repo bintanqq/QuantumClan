@@ -1,13 +1,11 @@
-// ════════════════════════════════════════════════════════════════════════════
-// FILE: AdminWarCommand.java  — fix hardcoded "War sudah berjalan."
-// ════════════════════════════════════════════════════════════════════════════
 package me.bintanq.quantumclan.command.admin;
 
 import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.command.sub.SubCommand;
 import me.bintanq.quantumclan.model.WarSession;
 import org.bukkit.entity.Player;
 
-public class AdminWarCommand {
+public class AdminWarCommand implements SubCommand {
     private final QuantumClan plugin;
 
     public AdminWarCommand(QuantumClan plugin) { this.plugin = plugin; }
@@ -20,7 +18,6 @@ public class AdminWarCommand {
         switch (args[0].toLowerCase()) {
             case "start" -> {
                 if (plugin.getWarManager().getActiveSession() != null) {
-                    // FIX: was hardcoded "War sudah berjalan."
                     plugin.sendMessage(player, "admin.war-already-running");
                     return;
                 }

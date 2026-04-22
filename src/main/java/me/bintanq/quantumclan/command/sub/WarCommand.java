@@ -6,7 +6,7 @@ import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.WarSession;
 import org.bukkit.entity.Player;
 
-public class WarCommand {
+public class WarCommand implements SubCommand {
     private final QuantumClan plugin;
     public WarCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {

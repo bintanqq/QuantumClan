@@ -8,18 +8,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 /**
- * /qclan announce <message>
- *
- * BUG FIX #5: Broadcast now uses newline format (visual gap/list style)
- * by replacing {newline} tokens in the messages.yml template with actual
- * Component newlines before broadcasting.
- *
- * BUG FIX cooldown: Added missing return after cooldown message (was fixed before,
- * keeping it correct here).
- *
- * No hardcoded messages — all strings come from messages.yml.
+ * Handles /qclan announce <message>
  */
-public class AnnounceCommand {
+public class AnnounceCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -28,24 +19,14 @@ public class AnnounceCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.announce")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.clan.announce")) return;
 
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
 
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-announce")) {
-            plugin.sendMessage(player, "error.role-no-permission",
-                    "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return;
-        }
+        if (!plugin.checkRole(player, "can-announce")) return;
 
-        // BUG FIX cooldown: was missing return
+        // Return if on cooldown
         if (plugin.getBuffTracker().isOnAnnounceCooldown(clan.getId())) {
             plugin.sendMessage(player, "clan.announce-cooldown",
                     "{value}", String.valueOf(plugin.getBuffTracker()
@@ -68,7 +49,7 @@ public class AnnounceCommand {
                 "{tag}", clan.getFormattedTag(),
                 "{message}", msg);
 
-        // BUG FIX #5: Split on {newline} token, then send each segment as a separate
+        // Split on {newline} token, then send each segment as a separate
         // Component line. This creates visible gaps between sections in the broadcast,
         // matching the "list style" requested.
         MiniMessage mm = plugin.getMiniMessage();

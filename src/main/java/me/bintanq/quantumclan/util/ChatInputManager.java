@@ -20,8 +20,7 @@ import java.util.function.Consumer;
  *      {@link #handleInput(UUID, String)}.
  *   3. Input auto-cancels after {@code chat-input-timeout} seconds (configurable).
  *   4. Input cancelled automatically on player quit via {@link #cancelInput(UUID)}.
- *
- * BUG FIX #4: Cancel keyword changed from "batal" to "cancel" (English, global plugin).
+ *   5. The keyword "cancel" can be used to abort a session.
  */
 public class ChatInputManager {
 
@@ -45,7 +44,7 @@ public class ChatInputManager {
     private final Map<UUID, PendingInput> pending = new ConcurrentHashMap<>();
 
     /**
-     * BUG FIX #4: Was "batal" (Indonesian). Changed to "cancel" (English).
+     * The keyword used to abort a chat-based input session.
      */
     private static final String CANCEL_KEYWORD = "cancel";
 
@@ -114,7 +113,7 @@ public class ChatInputManager {
 
         Bukkit.getScheduler().cancelTask(session.taskId);
 
-        // BUG FIX #4: cancel keyword is now "cancel" (English)
+        // If the user types the cancel keyword, trigger the cancel callback.
         if (CANCEL_KEYWORD.equalsIgnoreCase(input.trim())) {
             if (session.onCancel != null) {
                 Bukkit.getScheduler().runTask(plugin, session.onCancel);

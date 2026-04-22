@@ -1,6 +1,3 @@
-// ════════════════════════════════════════════════════════════════════════════
-// FILE: AcceptCommand.java  — fix hardcoded "Gagal bergabung."
-// ════════════════════════════════════════════════════════════════════════════
 package me.bintanq.quantumclan.command.sub;
 
 import me.bintanq.quantumclan.QuantumClan;
@@ -8,7 +5,7 @@ import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class AcceptCommand {
+public class AcceptCommand implements SubCommand {
     private final QuantumClan plugin;
 
     public AcceptCommand(QuantumClan plugin) { this.plugin = plugin; }
@@ -32,7 +29,6 @@ public class AcceptCommand {
         plugin.getClanManager().addMember(clanId, player.getUniqueId()).thenAccept(ok ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (!ok) {
-                        // FIX: was hardcoded "Gagal bergabung."
                         plugin.sendMessage(player, "error.transaction-processing");
                         return;
                     }

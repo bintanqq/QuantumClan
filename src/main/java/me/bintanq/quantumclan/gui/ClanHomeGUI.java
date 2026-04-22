@@ -24,12 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * GUI that lists all clan homes.
- *
- * BUG FIX #2: All text from messages.yml.
- * BUG FIX #6: Failures (home not found, cooldown) no longer close the GUI.
- * BUG FIX #7: Back button support when opened from main menu.
  */
-public class ClanHomeGUI implements InventoryHolder {
+public class ClanHomeGUI extends AbstractClanGUI {
 
     private static final int SIZE = 54;
     private static final int[] HOME_SLOTS = {
@@ -40,18 +36,14 @@ public class ClanHomeGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Clan clan;
     private final int page;
     private final GUINavigation backAction;
-    private Inventory inventory;
 
     private final Map<Integer, String> slotToHome = new ConcurrentHashMap<>();
 
     public ClanHomeGUI(QuantumClan plugin, Clan clan, int page, GUINavigation backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+        super(plugin);
         this.clan       = clan;
         this.page       = Math.max(0, page);
         this.backAction = backAction;
@@ -130,7 +122,7 @@ public class ClanHomeGUI implements InventoryHolder {
         List<Clan.ClanHome> homes = new ArrayList<>((List) clan.getHomes());
         int totalPages = Math.max(1, (int) Math.ceil(homes.size() / (double) HOME_SLOTS.length));
 
-        // BUG FIX #7: Back button if opened from menu, Close if opened directly
+        // Back button if opened from menu, Close if opened directly
         String closeOrBackName = backAction != null ? msg.get("gui.back") : msg.get("gui.close");
         inventory.setItem(gc.getClanHomeCloseSlot(),
                 makeItem(Material.BARRIER, closeOrBackName, Collections.emptyList()));
@@ -189,7 +181,7 @@ public class ClanHomeGUI implements InventoryHolder {
             }
             Clan.ClanHome home = latest.getHome(homeName);
             if (home == null) {
-                // BUG FIX #6: Don't close GUI on failure — send message and stay
+                // Don't close GUI on failure — send message and stay
                 plugin.sendMessage(player, "home.teleport-not-found", "{value}", homeName);
                 openPage(player, page); // Refresh current page
                 return;
@@ -211,7 +203,7 @@ public class ClanHomeGUI implements InventoryHolder {
             long cooldown = plugin.getConfigManager().getHomeTeleportCooldown();
             long elapsed  = (System.currentTimeMillis() - lastTp) / 1000;
             if (elapsed < cooldown) {
-                // BUG FIX #6: Don't close GUI — just send the message
+                // Don't close GUI — just send the message
                 plugin.sendMessage(player, "home.teleport-cooldown",
                         "{value}", String.valueOf(cooldown - elapsed));
                 return;
@@ -234,7 +226,7 @@ public class ClanHomeGUI implements InventoryHolder {
         if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-delete-home")) {
             plugin.sendMessage(player, "error.role-no-permission",
                     "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return; // BUG FIX #6: Stay in GUI
+            return; // Stay in GUI
         }
 
         plugin.getClanManager().deleteHome(latest.getId(), homeName)
@@ -271,16 +263,4 @@ public class ClanHomeGUI implements InventoryHolder {
         return false;
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

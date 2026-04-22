@@ -28,11 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * GUI that displays a clan's info: stats, member list, homes, and rank.
- *
- * BUG FIX #2: All text pulled from messages.yml — no hardcoded Indonesian/English strings.
- * BUG FIX #7: Back button support when opened from a parent menu.
  */
-public class ClanInfoGUI implements InventoryHolder {
+public class ClanInfoGUI extends AbstractClanGUI {
 
     private static final int SIZE         = 54;
     private static final int PAGE_SLOTS   = 18;
@@ -43,17 +40,13 @@ public class ClanInfoGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Clan clan;
     private final int page;
     /** Navigation callback — null means "show Close button, not Back". */
     private final GUINavigation backAction;
-    private Inventory inventory;
 
     public ClanInfoGUI(QuantumClan plugin, Clan clan, int page, GUINavigation backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+        super(plugin);
         this.clan       = clan;
         this.page       = Math.max(0, page);
         this.backAction = backAction;
@@ -256,41 +249,4 @@ public class ClanInfoGUI implements InventoryHolder {
         viewer.openInventory(new ClanInfoGUI(plugin, clan, 0, backAction).build());
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) {
-            List<Component> noItalic = new ArrayList<>();
-            for (Component line : lore) {
-                noItalic.add(Component.empty().append(line)
-                        .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
-            }
-            meta.lore(noItalic);
-        }
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    private ItemStack makeSkull(OfflinePlayer op, String name, List<Component> lore) {
-        ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta  = (SkullMeta) skull.getItemMeta();
-        if (meta == null) return skull;
-        meta.setOwningPlayer(op);
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) {
-            List<Component> noItalic = new ArrayList<>();
-            for (Component line : lore) {
-                noItalic.add(Component.empty().append(line)
-                        .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
-            }
-            meta.lore(noItalic);
-        }
-        skull.setItemMeta(meta);
-        return skull;
-    }
 }

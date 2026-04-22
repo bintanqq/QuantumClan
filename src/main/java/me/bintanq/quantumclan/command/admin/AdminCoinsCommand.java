@@ -1,14 +1,12 @@
-// ════════════════════════════════════════════════════════════════════════════
-// FILE: AdminCoinsCommand.java  — fix hardcoded "Gagal memberikan coins."
-// ════════════════════════════════════════════════════════════════════════════
 package me.bintanq.quantumclan.command.admin;
 
 import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.command.sub.SubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public class AdminCoinsCommand {
+public class AdminCoinsCommand implements SubCommand {
     private final QuantumClan plugin;
 
     public AdminCoinsCommand(QuantumClan plugin) { this.plugin = plugin; }
@@ -34,7 +32,6 @@ public class AdminCoinsCommand {
         plugin.getCoinsProvider().grant(target.getUniqueId(), amount, "admin-grant")
                 .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () -> {
                     if (!ok) {
-                        // FIX: was hardcoded "Gagal memberikan coins."
                         plugin.sendMessage(player, "admin.coins-grant-failed");
                         return;
                     }

@@ -23,17 +23,15 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Coins Shop GUI — allows players to spend built-in Coins on items.
  *
- * BUG FIX #3: Price was shown twice — once from shop.yml lore (containing {cost})
- * and once from the shop-price-label appended below. Now the price label is ONLY
- * appended if the item's lore doesn't already contain a {cost} placeholder.
- * Standardized approach: shop.yml lore handles description, the GUI appends
- * a single formatted price/affordability line.
+ * Price label is ONLY appended if the item's lore doesn't already contain 
+ * a {cost} placeholder. Standardized approach: shop.yml lore handles 
+ * description, the GUI appends a single formatted price/affordability line.
  *
  * ADDITION: backAction field + openFromMenu() for back-navigation support.
  * When navigating pages internally, backAction is forwarded so the close button
  * always returns to the parent menu regardless of which page the player is on.
  */
-public class CoinsShopGUI implements InventoryHolder {
+public class CoinsShopGUI extends AbstractClanGUI {
 
     private static final int[] ITEM_SLOTS = {
             10, 11, 12, 13, 14, 15, 16,
@@ -43,19 +41,15 @@ public class CoinsShopGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan  plugin;
-    private final MiniMessage  mm;
     private final Player       viewer;
     private final int          page;
     private final List<CoinsItem> items;
-    private final Runnable     backAction; // null = just close inventory
-    private Inventory          inventory;
+    private final GUINavigation backAction; // null = just close inventory
 
     // ── Constructors ────────────────────────────────────────────────────────
 
-    public CoinsShopGUI(QuantumClan plugin, Player viewer, int page, Runnable backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+    public CoinsShopGUI(QuantumClan plugin, Player viewer, int page, GUINavigation backAction) {
+        super(plugin);
         this.viewer     = viewer;
         this.page       = Math.max(0, page);
         this.items      = plugin.getShopConfigManager().getCoinsShopItems();
@@ -117,8 +111,8 @@ public class CoinsShopGUI implements InventoryHolder {
 
             List<Component> lore = new ArrayList<>();
 
-            // BUG FIX #3: Resolve lore from shop.yml — these lines may already contain
-            // {cost}/{coins-name} as description text. We resolve them but do NOT
+            // Resolve lore from shop.yml — these lines may already contain
+            // the {cost} placeholder. We resolve them but do NOT
             // add a separate price line afterwards to avoid duplication.
             for (String line : ci.getLore()) {
                 String resolved = line
@@ -182,7 +176,7 @@ public class CoinsShopGUI implements InventoryHolder {
 
             if (slot == gc.getCoinsShopCloseSlot()) {
                 // If a backAction is registered, delegate to it (e.g. reopen parent menu).
-                if (backAction != null) backAction.run();
+                if (backAction != null) backAction.navigate();
                 else player.closeInventory();
                 return;
             }
@@ -237,23 +231,8 @@ public class CoinsShopGUI implements InventoryHolder {
      * CoinsShopGUI.openFromMenu(plugin, player, () -> MainMenuGUI.open(plugin, player));
      * }</pre>
      */
-    public static void openFromMenu(QuantumClan plugin, Player player, Runnable backAction) {
+    public static void openFromMenu(QuantumClan plugin, Player player, GUINavigation backAction) {
         player.openInventory(new CoinsShopGUI(plugin, player, 0, backAction).build());
     }
 
-    // ── InventoryHolder ──────────────────────────────────────────────────────
-
-    @Override public Inventory getInventory() { return inventory; }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

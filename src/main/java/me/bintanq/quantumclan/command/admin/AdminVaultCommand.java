@@ -1,6 +1,7 @@
 package me.bintanq.quantumclan.command.admin;
 
 import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.command.sub.SubCommand;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -11,7 +12,7 @@ import java.util.Arrays;
  * Handles /qclanadmin vault <subcommand>.
  * All messages come from messages.yml — no hardcoded strings.
  */
-public class AdminVaultCommand {
+public class AdminVaultCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -33,7 +34,7 @@ public class AdminVaultCommand {
 
     private void handleClear(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendMessage(player, "admin.help-give-usage");
+            plugin.sendMessage(player, "admin.vault-usage");
             return;
         }
         String clanQuery = String.join(" ", args);
@@ -51,7 +52,7 @@ public class AdminVaultCommand {
 
     private void handleInspect(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendMessage(player, "admin.help-give-usage");
+            plugin.sendMessage(player, "admin.vault-usage");
             return;
         }
         String clanQuery = String.join(" ", args);
@@ -71,6 +72,6 @@ public class AdminVaultCommand {
                 .replace("{desc}", plugin.getMessagesManager().get("help.admin-cmd-vault")));
         plugin.sendRaw(player, plugin.getMessagesManager().get("help.admin-entry")
                 .replace("{cmd}", "vault inspect <clan>")
-                .replace("{desc}", "View vault contents (read-only)"));
+                .replace("{desc}", plugin.getMessagesManager().get("help.admin-cmd-vault-inspect")));
     }
 }

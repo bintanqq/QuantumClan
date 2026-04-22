@@ -5,17 +5,16 @@ import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class DelHomeCommand {
+public class DelHomeCommand implements SubCommand {
     private final QuantumClan plugin;
     public DelHomeCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.home.delete")) { plugin.sendMessage(player, "error.no-permission"); return; }
-        if (args.length == 0) { plugin.sendRaw(player, "<red>/qclan delhome <nama>"); return; }
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-delete-home")) {
-            plugin.sendMessage(player, "error.role-no-permission", "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole()); return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.home.delete")) return;
+        if (args.length == 0) { plugin.sendMessage(player, "home.delhome-usage"); return; }
+
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
+        if (!plugin.checkRole(player, "can-delete-home")) return;
         plugin.getClanManager().deleteHome(clan.getId(), args[0]).thenAccept(ok ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (ok) plugin.sendMessage(player, "home.delete-success", "{value}", args[0]);

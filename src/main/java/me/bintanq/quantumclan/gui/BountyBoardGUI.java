@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Bounty Board GUI — Bug 7: back button support. All text from messages.yml.
  */
-public class BountyBoardGUI implements InventoryHolder {
+public class BountyBoardGUI extends AbstractClanGUI {
 
     private static final int SIZE = 54;
     private static final int[] ENTRY_SLOTS = {
@@ -38,16 +38,12 @@ public class BountyBoardGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final int page;
     private final List<BountyEntry> bounties;
     private final GUINavigation backAction;
-    private Inventory inventory;
 
     public BountyBoardGUI(QuantumClan plugin, int page, GUINavigation backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+        super(plugin);
         this.page       = Math.max(0, page);
         this.bounties   = plugin.getBountyManager().getActiveBountiesSnapshot();
         this.backAction = backAction;
@@ -126,15 +122,7 @@ public class BountyBoardGUI implements InventoryHolder {
         lore.add(Component.empty());
         lore.add(mm.deserialize(msg.get("bounty.entry-hint")));
 
-        ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta  = (SkullMeta) skull.getItemMeta();
-        if (meta != null) {
-            meta.setOwningPlayer(target);
-            meta.displayName(mm.deserialize("<!italic><red>☠ <yellow>" + targetName));
-            meta.lore(lore);
-            skull.setItemMeta(meta);
-        }
-        return skull;
+        return makeSkull(target, "<red>☠ <yellow>" + targetName, lore);
     }
 
     private void setNavigation() {
@@ -213,16 +201,4 @@ public class BountyBoardGUI implements InventoryHolder {
         return mins + "m " + (seconds % 60) + "s";
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

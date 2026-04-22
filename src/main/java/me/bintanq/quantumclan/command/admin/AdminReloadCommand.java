@@ -1,9 +1,10 @@
 package me.bintanq.quantumclan.command.admin;
 
 import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.command.sub.SubCommand;
 import org.bukkit.entity.Player;
 
-public class AdminReloadCommand {
+public class AdminReloadCommand implements SubCommand {
     private final QuantumClan plugin;
     public AdminReloadCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {

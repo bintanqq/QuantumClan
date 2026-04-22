@@ -1,6 +1,7 @@
 package me.bintanq.quantumclan.command.admin;
 
 import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.command.sub.SubCommand;
 import me.bintanq.quantumclan.gui.ClanInfoGUI;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
@@ -8,7 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 
-public class AdminClanCommand {
+public class AdminClanCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -18,7 +19,7 @@ public class AdminClanCommand {
 
     public void execute(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<white>/qclanadmin clan <info|delete|setlevel|setreputation> <clan>");
+            plugin.sendMessage(player, "admin.clan-usage");
             return;
         }
 
@@ -26,14 +27,14 @@ public class AdminClanCommand {
 
         switch (sub) {
             case "info" -> {
-                if (args.length < 2) { plugin.sendRaw(player, "<white>/qclanadmin clan info <clan>"); return; }
+                if (args.length < 2) { plugin.sendMessage(player, "admin.clan-info-usage"); return; }
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
                 if (clan == null) { plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery); return; }
                 ClanInfoGUI.open(plugin, player, clan);
             }
             case "delete" -> {
-                if (args.length < 2) { plugin.sendRaw(player, "<white>/qclanadmin clan delete <clan>"); return; }
+                if (args.length < 2) { plugin.sendMessage(player, "admin.clan-delete-usage"); return; }
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
                 if (clan == null) { plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery); return; }
@@ -46,7 +47,7 @@ public class AdminClanCommand {
                 // Syntax: setlevel <level> <clan...> OR setlevel <clan...> <level>
                 // We use: /qclanadmin clan setlevel <clan> <level>
                 // Level is always the LAST arg, clan name is everything in between
-                if (args.length < 3) { plugin.sendRaw(player, "<white>/qclanadmin clan setlevel <clan> <level>"); return; }
+                if (args.length < 3) { plugin.sendMessage(player, "admin.clan-setlevel-usage"); return; }
                 String levelStr = args[args.length - 1];
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length - 1));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
@@ -62,7 +63,7 @@ public class AdminClanCommand {
                                         "{value}", String.valueOf(finalLevel))));
             }
             case "setreputation" -> {
-                if (args.length < 3) { plugin.sendRaw(player, "<white>/qclanadmin clan setreputation <clan> <amount>"); return; }
+                if (args.length < 3) { plugin.sendMessage(player, "admin.clan-setreputation-usage"); return; }
                 String repStr = args[args.length - 1];
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length - 1));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
@@ -76,7 +77,7 @@ public class AdminClanCommand {
                                         "{clan}", clan.getName(),
                                         "{value}", String.valueOf(finalRep))));
             }
-            default -> plugin.sendRaw(player, "<white>/qclanadmin clan <info|delete|setlevel|setreputation> <clan>");
+            default -> plugin.sendMessage(player, "admin.clan-usage");
         }
     }
 }

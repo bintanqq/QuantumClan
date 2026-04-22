@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-public class KickCommand {
+public class KickCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -18,25 +18,15 @@ public class KickCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.kick")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.clan.kick")) return;
         if (args.length == 0) {
             plugin.sendMessage(player, "error.unknown-subcommand");
             return;
         }
 
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-kick")) {
-            plugin.sendMessage(player, "error.role-no-permission",
-                    "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return;
-        }
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
+        if (!plugin.checkRole(player, "can-kick")) return;
 
         String targetName = args[0];
         UUID targetUuid = resolveUuid(targetName);

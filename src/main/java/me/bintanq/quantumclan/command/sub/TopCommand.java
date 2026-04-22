@@ -4,7 +4,7 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.gui.ClanTopGUI;
 import org.bukkit.entity.Player;
 
-public class TopCommand {
+public class TopCommand implements SubCommand {
     private final QuantumClan plugin;
     public TopCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {

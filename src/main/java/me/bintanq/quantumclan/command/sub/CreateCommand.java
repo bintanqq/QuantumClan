@@ -9,16 +9,14 @@ import org.bukkit.entity.Player;
  * /qclan create
  * Flow: sends name prompt → waits chat → sends tag prompt → waits chat → creates clan.
  */
-public class CreateCommand {
+public class CreateCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
     public CreateCommand(QuantumClan plugin) { this.plugin = plugin; }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.create")) {
-            plugin.sendMessage(player, "error.no-permission"); return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.clan.create")) return;
         if (plugin.getClanManager().isInClan(player.getUniqueId())) {
             plugin.sendMessage(player, "clan.create-already-in-clan"); return;
         }

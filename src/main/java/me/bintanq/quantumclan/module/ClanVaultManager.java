@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *  - /qclan vault command is removed (vault is block-only)
  *  - Admin /qclanadmin vault inspect|clear still works regardless of location
  *
- * Slot count recalculated from current clan level on every open (BUG FIX 4).
+ * Slot count recalculated from current clan level on every open.
  */
 public class ClanVaultManager {
 

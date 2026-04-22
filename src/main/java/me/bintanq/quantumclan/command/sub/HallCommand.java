@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
  *   buy       → open purchase confirmation GUI
  *   tp        → teleport to hall (requires access, blocked during war)
  */
-public class HallCommand {
+public class HallCommand implements SubCommand {
 
     private final QuantumClan plugin;
 

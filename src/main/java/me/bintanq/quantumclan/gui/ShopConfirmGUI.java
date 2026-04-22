@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Confirmation GUI for expensive clan shop purchases.
  * Propagates the backAction so Cancel returns to the shop correctly.
  */
-public class ShopConfirmGUI implements InventoryHolder {
+public class ShopConfirmGUI extends AbstractClanGUI {
 
     private static final int SIZE        = 27;
     private static final int SLOT_YES    = 11;
@@ -34,17 +34,13 @@ public class ShopConfirmGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Player viewer;
     private final Clan clan;
     private final ShopItem shopItem;
     private final GUINavigation shopBackAction; // the back action of the shop (to return to main menu)
-    private Inventory inventory;
 
     public ShopConfirmGUI(QuantumClan plugin, Player viewer, Clan clan, ShopItem shopItem, GUINavigation shopBackAction) {
-        this.plugin         = plugin;
-        this.mm             = plugin.getMiniMessage();
+        super(plugin);
         this.viewer         = viewer;
         this.clan           = clan;
         this.shopItem       = shopItem;
@@ -116,16 +112,4 @@ public class ShopConfirmGUI implements InventoryHolder {
         }
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

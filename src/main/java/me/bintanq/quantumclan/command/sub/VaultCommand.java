@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
  * Opens the Clan Vault GUI for the player.
  * Permission check: can-open-vault (roles.yml)
  */
-public class VaultCommand {
+public class VaultCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -19,22 +19,12 @@ public class VaultCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.vault.use")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.vault.use")) return;
 
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
 
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-open-vault")) {
-            plugin.sendMessage(player, "error.role-no-permission",
-                    "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return;
-        }
+        if (!plugin.checkRole(player, "can-open-vault")) return;
 
         plugin.getClanVaultManager().openVault(player, clan);
     }

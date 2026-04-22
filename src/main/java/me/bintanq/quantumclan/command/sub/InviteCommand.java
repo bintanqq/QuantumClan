@@ -1,7 +1,3 @@
-// ════════════════════════════════════════════════════════════════════════════
-// FILE: InviteCommand.java
-// FIX: hardcoded "Kamu tidak bisa mengundang dirimu sendiri."
-// ════════════════════════════════════════════════════════════════════════════
 package me.bintanq.quantumclan.command.sub;
 
 import me.bintanq.quantumclan.QuantumClan;
@@ -9,7 +5,7 @@ import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class InviteCommand {
+public class InviteCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -18,27 +14,15 @@ public class InviteCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.invite")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
-
+        if (!plugin.checkPerm(player, "quantumclan.clan.invite")) return;
         if (args.length == 0) {
             plugin.sendMessage(player, "error.unknown-subcommand");
             return;
         }
 
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
-
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-invite")) {
-            plugin.sendMessage(player, "error.role-no-permission",
-                    "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return;
-        }
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
+        if (!plugin.checkRole(player, "can-invite")) return;
 
         int maxMembers = plugin.getConfigManager().getMaxMembers(clan.getLevel());
         if (clan.getMemberCount() >= maxMembers) {
@@ -53,7 +37,6 @@ public class InviteCommand {
         }
 
         if (target.equals(player)) {
-            // FIX: was hardcoded Indonesian — now uses messages.yml key
             plugin.sendMessage(player, "clan.invite-self");
             return;
         }

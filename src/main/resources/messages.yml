@@ -90,8 +90,12 @@ home:
   teleport-success: "<aqua>Teleported to home <white>{value}</white>."
   teleport-not-found: "<white>Home <aqua>{value}</aqua> was not found."
   teleport-cooldown: "<white>Teleport cooldown! Wait <aqua>{value}</aqua> more seconds."
-  no-homes: "<white>Your clan has no homes. Set one with <aqua>/qclan sethome <name></aqua>."
+  no-homes: "<white>Your clan has no homes. Set one with <aqua>/qclan sethome <n></aqua>."
   set-max: "<white>Home slots are full! Upgrade the clan level for more home slots."
+  delhome-usage: "<white>Usage: <aqua>/qclan delhome <name>"
+  role-usage: "<white>Usage: <aqua>/qclan role set <player> <role>"
+  transfer-usage: "<white>Usage: <aqua>/qclan transfer <player>"
+  deposit-usage: "<white>Usage: <aqua>/qclan deposit <amount>"
 
 # ── Shop ──────────────────────────────────────────────────────
 shop:
@@ -198,6 +202,12 @@ admin:
   coins-grant-failed: "<white>Failed to grant {coins-name}. Please try again."
   coins-granted: "<aqua>Successfully granted <white>{value} {coins-name}</white> to <aqua>{player}</aqua>."
   help-give-usage: "<white>Usage: <aqua>/qclanadmin give coins <player> <amount>"
+  vault-usage: "<white>Usage: <aqua>/qclanadmin vault <clear|inspect> <clan>"
+  clan-usage: "<white>Usage: <aqua>/qclanadmin clan <info|delete|setlevel|setreputation> <clan>"
+  clan-info-usage: "<white>Usage: <aqua>/qclanadmin clan info <clan>"
+  clan-delete-usage: "<white>Usage: <aqua>/qclanadmin clan delete <clan>"
+  clan-setlevel-usage: "<white>Usage: <aqua>/qclanadmin clan setlevel <clan> <level>"
+  clan-setreputation-usage: "<white>Usage: <aqua>/qclanadmin clan setreputation <clan> <amount>"
 
 # ── Hook Status (console only) ────────────────────────────────
 hook:
@@ -345,6 +355,9 @@ hall:
   purchase-success: "<aqua>Your clan has purchased Clan Hall access for <white>{cost}</white>!"
   purchase-failed: "<white>Purchase failed. The clan treasury has been refunded."
 
+  npc-added: "<aqua>NPC point <white>{type}</white> (<white>{name}</white>) added at your location."
+  npc-removed: "<aqua>NPC point <white>{type}</white> removed successfully."
+
   # GUI
   gui-title: "<dark_gray>[ <gold>✦ Clan Hall <dark_gray>]"
   gui-info-name: "<gold>Clan Hall"
@@ -440,7 +453,7 @@ hall:
 # ── Vault ─────────────────────────────────────────────────────
 vault:
   in-use: "<white>Vault is currently being used by <aqua>{player}</aqua>. Try again in a moment."
-  opener-unknown: "<white>another member"
+  opener-unknown: "another member"
   no-permission-open: "<white>Your role is not allowed to open the vault."
   no-permission-deposit: "<white>Your role is not allowed to deposit items into the vault."
   no-permission-withdraw: "<white>Your role is not allowed to withdraw items from the vault."
@@ -454,6 +467,12 @@ vault:
   info-name-admin: "<red>Vault — Admin Inspect"
   close-name: "<red>Close Vault"
   hall-only: "<white>The Clan Vault can only be accessed by interacting with the vault block inside the <aqua>Clan Hall</aqua>."
+
+spy-scroll:
+  tracking: "<dark_aqua>Tracking: <yellow>{player} <gray>| Duration: <yellow>{duration} min"
+  expired: "<gray>Spy Scroll expired."
+  target-offline: "<gray>Target <yellow>{player} <gray>is currently offline."
+  actionbar: "<dark_aqua>Tracking: <yellow>{player} <gray>| {world} <dark_gray>({x}, {y}, {z}) <gray>| <yellow>{time}s left"
 
 # ── Help ──────────────────────────────────────────────────────
 help:
@@ -492,3 +511,4 @@ help:
   admin-cmd-clan: "Manage clans (info/delete/setlevel/setreputation)"
   admin-cmd-hall: "Manage the Clan Hall system"
   admin-cmd-vault: "Admin vault management (clear/inspect)"
+  admin-cmd-vault-inspect: "View vault contents (read-only)"

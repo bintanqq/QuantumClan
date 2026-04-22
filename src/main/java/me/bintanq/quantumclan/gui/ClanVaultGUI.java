@@ -23,17 +23,11 @@ import java.util.List;
 /**
  * Clan Vault GUI.
  *
- * BUG FIX 1: checkStoragePermission() is now a public method returning boolean so
- *            InventoryClickListener can cancel the event only when perms fail,
- *            while letting valid clicks through (items actually move).
- * BUG FIX 2: openVault in ClanVaultManager now enforces hall-only access.
- * BUG FIX 4: On open, if the clan's level grants more rows than what is stored,
- *            the inventory is automatically expanded.
+ *  - On open, if the clan's level grants more rows than what is stored,
+ *    the inventory is automatically expanded.
  */
-public class ClanVaultGUI implements InventoryHolder, Listener {
+public class ClanVaultGUI extends AbstractClanGUI implements Listener {
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Player viewer;
     private final Clan clan;
     private final ItemStack[] storageContents;
@@ -43,21 +37,18 @@ public class ClanVaultGUI implements InventoryHolder, Listener {
     private final int storageSlots;
     private final int totalSize;
 
-    private Inventory inventory;
-
     private static final int NAV_CLOSE_OFFSET = 0;
     private static final int NAV_INFO_OFFSET  = 4;
 
     public ClanVaultGUI(QuantumClan plugin, Player viewer, Clan clan,
                         ItemStack[] storageContents, boolean adminMode) {
-        this.plugin           = plugin;
-        this.mm               = plugin.getMiniMessage();
+        super(plugin);
         this.viewer           = viewer;
         this.clan             = clan;
         this.storageContents  = storageContents;
         this.adminMode        = adminMode;
 
-        // BUG FIX 4: re-read vault rows based on CURRENT clan level each time GUI opens
+        // Re-read vault rows based on CURRENT clan level each time GUI opens
         int rows = plugin.getConfigManager().getVaultRows(clan.getLevel());
         this.storageRows  = Math.max(1, Math.min(6, rows));
         this.storageSlots = storageRows * 9;
@@ -130,7 +121,7 @@ public class ClanVaultGUI implements InventoryHolder, Listener {
     }
 
     /**
-     * FIX BUG 1: Returns true if the player is allowed to interact with this
+     * Returns true if the player is allowed to interact with this
      * storage slot. Called by InventoryClickListener BEFORE deciding to cancel.
      * Returns false (and sends message) when permission is denied.
      */
@@ -211,16 +202,4 @@ public class ClanVaultGUI implements InventoryHolder, Listener {
         return used;
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

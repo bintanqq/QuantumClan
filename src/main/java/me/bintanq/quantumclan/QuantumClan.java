@@ -9,6 +9,7 @@ import me.bintanq.quantumclan.economy.impl.*;
 import me.bintanq.quantumclan.hook.HookManager;
 import me.bintanq.quantumclan.listener.*;
 import me.bintanq.quantumclan.manager.ClanManager;
+import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.module.*;
 import me.bintanq.quantumclan.placeholder.QuantumClanPlaceholder;
 import me.bintanq.quantumclan.schematic.SchematicProvider;
@@ -22,6 +23,7 @@ import me.bintanq.quantumclan.api.QuantumClanAPIImpl;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -92,9 +94,12 @@ public class QuantumClan extends JavaPlugin {
         instance = this;
         long start = System.currentTimeMillis();
 
-        getLogger().info("╔══════════════════════════════════════╗");
-        getLogger().info("║     QuantumClan v" + getDescription().getVersion() + " Loading...     ║");
-        getLogger().info("╚══════════════════════════════════════╝");
+        getLogger().info(" ");
+        getLogger().info("  Q U A N T U M C L A N| v" + getDescription().getVersion());
+        getLogger().info("  --------------+-------------------------");
+        getLogger().info("  Integrity     | Validated");
+        getLogger().info("  Module        | Core Engine Loading...");
+        getLogger().info(" ");
 
         // 1. Save default configs
         saveDefaultConfigs();
@@ -178,9 +183,12 @@ public class QuantumClan extends JavaPlugin {
         }
 
         long elapsed = System.currentTimeMillis() - start;
-        getLogger().info("╔══════════════════════════════════════╗");
-        getLogger().info("║   QuantumClan enabled in " + elapsed + "ms       ║");
-        getLogger().info("╚══════════════════════════════════════╝");
+        getLogger().info(" ");
+        getLogger().info("  Q U A N T U M | Active");
+        getLogger().info("  --------------+-------------------------");
+        getLogger().info("  Latency       | " + elapsed + "ms");
+        getLogger().info("  Status        | Ready to Serve");
+        getLogger().info(" ");
     }
 
     // ─────────────────────────────────────────────────────────
@@ -408,6 +416,15 @@ public class QuantumClan extends JavaPlugin {
         sender.sendMessage(mm.deserialize(full));
     }
 
+    /**
+     * Deserializes a message key from messages.yml with replacements.
+     * Use this for GUI titles, lore, or custom broadcasts.
+     */
+    public Component deserialize(String messageKey, String... replacements) {
+        String raw = messagesManager.get(messageKey, replacements);
+        return mm.deserialize(raw != null ? raw : "<red>[Missing: " + messageKey + "]");
+    }
+
     public void sendRaw(org.bukkit.command.CommandSender sender, String miniMessage) {
         sender.sendMessage(mm.deserialize(miniMessage));
     }
@@ -415,6 +432,45 @@ public class QuantumClan extends JavaPlugin {
     public void broadcast(String miniMessage) {
         Component component = mm.deserialize(miniMessage);
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(component));
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Context Helpers (Fail-Fast)
+    // ─────────────────────────────────────────────────────────
+
+    /**
+     * Checks if a player has a specific permission. Sends error if not.
+     */
+    public boolean checkPerm(Player player, String perm) {
+        if (!player.hasPermission(perm)) {
+            sendMessage(player, "error.no-permission");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the player's clan, or sends an error if they are not in one.
+     */
+    public Clan getPlayerClan(Player player) {
+        Clan clan = clanManager.getClanByPlayer(player.getUniqueId());
+        if (clan == null) {
+            sendMessage(player, "clan.not-in-clan");
+        }
+        return clan;
+    }
+
+    /**
+     * Checks if a player has a specific role permission in their clan.
+     */
+    public boolean checkRole(Player player, String permissionNode) {
+        if (!clanManager.hasRolePermission(player.getUniqueId(), permissionNode)) {
+            me.bintanq.quantumclan.model.ClanMember member = clanManager.getMember(player.getUniqueId());
+            String roleName = member != null ? member.getRole() : "Member";
+            sendMessage(player, "error.role-no-permission", "{role}", roleName);
+            return false;
+        }
+        return true;
     }
 
     // ─────────────────────────────────────────────────────────

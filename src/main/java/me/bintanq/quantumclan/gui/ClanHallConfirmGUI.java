@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Purchase confirmation GUI for Clan Hall access.
  * Opens after clicking "Buy" in ClanHallGUI.
  */
-public class ClanHallConfirmGUI implements InventoryHolder {
+public class ClanHallConfirmGUI extends AbstractClanGUI {
 
     private static final int SIZE      = 27;
     private static final int SLOT_YES  = 11;
@@ -33,16 +33,12 @@ public class ClanHallConfirmGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Player viewer;
     private final Clan clan;
     private final long cost;
-    private Inventory inventory;
 
     public ClanHallConfirmGUI(QuantumClan plugin, Player viewer, Clan clan, long cost) {
-        this.plugin = plugin;
-        this.mm     = plugin.getMiniMessage();
+        super(plugin);
         this.viewer = viewer;
         this.clan   = clan;
         this.cost   = cost;
@@ -113,16 +109,4 @@ public class ClanHallConfirmGUI implements InventoryHolder {
         }
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

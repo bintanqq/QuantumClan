@@ -8,13 +8,13 @@ import me.bintanq.quantumclan.model.ClanMember;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-public class HomeCommand {
+public class HomeCommand implements SubCommand {
     private final QuantumClan plugin;
     public HomeCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.home.use")) { plugin.sendMessage(player, "error.no-permission"); return; }
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
+        if (!plugin.checkPerm(player, "quantumclan.home.use")) return;
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
         if (clan.getHomes().isEmpty()) { plugin.sendMessage(player, "home.no-homes"); return; }
         if (args.length == 0) {
             ClanHomeGUI.open(plugin, player, clan); return;

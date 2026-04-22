@@ -23,16 +23,11 @@ import java.util.stream.Collectors;
 
 /**
  * Main Menu GUI.
- *
- * BUG FIX 3: Added "clan-vault" entry to the main menu for in-clan players.
- *            The vault slot is configured in gui.yml (main-menu.items.clan-vault).
  */
-public class MainMenuGUI implements InventoryHolder {
+public class MainMenuGUI extends AbstractClanGUI {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Player viewer;
 
     private final boolean isInClan;
@@ -41,8 +36,7 @@ public class MainMenuGUI implements InventoryHolder {
     private static final int SLOT_CREATE_CLAN = 13;
 
     public MainMenuGUI(QuantumClan plugin, Player viewer) {
-        this.plugin   = plugin;
-        this.mm       = plugin.getMiniMessage();
+        super(plugin);
         this.viewer   = viewer;
         Clan clan     = plugin.getClanManager().getClanByPlayer(viewer.getUniqueId());
         this.isInClan = (clan != null);
@@ -52,8 +46,7 @@ public class MainMenuGUI implements InventoryHolder {
     public Inventory build() {
         var gc  = plugin.getGuiConfigManager();
         int size = gc.getMainMenuSize();
-        Inventory inventory = Bukkit.createInventory(this, size, mm.deserialize(gc.getMainMenuTitle()));
-        this.inventory = inventory;
+        inventory = Bukkit.createInventory(this, size, mm.deserialize(gc.getMainMenuTitle()));
 
         Material filler = gc.getMainMenuFiller();
         ItemStack glass = makeItem(filler, " ", Collections.emptyList());
@@ -68,7 +61,6 @@ public class MainMenuGUI implements InventoryHolder {
         return inventory;
     }
 
-    private Inventory inventory;
 
     private void buildInClanMenu() {
         var gc = plugin.getGuiConfigManager();
@@ -83,7 +75,7 @@ public class MainMenuGUI implements InventoryHolder {
         if (plugin.getConfigManager().isWarsEnabled())            placeConfigItem("war-menu");
         if (plugin.getConfigManager().isContributionsEnabled())   placeConfigItem("contribution-shop");
         if (plugin.getConfigManager().isCoinsShopEnabled())       placeConfigItem("coins-shop");
-        // BUG FIX 3: Vault entry in main menu
+        // Vault entry in main menu
         if (plugin.getConfigManager().isVaultEnabled())           placeConfigItem("clan-vault");
 
         if (clan != null && clan.getLeaderUuid().equals(viewer.getUniqueId())) {
@@ -198,7 +190,7 @@ public class MainMenuGUI implements InventoryHolder {
             CoinsShopGUI.openFromMenu(plugin, player, () -> open(plugin, player));
 
         } else if (slot == gc.getMainMenuSlot("clan-vault")) {
-            // BUG FIX 3: Handle vault click from main menu
+            // Handle vault click from main menu
             if (latestClan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
             if (!plugin.getClanManager().hasRolePermission(uuid, "can-open-vault")) {
                 plugin.sendMessage(player, "error.role-no-permission",
@@ -245,22 +237,4 @@ public class MainMenuGUI implements InventoryHolder {
         player.openInventory(gui.build());
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) {
-            List<Component> noItalic = lore.stream()
-                    .map(c -> Component.empty().append(c)
-                            .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))
-                    .collect(Collectors.toList());
-            meta.lore(noItalic);
-        }
-        item.setItemMeta(meta);
-        return item;
-    }
 }

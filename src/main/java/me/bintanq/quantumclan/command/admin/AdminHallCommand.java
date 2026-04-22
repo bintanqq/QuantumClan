@@ -1,6 +1,7 @@
 package me.bintanq.quantumclan.command.admin;
 
 import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.command.sub.SubCommand;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -15,7 +16,7 @@ import java.util.Arrays;
  * All player-facing text comes from messages.yml — no hardcoded strings.
  * Added: setvaultblock / clearvaultblock for the physical vault block feature.
  */
-public class AdminHallCommand {
+public class AdminHallCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -267,7 +268,7 @@ public class AdminHallCommand {
     // ── setvaultblock ─────────────────────────────────────────
 
     private void handleSetVaultBlock(Player player) {
-        Location target = player.getTargetBlockExact(5);
+        Location target = player.getTargetBlockExact(5).getLocation();
         if (target == null) {
             plugin.sendMessage(player, "hall.admin.setvaultblock-no-block");
             return;

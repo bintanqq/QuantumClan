@@ -5,7 +5,7 @@ import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class DepositCommand {
+public class DepositCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -14,26 +14,15 @@ public class DepositCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.deposit")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.clan.deposit")) return;
         if (args.length == 0) {
-            plugin.sendRaw(player, "<white>/qclan deposit <amount>");
+            plugin.sendMessage(player, "clan.deposit-usage");
             return;
         }
 
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
-
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-deposit")) {
-            plugin.sendMessage(player, "error.role-no-permission",
-                    "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return;
-        }
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
+        if (!plugin.checkRole(player, "can-deposit")) return;
 
         long amount;
         try {

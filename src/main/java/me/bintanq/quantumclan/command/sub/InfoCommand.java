@@ -5,7 +5,7 @@ import me.bintanq.quantumclan.gui.ClanInfoGUI;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.entity.Player;
 
-public class InfoCommand {
+public class InfoCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -14,14 +14,11 @@ public class InfoCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.info")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.clan.info")) return;
 
         Clan target;
         if (args.length > 0) {
-            // BUG FIX: join all args to support clan names with spaces
+            // Join all args to support clan names with spaces
             String query = String.join(" ", args);
             target = plugin.getClanManager().getClanByName(query);
             // Also try by tag (tags cannot have spaces, but try args[0] as tag)
@@ -33,11 +30,8 @@ public class InfoCommand {
                 return;
             }
         } else {
-            target = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-            if (target == null) {
-                plugin.sendMessage(player, "clan.not-in-clan");
-                return;
-            }
+            target = plugin.getPlayerClan(player);
+            if (target == null) return;
         }
 
         ClanInfoGUI.open(plugin, player, target);

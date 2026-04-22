@@ -15,7 +15,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Arrays;
 
-public class BountyCommand {
+public class BountyCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -37,20 +37,13 @@ public class BountyCommand {
     }
 
     private void handlePlace(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.bounty.place")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-declare-bounty")) {
-            plugin.sendMessage(player, "error.role-no-permission",
-                    "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.bounty.place")) return;
+
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
+
+        if (!plugin.checkRole(player, "can-declare-bounty")) return;
+
         if (args.length == 0) {
             plugin.sendMessage(player, "error.unknown-subcommand");
             return;
@@ -113,22 +106,13 @@ public class BountyCommand {
     }
 
     private void handleBoard(Player player) {
-        if (!player.hasPermission("quantumclan.bounty.board")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.bounty.board")) return;
         BountyBoardGUI.open(plugin, player);
     }
 
     private void handleSubmit(Player player) {
-        if (!player.hasPermission("quantumclan.bounty.submit")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
-        if (plugin.getClanManager().getClanByPlayer(player.getUniqueId()) == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.bounty.submit")) return;
+        if (plugin.getPlayerClan(player) == null) return;
 
         ItemStack hand = player.getInventory().getItemInMainHand();
         if (hand == null || hand.getType() != Material.PLAYER_HEAD || !hand.hasItemMeta()) {

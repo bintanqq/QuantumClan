@@ -4,7 +4,7 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.gui.CoinsShopGUI;
 import org.bukkit.entity.Player;
 
-public class CoinsCommand {
+public class CoinsCommand implements SubCommand {
 
     private final QuantumClan plugin;
 

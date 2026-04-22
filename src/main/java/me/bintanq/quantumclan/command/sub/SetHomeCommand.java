@@ -5,7 +5,7 @@ import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class SetHomeCommand {
+public class SetHomeCommand implements SubCommand {
 
     private final QuantumClan plugin;
 
@@ -14,25 +14,15 @@ public class SetHomeCommand {
     }
 
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.home.set")) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
+        if (!plugin.checkPerm(player, "quantumclan.home.set")) return;
         if (args.length == 0) {
             plugin.sendMessage(player, "error.unknown-subcommand");
             return;
         }
 
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) {
-            plugin.sendMessage(player, "clan.not-in-clan");
-            return;
-        }
-        if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-set-home")) {
-            plugin.sendMessage(player, "error.role-no-permission",
-                    "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
-            return;
-        }
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
+        if (!plugin.checkRole(player, "can-set-home")) return;
 
         String name = args[0];
         int maxHomes = plugin.getConfigManager().getMaxHomes(clan.getLevel());

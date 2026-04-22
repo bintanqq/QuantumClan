@@ -5,14 +5,15 @@ import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class TransferCommand {
+public class TransferCommand implements SubCommand {
     private final QuantumClan plugin;
     public TransferCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {
-        if (!player.hasPermission("quantumclan.clan.transfer")) { plugin.sendMessage(player, "error.no-permission"); return; }
-        if (args.length == 0) { plugin.sendRaw(player, "<red>/qclan transfer <player>"); return; }
-        Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
-        if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
+        if (!plugin.checkPerm(player, "quantumclan.clan.transfer")) return;
+        if (args.length == 0) { plugin.sendMessage(player, "clan.transfer-usage"); return; }
+
+        Clan clan = plugin.getPlayerClan(player);
+        if (clan == null) return;
         if (!clan.getLeaderUuid().equals(player.getUniqueId())) { plugin.sendMessage(player, "error.no-permission"); return; }
         Player target = Bukkit.getPlayer(args[0]);
         if (target == null) { plugin.sendMessage(player, "error.player-not-found", "{player}", args[0]); return; }

@@ -59,7 +59,7 @@ public class ChatListener implements Listener {
 
     // ── 2. Clan tag injection (HIGH priority) ────────────────
     //
-    // BUG FIX: We do NOT set a custom renderer. Instead we only modify
+    // We do NOT set a custom renderer. Instead we only modify
     // the player's display name component for this event cycle.
     // This way other chat plugins (EssentialsChat, etc.) keep full control
     // of the chat format — we only contribute the prefix/suffix to the name.

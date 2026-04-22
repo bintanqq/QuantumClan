@@ -171,29 +171,11 @@ public class Clan implements ClanAPI {
     }
 
     // ── Nested: ClanHome ──────────────────────────────────────
-
-    public static class ClanHome implements ClanHomeAPI {
-        private final String id;
-        private final String clanId;
-        private final String name;
-        private final String world;
-        private final double x, y, z;
-        private final float yaw, pitch;
-
-        public ClanHome(String id, String clanId, String name,
-                        String world, double x, double y, double z,
-                        float yaw, float pitch) {
-            this.id     = id;
-            this.clanId = clanId;
-            this.name   = name;
-            this.world  = world;
-            this.x      = x;
-            this.y      = y;
-            this.z      = z;
-            this.yaw    = yaw;
-            this.pitch  = pitch;
-        }
-
+ 
+    public record ClanHome(String id, String clanId, String name,
+                           String world, double x, double y, double z,
+                           float yaw, float pitch) implements ClanHomeAPI {
+ 
         public static ClanHome create(String clanId, String name, Location location) {
             return new ClanHome(
                     UUID.randomUUID().toString(),
@@ -203,23 +185,26 @@ public class Clan implements ClanAPI {
                     location.getYaw(), location.getPitch()
             );
         }
-
+ 
+        @Override
         public Location toBukkitLocation() {
             org.bukkit.World w = org.bukkit.Bukkit.getWorld(world);
             if (w == null) return null;
             return new Location(w, x, y, z, yaw, pitch);
         }
+ 
+        @Override public String getId()     { return id; }
+        public String getClanId()           { return clanId; }
+        @Override public String getName()   { return name; }
+        @Override public String getWorld()  { return world; }
+        @Override public double getX()      { return x; }
+        @Override public double getY()      { return y; }
+        @Override public double getZ()      { return z; }
+        @Override public float  getYaw()    { return yaw; }
+        @Override public float  getPitch()  { return pitch; }
 
-        public String getId()     { return id; }
-        public String getClanId() { return clanId; }
-        public String getName()   { return name; }
-        public String getWorld()  { return world; }
-        public double getX()      { return x; }
-        public double getY()      { return y; }
-        public double getZ()      { return z; }
-        public float  getYaw()    { return yaw; }
-        public float  getPitch()  { return pitch; }
     }
+
 
     // ── Getters / Setters ─────────────────────────────────────
 

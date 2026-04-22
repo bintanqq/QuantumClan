@@ -1,6 +1,3 @@
-// ════════════════════════════════════════════════════════════════════════════
-// FILE: WarListener.java  (hardcoded action bars fixed)
-// ════════════════════════════════════════════════════════════════════════════
 package me.bintanq.quantumclan.listener;
 
 import me.bintanq.quantumclan.QuantumClan;
@@ -57,7 +54,6 @@ public class WarListener implements Listener {
 
             if (attackerClan != null && attackerClan.equals(victimClan)) {
                 event.setCancelled(true);
-                // FIX: was hardcoded
                 attacker.sendActionBar(plugin.getMiniMessage().deserialize(
                         plugin.getMessagesManager().get("war.friendly-fire")));
                 return;
@@ -80,7 +76,6 @@ public class WarListener implements Listener {
         Player player = event.getPlayer();
         if (isInArena(player.getLocation())) {
             event.setCancelled(true);
-            // FIX: was hardcoded
             player.sendActionBar(plugin.getMiniMessage().deserialize(
                     plugin.getMessagesManager().get("war.arena-no-break")));
         }
@@ -96,7 +91,6 @@ public class WarListener implements Listener {
         Player player = event.getPlayer();
         if (isInArena(player.getLocation())) {
             event.setCancelled(true);
-            // FIX: was hardcoded
             player.sendActionBar(plugin.getMiniMessage().deserialize(
                     plugin.getMessagesManager().get("war.arena-no-build")));
         }
@@ -116,7 +110,6 @@ public class WarListener implements Listener {
 
         if (BLOCKED_COMMANDS.contains(cmd)) {
             event.setCancelled(true);
-            // FIX: was hardcoded
             player.sendActionBar(plugin.getMiniMessage().deserialize(
                     plugin.getMessagesManager().get("war.command-blocked")));
         }

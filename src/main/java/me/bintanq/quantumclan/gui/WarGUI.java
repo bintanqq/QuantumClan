@@ -23,11 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * War GUI — shows current war status, registered clans, and registration button.
- *
- * BUG FIX #2: All text from messages.yml/gui.yml — no hardcoded strings.
- * BUG FIX #7: Back button when opened from main menu.
  */
-public class WarGUI implements InventoryHolder {
+public class WarGUI extends AbstractClanGUI {
 
     private static final int SLOT_STATUS = 11;
     private static final int SLOT_ACTION = 13;
@@ -36,14 +33,10 @@ public class WarGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final GUINavigation backAction;
-    private Inventory inventory;
 
     public WarGUI(QuantumClan plugin, GUINavigation backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+        super(plugin);
         this.backAction = backAction;
     }
 
@@ -188,15 +181,4 @@ public class WarGUI implements InventoryHolder {
         player.openInventory(new WarGUI(plugin, backAction).build());
     }
 
-    @Override public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material m, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(m);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

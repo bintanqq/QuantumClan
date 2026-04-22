@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Clan Shop GUI.
  */
-public class ClanShopGUI implements InventoryHolder {
+public class ClanShopGUI extends AbstractClanGUI {
 
     private static final int SIZE = 54;
     private static final int[] ITEM_SLOTS = {
@@ -35,18 +35,14 @@ public class ClanShopGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
     private final Clan clan;
     private final Player viewer;
     private final int page;
     private final List<ShopItem> items;
     private final GUINavigation backAction;
-    private Inventory inventory;
 
     public ClanShopGUI(QuantumClan plugin, Player viewer, Clan clan, int page, GUINavigation backAction) {
-        this.plugin     = plugin;
-        this.mm         = plugin.getMiniMessage();
+        super(plugin);
         this.viewer     = viewer;
         this.clan       = clan;
         this.page       = Math.max(0, page);
@@ -146,7 +142,7 @@ public class ClanShopGUI implements InventoryHolder {
         var gc  = plugin.getGuiConfigManager();
         var msg = plugin.getMessagesManager();
 
-        // BUG FIX 6: Treasury display shows NEUTRAL info only.
+        // Treasury display shows NEUTRAL info only.
         // "cannot-afford" used to leak here as lore. Now we show the balance
         // as the item name and a neutral description as lore.
         String treasuryName = gc.getClanShopTreasuryName()
@@ -227,15 +223,4 @@ public class ClanShopGUI implements InventoryHolder {
         player.openInventory(new ClanShopGUI(plugin, player, clan, 0, backAction).build());
     }
 
-    @Override public Inventory getInventory() { return inventory; }
-
-    private ItemStack makeItem(Material material, String name, List<Component> lore) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta  = item.getItemMeta();
-        if (meta == null) return item;
-        meta.displayName(mm.deserialize("<!italic>" + name));
-        if (!lore.isEmpty()) meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

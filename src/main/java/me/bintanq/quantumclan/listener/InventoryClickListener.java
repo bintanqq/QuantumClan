@@ -134,41 +134,12 @@ public class InventoryClickListener implements Listener {
     }
 
     private void routeClick(InventoryHolder holder, Player player, int slot, ClickType click) {
-        switch (holder) {
-            case MainMenuGUI gui           -> gui.handleClick(player, slot, click);
-            case ClanInfoGUI gui           -> gui.handleClick(player, slot, click);
-            case ClanShopGUI gui           -> gui.handleClick(player, slot, click);
-            case ShopConfirmGUI gui        -> gui.handleClick(player, slot, click);
-            case ClanHomeGUI gui           -> gui.handleClick(player, slot, click);
-            case BountyBoardGUI gui        -> gui.handleClick(player, slot, click);
-            case ClanTopGUI gui            -> gui.handleClick(player, slot, click);
-            case UpgradeGUI gui            -> gui.handleClick(player, slot, click);
-            case WarGUI gui                -> gui.handleClick(player, slot, click);
-            case ContributionShopGUI gui   -> gui.handleClick(player, slot, click);
-            case DisbandConfirmGUI gui     -> gui.handleClick(player, slot, click);
-            case CoinsShopGUI gui          -> gui.handleClick(player, slot, click);
-            case ClanHallGUI gui           -> gui.handleClick(player, slot, click);
-            case ClanHallConfirmGUI gui    -> gui.handleClick(player, slot, click);
-            case ClanVaultGUI gui          -> gui.handleClick(player, slot, click);
-            default -> { /* Unrecognised QC GUI — already cancelled */ }
+        if (holder instanceof BaseGUI gui) {
+            gui.handleClick(player, slot, click);
         }
     }
 
     private boolean isQCHolder(InventoryHolder holder) {
-        return holder instanceof MainMenuGUI
-                || holder instanceof ClanInfoGUI
-                || holder instanceof ClanShopGUI
-                || holder instanceof ShopConfirmGUI
-                || holder instanceof ClanHomeGUI
-                || holder instanceof BountyBoardGUI
-                || holder instanceof ClanTopGUI
-                || holder instanceof UpgradeGUI
-                || holder instanceof WarGUI
-                || holder instanceof ContributionShopGUI
-                || holder instanceof DisbandConfirmGUI
-                || holder instanceof CoinsShopGUI
-                || holder instanceof ClanHallGUI
-                || holder instanceof ClanHallConfirmGUI
-                || holder instanceof ClanVaultGUI;
+        return holder instanceof BaseGUI;
     }
 }

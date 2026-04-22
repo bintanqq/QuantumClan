@@ -4,7 +4,7 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.entity.Player;
 
-public class DeclineCommand {
+public class DeclineCommand implements SubCommand {
     private final QuantumClan plugin;
     public DeclineCommand(QuantumClan plugin) { this.plugin = plugin; }
     public void execute(Player player, String[] args) {
