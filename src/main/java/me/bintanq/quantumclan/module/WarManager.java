@@ -330,15 +330,6 @@ public class WarManager {
         }
     }
 
-    // ── Hologram updater ──────────────────────────────────────
-
-    public void startHologramUpdater() {
-        long interval = plugin.getConfigManager().getHologramUpdateInterval();
-        hologramTaskId = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-            // Hologram update is handled by leaderboard cache refresh
-            // DecentHolograms / HolographicDisplays update delegated here if needed
-        }, interval, interval).getTaskId();
-    }
 
     // ── Getters ───────────────────────────────────────────────
 

@@ -129,6 +129,10 @@ permissions:
     description: Allow using contribution shop
     default: true
 
+  quantumclan.coins.shop:
+    description: Allow using the coins shop
+    default: true
+
   quantumclan.top:
     description: Allow viewing clan leaderboard
     default: true
@@ -193,6 +197,7 @@ permissions:
       quantumclan.war.leave: true
       quantumclan.contribution.view: true
       quantumclan.contribution.shop: true
+      quantumclan.coins.shop: true
       quantumclan.top: true
       quantumclan.admin.coins: true
       quantumclan.admin.war: true

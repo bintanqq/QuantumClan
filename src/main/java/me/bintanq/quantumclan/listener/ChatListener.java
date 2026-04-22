@@ -14,19 +14,15 @@ import org.bukkit.event.Listener;
 import java.util.UUID;
 
 /**
- * Handles dua hal:
+ * Handles two responsibilities:
  *
- * 1. Chat input interception — jika player punya pending ChatInputManager session,
- *    cancel event dan forward teks ke manager.
+ * 1. Chat input interception — if a player has a pending ChatInputManager session,
+ *    cancels the event and forwards text to the manager.
+ *    Cancel keyword: "cancel" (case-insensitive, English).
  *
- * 2. Clan tag injection — jika chat.tag-enabled = true di config,
- *    tambahkan tag clan sebagai PREFIX (di depan display name) atau
- *    SUFFIX (di belakang display name).
- *    Chat format asli dari plugin lain (EssentialsChat, dll) tidak disentuh —
- *    kita hanya memodifikasi displayName player di event ini.
- *
- * Priority LOWEST untuk intercept input (tangkap sebelum plugin lain).
- * Priority HIGH untuk tag injection (setelah plugin chat lain format pesannya).
+ * 2. Clan tag injection — if chat.tag-enabled = true in config,
+ *    adds the clan tag as PREFIX or SUFFIX to the player's display name
+ *    for that chat event only.
  */
 public class ChatListener implements Listener {
 
@@ -47,14 +43,13 @@ public class ChatListener implements Listener {
 
         if (!plugin.getChatInputManager().hasPendingInput(uuid)) return;
 
-        // Extract plain text
         String rawText = PlainTextComponentSerializer.plainText()
                 .serialize(event.originalMessage());
 
-        // Cancel — pesan ini dikonsumsi sebagai input, bukan dikirim ke chat
+        // Cancel — consumed as input, not sent to chat
         event.setCancelled(true);
 
-        // Forward ke ChatInputManager (callback dispatch ke main thread)
+        // Forward to ChatInputManager (dispatches callback to main thread)
         plugin.getChatInputManager().handleInput(uuid, rawText);
     }
 
@@ -68,21 +63,17 @@ public class ChatListener implements Listener {
         UUID uuid     = player.getUniqueId();
 
         Clan clan = plugin.getClanManager().getClanByPlayer(uuid);
-        if (clan == null) return; // tidak di clan — skip
+        if (clan == null) return;
 
         String tagFormat  = plugin.getConfigManager().getChatTagFormat();
         String position   = plugin.getConfigManager().getChatTagPosition(); // PREFIX | SUFFIX
         String coloredTag = clan.getColoredTag();
 
-        // Resolve tag component dari config format
-        // tagFormat contoh: "<gray>[{tag}<gray>] " → ganti {tag} dengan colored tag
         String resolvedTag = tagFormat.replace("{tag}", coloredTag);
         Component tagComponent = mm.deserialize(resolvedTag);
 
-        // Ambil display name saat ini
         Component originalName = event.getPlayer().displayName();
 
-        // Inject tag ke display name untuk event ini saja
         Component newName;
         if ("SUFFIX".equals(position)) {
             newName = originalName.append(tagComponent);
@@ -91,8 +82,6 @@ public class ChatListener implements Listener {
             newName = tagComponent.append(originalName);
         }
 
-        // Override display name hanya untuk event ini via renderer
-        // Ini lebih aman daripada setDisplayName() permanen
         event.renderer((source, sourceDisplayName, message, viewer) ->
                 newName
                         .append(Component.text(": "))

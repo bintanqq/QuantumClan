@@ -3,7 +3,6 @@ package me.bintanq.quantumclan.economy.impl;
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.database.dao.CoinsDAO;
 import me.bintanq.quantumclan.economy.EconomyProvider;
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 import java.util.UUID;
@@ -12,9 +11,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * EconomyProvider for the built-in Coins system.
  * Coins are stored in SQLite via CoinsDAO.
- * This is used as a secondary premium currency (not the primary economy provider).
- *
- * All operations are async via CoinsDAO CompletableFutures.
+ * Used as a secondary premium currency (not the primary economy provider).
  */
 public class CoinsProvider implements EconomyProvider {
 
@@ -22,7 +19,7 @@ public class CoinsProvider implements EconomyProvider {
     private final CoinsDAO coinsDAO;
 
     public CoinsProvider(QuantumClan plugin, CoinsDAO coinsDAO) {
-        this.plugin = plugin;
+        this.plugin   = plugin;
         this.coinsDAO = coinsDAO;
     }
 
@@ -54,8 +51,7 @@ public class CoinsProvider implements EconomyProvider {
 
     public CompletableFuture<Boolean> has(UUID uuid, double amount) {
         if (!isAvailable()) return CompletableFuture.completedFuture(false);
-        return coinsDAO.getCoins(uuid)
-                .thenApply(coins -> coins >= (long) Math.ceil(amount));
+        return coinsDAO.getCoins(uuid).thenApply(coins -> coins >= (long) Math.ceil(amount));
     }
 
     @Override
@@ -69,9 +65,7 @@ public class CoinsProvider implements EconomyProvider {
         if (intAmount <= 0) return CompletableFuture.completedFuture(false);
 
         return coinsDAO.getCoins(uuid).thenCompose(current -> {
-            if (current < intAmount) {
-                return CompletableFuture.completedFuture(false);
-            }
+            if (current < intAmount) return CompletableFuture.completedFuture(false);
             return coinsDAO.setCoins(uuid, current - intAmount, "withdraw");
         });
     }
@@ -81,14 +75,16 @@ public class CoinsProvider implements EconomyProvider {
         return deposit(player.getUniqueId(), amount, "deposit");
     }
 
+    /**
+     * Public overload — deposit with a specific reason for ledger logging.
+     */
     public CompletableFuture<Boolean> deposit(UUID uuid, double amount, String reason) {
         if (!isAvailable()) return CompletableFuture.completedFuture(false);
         long intAmount = (long) Math.ceil(amount);
         if (intAmount <= 0) return CompletableFuture.completedFuture(false);
 
         return coinsDAO.getCoins(uuid).thenCompose(current ->
-                coinsDAO.setCoins(uuid, current + intAmount, reason)
-        );
+                coinsDAO.setCoins(uuid, current + intAmount, reason));
     }
 
     /**
@@ -98,8 +94,7 @@ public class CoinsProvider implements EconomyProvider {
         if (!isAvailable()) return CompletableFuture.completedFuture(false);
         if (amount <= 0) return CompletableFuture.completedFuture(false);
         return coinsDAO.getCoins(uuid).thenCompose(current ->
-                coinsDAO.setCoins(uuid, current + amount, reason)
-        );
+                coinsDAO.setCoins(uuid, current + amount, reason));
     }
 
     /**
@@ -112,6 +107,7 @@ public class CoinsProvider implements EconomyProvider {
 
     @Override
     public String format(double amount) {
-        return (long) Math.ceil(amount) + " Coins";
+        String coinsName = plugin.getConfigManager().getCoinsName();
+        return (long) Math.ceil(amount) + " " + coinsName;
     }
 }

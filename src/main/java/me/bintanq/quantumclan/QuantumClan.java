@@ -33,6 +33,7 @@ public class QuantumClan extends JavaPlugin {
     private ShopConfigManager   shopConfigManager;
     private WarConfigManager    warConfigManager;
     private RolesConfigManager  rolesConfigManager;
+    private GuiConfigManager    guiConfigManager;
 
     // ── Database ──────────────────────────────────────────────
     private DatabaseManager  databaseManager;
@@ -65,6 +66,7 @@ public class QuantumClan extends JavaPlugin {
     private BuffTracker         buffTracker;
     private ContributionManager contributionManager;
     private SpyScrollManager    spyScrollManager;
+    private CoinsShopManager    coinsShopManager;
 
     // ── MiniMessage ───────────────────────────────────────────
     private final MiniMessage mm = MiniMessage.miniMessage();
@@ -189,6 +191,7 @@ public class QuantumClan extends JavaPlugin {
         saveResource("shop.yml",     false);
         saveResource("war.yml",      false);
         saveResource("roles.yml",    false);
+        saveResource("gui.yml",      false);
     }
 
     private boolean loadConfigs() {
@@ -198,6 +201,7 @@ public class QuantumClan extends JavaPlugin {
             shopConfigManager  = new ShopConfigManager(this);
             warConfigManager   = new WarConfigManager(this);
             rolesConfigManager = new RolesConfigManager(this);
+            guiConfigManager   = new GuiConfigManager(this);
             return true;
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "[QuantumClan] Config load error", e);
@@ -276,13 +280,12 @@ public class QuantumClan extends JavaPlugin {
         bountyManager       = new BountyManager(this);
         contributionManager = new ContributionManager(this);
         clanShopManager     = new ClanShopManager(this);
+        coinsShopManager    = new CoinsShopManager(this);
         warManager          = new WarManager(this);
         warScheduler        = new WarScheduler(this);
 
         bountyManager.startExpiryScheduler();
         warScheduler.schedule();
-
-        // Hologram updater DIHAPUS — leaderboard via PlaceholderAPI saja.
     }
 
     private void registerListeners() {
@@ -356,6 +359,7 @@ public class QuantumClan extends JavaPlugin {
     public ShopConfigManager  getShopConfigManager()     { return shopConfigManager; }
     public WarConfigManager   getWarConfigManager()      { return warConfigManager; }
     public RolesConfigManager getRolesConfigManager()    { return rolesConfigManager; }
+    public GuiConfigManager   getGuiConfigManager()      { return guiConfigManager; }
     public DatabaseManager    getDatabaseManager()       { return databaseManager; }
     public ClanDAO            getClanDAO()               { return clanDAO; }
     public MemberDAO          getMemberDAO()             { return memberDAO; }
@@ -373,6 +377,7 @@ public class QuantumClan extends JavaPlugin {
     public WarManager         getWarManager()            { return warManager; }
     public WarScheduler       getWarScheduler()          { return warScheduler; }
     public ClanShopManager    getClanShopManager()       { return clanShopManager; }
+    public CoinsShopManager   getCoinsShopManager()      { return coinsShopManager; }
     public BuffTracker        getBuffTracker()           { return buffTracker; }
     public ContributionManager getContributionManager() { return contributionManager; }
     public SpyScrollManager   getSpyScrollManager()     { return spyScrollManager; }
