@@ -1,4 +1,196 @@
 package me.bintanq.quantumclan.command;
 
-public class QClanCommand {
+import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.command.sub.*;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Routes /qclan <subcommand> to the appropriate SubCommand handler.
+ */
+public class QClanCommand implements CommandExecutor, TabCompleter {
+
+    private final QuantumClan plugin;
+
+    // Sub-command instances
+    private final CreateCommand       create;
+    private final InviteCommand       invite;
+    private final KickCommand         kick;
+    private final LeaveCommand        leave;
+    private final InfoCommand         info;
+    private final HomeCommand         home;
+    private final SetHomeCommand      sethome;
+    private final DelHomeCommand      delhome;
+    private final DepositCommand      deposit;
+    private final ShopCommand         shop;
+    private final BountyCommand       bounty;
+    private final WarCommand          war;
+    private final UpgradeCommand      upgrade;
+    private final TopCommand          top;
+    private final RoleCommand         role;
+    private final TransferCommand     transfer;
+    private final DisbandCommand      disband;
+    private final AnnounceCommand     announce;
+    private final ContributionCommand contribution;
+    private final AcceptCommand       accept;
+    private final DeclineCommand      decline;
+
+    public QClanCommand(QuantumClan plugin) {
+        this.plugin       = plugin;
+        create       = new CreateCommand(plugin);
+        invite       = new InviteCommand(plugin);
+        kick         = new KickCommand(plugin);
+        leave        = new LeaveCommand(plugin);
+        info         = new InfoCommand(plugin);
+        home         = new HomeCommand(plugin);
+        sethome      = new SetHomeCommand(plugin);
+        delhome      = new DelHomeCommand(plugin);
+        deposit      = new DepositCommand(plugin);
+        shop         = new ShopCommand(plugin);
+        bounty       = new BountyCommand(plugin);
+        war          = new WarCommand(plugin);
+        upgrade      = new UpgradeCommand(plugin);
+        top          = new TopCommand(plugin);
+        role         = new RoleCommand(plugin);
+        transfer     = new TransferCommand(plugin);
+        disband      = new DisbandCommand(plugin);
+        announce     = new AnnounceCommand(plugin);
+        contribution = new ContributionCommand(plugin);
+        accept       = new AcceptCommand(plugin);
+        decline      = new DeclineCommand(plugin);
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
+                             @NotNull String label, @NotNull String[] args) {
+
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return true;
+        }
+
+        if (!player.hasPermission("quantumclan.use")) {
+            plugin.sendMessage(player, "error.no-permission");
+            return true;
+        }
+
+        if (args.length == 0) {
+            sendHelp(player);
+            return true;
+        }
+
+        String sub = args[0].toLowerCase();
+        String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
+
+        switch (sub) {
+            case "create"       -> create.execute(player, subArgs);
+            case "invite"       -> invite.execute(player, subArgs);
+            case "accept"       -> accept.execute(player, subArgs);
+            case "decline"      -> decline.execute(player, subArgs);
+            case "kick"         -> kick.execute(player, subArgs);
+            case "leave"        -> leave.execute(player, subArgs);
+            case "info"         -> info.execute(player, subArgs);
+            case "home"         -> home.execute(player, subArgs);
+            case "sethome"      -> sethome.execute(player, subArgs);
+            case "delhome"      -> delhome.execute(player, subArgs);
+            case "deposit"      -> deposit.execute(player, subArgs);
+            case "shop"         -> shop.execute(player, subArgs);
+            case "bounty"       -> bounty.execute(player, subArgs);
+            case "war"          -> war.execute(player, subArgs);
+            case "upgrade"      -> upgrade.execute(player, subArgs);
+            case "top"          -> top.execute(player, subArgs);
+            case "role"         -> role.execute(player, subArgs);
+            case "transfer"     -> transfer.execute(player, subArgs);
+            case "disband"      -> disband.execute(player, subArgs);
+            case "announce"     -> announce.execute(player, subArgs);
+            case "contribution",
+                 "contrib"      -> contribution.execute(player, subArgs);
+            default             -> plugin.sendMessage(player, "error.unknown-subcommand");
+        }
+
+        return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
+                                                @NotNull Command command,
+                                                @NotNull String alias,
+                                                @NotNull String[] args) {
+        if (!(sender instanceof Player)) return List.of();
+
+        if (args.length == 1) {
+            List<String> subs = List.of(
+                    "create", "invite", "accept", "decline", "kick", "leave", "info",
+                    "home", "sethome", "delhome", "deposit", "shop", "bounty",
+                    "war", "upgrade", "top", "role", "transfer", "disband",
+                    "announce", "contribution"
+            );
+            String partial = args[0].toLowerCase();
+            return subs.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
+        }
+
+        if (args.length >= 2) {
+            String sub = args[0].toLowerCase();
+            return switch (sub) {
+                case "bounty" -> {
+                    if (args.length == 2) {
+                        List<String> opts = List.of("place", "board", "submit");
+                        yield opts.stream().filter(s -> s.startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    yield List.of();
+                }
+                case "war" -> {
+                    if (args.length == 2) {
+                        List<String> opts = List.of("register", "leave");
+                        yield opts.stream().filter(s -> s.startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    yield List.of();
+                }
+                case "role" -> {
+                    if (args.length == 2) {
+                        yield plugin.getClanManager().getClanByPlayer(((Player) sender).getUniqueId()) != null
+                                ? List.of("set") : List.of();
+                    }
+                    if (args.length == 4) {
+                        yield plugin.getRolesConfigManager().getRoleNames().stream()
+                                .filter(r -> r.startsWith(args[3].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    yield List.of();
+                }
+                default -> List.of();
+            };
+        }
+
+        return List.of();
+    }
+
+    private void sendHelp(Player player) {
+        plugin.sendRaw(player, "<gold>━━━━━━ <yellow>QuantumClan Commands <gold>━━━━━━");
+        plugin.sendRaw(player, "<yellow>/qclan create <gray>- Buat clan baru");
+        plugin.sendRaw(player, "<yellow>/qclan invite <player> <gray>- Undang player");
+        plugin.sendRaw(player, "<yellow>/qclan kick <player> <gray>- Keluarkan member");
+        plugin.sendRaw(player, "<yellow>/qclan leave <gray>- Keluar dari clan");
+        plugin.sendRaw(player, "<yellow>/qclan info [clan] <gray>- Info clan");
+        plugin.sendRaw(player, "<yellow>/qclan home [nama] <gray>- Teleport ke home");
+        plugin.sendRaw(player, "<yellow>/qclan sethome <nama> <gray>- Set home");
+        plugin.sendRaw(player, "<yellow>/qclan shop <gray>- Buka clan shop");
+        plugin.sendRaw(player, "<yellow>/qclan bounty <place|board|submit> <gray>- Sistem bounty");
+        plugin.sendRaw(player, "<yellow>/qclan war <register|leave> <gray>- Registrasi war");
+        plugin.sendRaw(player, "<yellow>/qclan upgrade <gray>- Upgrade level clan");
+        plugin.sendRaw(player, "<yellow>/qclan top <gray>- Leaderboard clan");
+        plugin.sendRaw(player, "<yellow>/qclan contribution <gray>- Contribution shop");
+        plugin.sendRaw(player, "<gold>━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    }
 }
