@@ -5,8 +5,7 @@
 [![Paper](https://img.shields.io/badge/Paper-1.21.x-blue)](https://papermc.io)
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://adoptium.net)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![JitPack](https://jitpack.io/v/bintanq/QuantumClan.svg)](https://jitpack.io/#bintanq/QuantumClan)
-
+[![API](https://jitpack.io/v/bintanqq/QuantumClan.svg)](https://jitpack.io/#bintanqq/QuantumClan)
 ---
 
 ## ✨ Features
@@ -194,8 +193,8 @@ QuantumClan ships a separate `QuantumClan-API` module published on JitPack.
 <dependencies>
     <dependency>
         <groupId>com.github.bintanq.QuantumClan</groupId>
-        <artifactId>QuantumClan-API</artifactId>
-        <version>v1.0.0</version>
+        <artifactId>QuantumClan</artifactId>
+        <version>1.0.0</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
