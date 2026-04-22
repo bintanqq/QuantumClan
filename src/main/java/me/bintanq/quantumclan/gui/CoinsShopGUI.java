@@ -22,13 +22,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Coins Shop GUI — allows players to spend built-in Coins on items.
- * Items are loaded from the coins-shop section in shop.yml.
  *
- * Layout (54 slots):
- *  Slot 4  — balance display
- *  Slots 10-16, 19-25, 28-34 — shop items
- *  Slot 49 — Close
- *  Slot 45 — Prev / Slot 53 — Next
+ * BUG FIX #3: Price was shown twice — once from shop.yml lore (containing {cost})
+ * and once from the shop-price-label appended below. Now the price label is ONLY
+ * appended if the item's lore doesn't already contain a {cost} placeholder.
+ * Standardized approach: shop.yml lore handles description, the GUI appends
+ * a single formatted price/affordability line.
+ *
+ * ADDITION: backAction field + openFromMenu() for back-navigation support.
+ * When navigating pages internally, backAction is forwarded so the close button
+ * always returns to the parent menu regardless of which page the player is on.
  */
 public class CoinsShopGUI implements InventoryHolder {
 
@@ -40,20 +43,31 @@ public class CoinsShopGUI implements InventoryHolder {
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    private final QuantumClan plugin;
-    private final MiniMessage mm;
-    private final Player viewer;
-    private final int page;
+    private final QuantumClan  plugin;
+    private final MiniMessage  mm;
+    private final Player       viewer;
+    private final int          page;
     private final List<CoinsItem> items;
-    private Inventory inventory;
+    private final Runnable     backAction; // null = just close inventory
+    private Inventory          inventory;
 
-    public CoinsShopGUI(QuantumClan plugin, Player viewer, int page) {
-        this.plugin  = plugin;
-        this.mm      = plugin.getMiniMessage();
-        this.viewer  = viewer;
-        this.page    = Math.max(0, page);
-        this.items   = plugin.getShopConfigManager().getCoinsShopItems();
+    // ── Constructors ────────────────────────────────────────────────────────
+
+    public CoinsShopGUI(QuantumClan plugin, Player viewer, int page, Runnable backAction) {
+        this.plugin     = plugin;
+        this.mm         = plugin.getMiniMessage();
+        this.viewer     = viewer;
+        this.page       = Math.max(0, page);
+        this.items      = plugin.getShopConfigManager().getCoinsShopItems();
+        this.backAction = backAction;
     }
+
+    /** Backward-compatible constructor (no back navigation). */
+    public CoinsShopGUI(QuantumClan plugin, Player viewer, int page) {
+        this(plugin, viewer, page, null);
+    }
+
+    // ── Build ────────────────────────────────────────────────────────────────
 
     public Inventory build() {
         var gc = plugin.getGuiConfigManager();
@@ -75,7 +89,6 @@ public class CoinsShopGUI implements InventoryHolder {
         var gc = plugin.getGuiConfigManager();
         String coinsName = plugin.getConfigManager().getCoinsName();
 
-        // Get balance synchronously from cache is not possible — show async loaded
         plugin.getCoinsProvider().getCoins(viewer.getUniqueId()).thenAccept(balance ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (inventory == null) return;
@@ -103,6 +116,10 @@ public class CoinsShopGUI implements InventoryHolder {
             meta.displayName(mm.deserialize("<!italic>" + ci.getName()));
 
             List<Component> lore = new ArrayList<>();
+
+            // BUG FIX #3: Resolve lore from shop.yml — these lines may already contain
+            // {cost}/{coins-name} as description text. We resolve them but do NOT
+            // add a separate price line afterwards to avoid duplication.
             for (String line : ci.getLore()) {
                 String resolved = line
                         .replace("{cost}", String.valueOf(ci.getCostCoins()))
@@ -110,12 +127,17 @@ public class CoinsShopGUI implements InventoryHolder {
                 lore.add(mm.deserialize("<!italic>" + resolved));
             }
 
-            // Add a "price" line and affordability indicator
-            lore.add(Component.empty());
-            lore.add(mm.deserialize("<!italic>" + plugin.getMessagesManager()
-                    .get("coins.shop-price-label",
-                            "{cost}", String.valueOf(ci.getCostCoins()),
-                            "{coins-name}", coinsName)));
+            // Only append the price line if the shop.yml lore doesn't already show it.
+            boolean loreAlreadyHasPrice = ci.getLore().stream()
+                    .anyMatch(l -> l.contains("{cost}") || l.toLowerCase().contains("cost:"));
+
+            if (!loreAlreadyHasPrice) {
+                lore.add(Component.empty());
+                lore.add(mm.deserialize("<!italic>" + plugin.getMessagesManager()
+                        .get("coins.shop-price-label",
+                                "{cost}", String.valueOf(ci.getCostCoins()),
+                                "{coins-name}", coinsName)));
+            }
 
             meta.lore(lore);
             item.setItemMeta(meta);
@@ -129,12 +151,12 @@ public class CoinsShopGUI implements InventoryHolder {
 
         inventory.setItem(gc.getCoinsShopCloseSlot(),
                 makeItem(Material.BARRIER,
-                        plugin.getGuiConfigManager().getString("coins-shop.close.name", "<white>Close"),
+                        plugin.getMessagesManager().get("gui.close"),
                         Collections.emptyList()));
 
         if (page > 0) {
             inventory.setItem(gc.getCoinsShopPrevSlot(),
-                    makeItem(Material.ARROW, gc.getString("coins-shop.prev.name", "<white>« Previous"),
+                    makeItem(Material.ARROW, plugin.getMessagesManager().get("gui.prev"),
                             List.of(mm.deserialize(plugin.getMessagesManager()
                                     .get("gui.page-info",
                                             "{current}", String.valueOf(page),
@@ -142,7 +164,7 @@ public class CoinsShopGUI implements InventoryHolder {
         }
         if (page < totalPages - 1) {
             inventory.setItem(gc.getCoinsShopNextSlot(),
-                    makeItem(Material.ARROW, gc.getString("coins-shop.next.name", "<white>Next »"),
+                    makeItem(Material.ARROW, plugin.getMessagesManager().get("gui.next"),
                             List.of(mm.deserialize(plugin.getMessagesManager()
                                     .get("gui.page-info",
                                             "{current}", String.valueOf(page + 2),
@@ -150,14 +172,30 @@ public class CoinsShopGUI implements InventoryHolder {
         }
     }
 
+    // ── Click handler ────────────────────────────────────────────────────────
+
     public void handleClick(Player player, int slot, ClickType click) {
         UUID uuid = player.getUniqueId();
         if (!processing.add(uuid)) return;
         try {
             var gc = plugin.getGuiConfigManager();
-            if (slot == gc.getCoinsShopCloseSlot()) { player.closeInventory(); return; }
-            if (slot == gc.getCoinsShopPrevSlot() && page > 0) { openPage(player, page - 1); return; }
-            if (slot == gc.getCoinsShopNextSlot() && page < getTotalPages() - 1) { openPage(player, page + 1); return; }
+
+            if (slot == gc.getCoinsShopCloseSlot()) {
+                // If a backAction is registered, delegate to it (e.g. reopen parent menu).
+                if (backAction != null) backAction.run();
+                else player.closeInventory();
+                return;
+            }
+
+            // Page navigation — forward backAction so close still works on new page
+            if (slot == gc.getCoinsShopPrevSlot() && page > 0) {
+                openPage(player, page - 1);
+                return;
+            }
+            if (slot == gc.getCoinsShopNextSlot() && page < getTotalPages() - 1) {
+                openPage(player, page + 1);
+                return;
+            }
 
             for (int i = 0; i < ITEM_SLOTS.length; i++) {
                 if (ITEM_SLOTS[i] == slot) {
@@ -174,20 +212,40 @@ public class CoinsShopGUI implements InventoryHolder {
         }
     }
 
+    /** Internal page flip — carries backAction forward. */
     private void openPage(Player player, int newPage) {
         player.closeInventory();
-        player.openInventory(new CoinsShopGUI(plugin, player, newPage).build());
+        player.openInventory(new CoinsShopGUI(plugin, player, newPage, backAction).build());
     }
 
     private int getTotalPages() {
         return Math.max(1, (int) Math.ceil(items.size() / (double) ITEM_SLOTS.length));
     }
 
+    // ── Static openers ───────────────────────────────────────────────────────
+
+    /** Opens page 0 without back navigation (original behaviour). */
     public static void open(QuantumClan plugin, Player player) {
         player.openInventory(new CoinsShopGUI(plugin, player, 0).build());
     }
 
+    /**
+     * Opens from a parent menu. The close/back button will invoke {@code backAction}
+     * instead of simply closing, and backAction is forwarded on page flips.
+     *
+     * <pre>{@code
+     * CoinsShopGUI.openFromMenu(plugin, player, () -> MainMenuGUI.open(plugin, player));
+     * }</pre>
+     */
+    public static void openFromMenu(QuantumClan plugin, Player player, Runnable backAction) {
+        player.openInventory(new CoinsShopGUI(plugin, player, 0, backAction).build());
+    }
+
+    // ── InventoryHolder ──────────────────────────────────────────────────────
+
     @Override public Inventory getInventory() { return inventory; }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private ItemStack makeItem(Material material, String name, List<Component> lore) {
         ItemStack item = new ItemStack(material);

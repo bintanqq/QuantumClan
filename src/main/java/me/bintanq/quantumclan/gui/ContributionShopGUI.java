@@ -22,13 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Contribution Shop GUI — exchange Contribution Points for personal rewards.
- *
- * Layout (54 slots):
- *  Slot  4 — Player's current contribution points
- *  Slots 10-16, 19-25, 28-34 — contribution shop items
- *  Slot 49 — Close
- *  Slot 45 — Prev / Slot 53 — Next
+ * Contribution Shop GUI — Bug 7: back button support.
  */
 public class ContributionShopGUI implements InventoryHolder {
 
@@ -46,21 +40,33 @@ public class ContributionShopGUI implements InventoryHolder {
     private final Player viewer;
     private final int page;
     private final List<ContribItem> items;
+    private final GUINavigation backAction;
     private Inventory inventory;
 
-    public ContributionShopGUI(QuantumClan plugin, Player viewer, int page) {
-        this.plugin  = plugin;
-        this.mm      = plugin.getMiniMessage();
-        this.viewer  = viewer;
-        this.page    = Math.max(0, page);
-        this.items   = plugin.getShopConfigManager().getContributionShopItems();
+    public ContributionShopGUI(QuantumClan plugin, Player viewer, int page, GUINavigation backAction) {
+        this.plugin     = plugin;
+        this.mm         = plugin.getMiniMessage();
+        this.viewer     = viewer;
+        this.page       = Math.max(0, page);
+        this.items      = plugin.getShopConfigManager().getContributionShopItems();
+        this.backAction = backAction;
     }
 
     public Inventory build() {
-        inventory = Bukkit.createInventory(this, SIZE,
-                mm.deserialize("<dark_gray>[ <aqua>Contribution Shop <dark_gray>]"));
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
 
-        fillBorder();
+        inventory = Bukkit.createInventory(this, SIZE, mm.deserialize(gc.getContribShopTitle()));
+
+        ItemStack glass = makeItem(gc.getContribShopFiller(), " ", Collections.emptyList());
+        for (int i = 0; i < SIZE; i++) {
+            if (!isItemSlot(i) && i != gc.getContribShopPointsSlot()
+                    && i != gc.getContribShopCloseSlot()
+                    && i != gc.getContribShopPrevSlot()
+                    && i != gc.getContribShopNextSlot())
+                inventory.setItem(i, glass);
+        }
+
         setPointsDisplay();
         placeItems();
         setNavigation();
@@ -68,27 +74,23 @@ public class ContributionShopGUI implements InventoryHolder {
         return inventory;
     }
 
-    private void fillBorder() {
-        ItemStack glass = makeItem(Material.CYAN_STAINED_GLASS_PANE, " ", Collections.emptyList());
-        for (int i = 0; i < SIZE; i++) {
-            if (!isItemSlot(i) && i != 4 && i != 45 && i != 49 && i != 53)
-                inventory.setItem(i, glass);
-        }
-    }
-
     private void setPointsDisplay() {
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
         ClanMember member = plugin.getClanManager().getMember(viewer.getUniqueId());
         int points = member != null ? member.getContributionPoints() : 0;
 
-        inventory.setItem(4, makeItem(Material.NETHER_STAR,
-                "<aqua>Contribution Points Kamu",
+        inventory.setItem(gc.getContribShopPointsSlot(), makeItem(gc.getContribShopPointsMat(),
+                gc.getContribShopPointsName(),
                 List.of(
-                        mm.deserialize("<yellow>" + points + " <aqua>Poin"),
-                        mm.deserialize("<gray>Dapatkan poin dari deposit, bounty, dan war.")
+                        mm.deserialize(msg.get("contribution.points-display",
+                                "{points}", String.valueOf(points))),
+                        mm.deserialize(msg.get("contribution.points-hint"))
                 )));
     }
 
     private void placeItems() {
+        var msg = plugin.getMessagesManager();
         ClanMember member = plugin.getClanManager().getMember(viewer.getUniqueId());
         int playerPoints  = member != null ? member.getContributionPoints() : 0;
 
@@ -107,16 +109,14 @@ public class ContributionShopGUI implements InventoryHolder {
 
             List<Component> lore = new ArrayList<>();
             for (String line : ci.getLore()) {
-                String resolved = line
-                        .replace("{cost}", String.valueOf(ci.getCostPoints()));
-                lore.add(mm.deserialize("<!italic>" + resolved));
+                lore.add(mm.deserialize("<!italic>" + line.replace("{cost}", String.valueOf(ci.getCostPoints()))));
             }
             lore.add(Component.empty());
             if (playerPoints >= ci.getCostPoints()) {
-                lore.add(mm.deserialize("<!italic><green>✔ Poin cukup"));
+                lore.add(mm.deserialize("<!italic>" + msg.get("contribution.can-afford")));
             } else {
-                lore.add(mm.deserialize("<!italic><red>✘ Poin kurang <yellow>"
-                        + (ci.getCostPoints() - playerPoints)));
+                lore.add(mm.deserialize("<!italic>" + msg.get("contribution.cannot-afford",
+                        "{value}", String.valueOf(ci.getCostPoints() - playerPoints))));
             }
 
             meta.lore(lore);
@@ -126,28 +126,41 @@ public class ContributionShopGUI implements InventoryHolder {
     }
 
     private void setNavigation() {
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
         int totalPages = Math.max(1, (int) Math.ceil(items.size() / (double) ITEM_SLOTS.length));
-        inventory.setItem(49, makeItem(Material.BARRIER, "<red>Tutup", Collections.emptyList()));
+
+        String closeOrBack = backAction != null ? msg.get("gui.back") : msg.get("gui.close");
+        inventory.setItem(gc.getContribShopCloseSlot(),
+                makeItem(Material.BARRIER, closeOrBack, Collections.emptyList()));
+
         if (page > 0)
-            inventory.setItem(45, makeItem(Material.ARROW, "<yellow>« Sebelumnya",
-                    List.of(mm.deserialize("<gray>Hal. " + page + "/" + totalPages))));
+            inventory.setItem(gc.getContribShopPrevSlot(), makeItem(Material.ARROW,
+                    msg.get("gui.prev"),
+                    List.of(mm.deserialize(msg.get("gui.page-info",
+                            "{current}", String.valueOf(page), "{total}", String.valueOf(totalPages))))));
         if (page < totalPages - 1)
-            inventory.setItem(53, makeItem(Material.ARROW, "<yellow>Berikutnya »",
-                    List.of(mm.deserialize("<gray>Hal. " + (page + 2) + "/" + totalPages))));
+            inventory.setItem(gc.getContribShopNextSlot(), makeItem(Material.ARROW,
+                    msg.get("gui.next"),
+                    List.of(mm.deserialize(msg.get("gui.page-info",
+                            "{current}", String.valueOf(page + 2), "{total}", String.valueOf(totalPages))))));
     }
 
     public void handleClick(Player player, int slot, ClickType click) {
         UUID uuid = player.getUniqueId();
         if (!processing.add(uuid)) return;
         try {
-            int totalPages = Math.max(1,
-                    (int) Math.ceil(items.size() / (double) ITEM_SLOTS.length));
+            var gc = plugin.getGuiConfigManager();
+            int totalPages = Math.max(1, (int) Math.ceil(items.size() / (double) ITEM_SLOTS.length));
 
-            if (slot == 49) { player.closeInventory(); return; }
-            if (slot == 45 && page > 0) { openPage(player, page - 1); return; }
-            if (slot == 53 && page < totalPages - 1) { openPage(player, page + 1); return; }
+            if (slot == gc.getContribShopCloseSlot()) {
+                if (backAction != null) { player.closeInventory(); backAction.navigate(); }
+                else player.closeInventory();
+                return;
+            }
+            if (slot == gc.getContribShopPrevSlot() && page > 0) { openPage(player, page - 1); return; }
+            if (slot == gc.getContribShopNextSlot() && page < totalPages - 1) { openPage(player, page + 1); return; }
 
-            // Find clicked contrib item
             for (int i = 0; i < ITEM_SLOTS.length; i++) {
                 if (ITEM_SLOTS[i] == slot) {
                     int itemIndex = page * ITEM_SLOTS.length + i;
@@ -165,18 +178,18 @@ public class ContributionShopGUI implements InventoryHolder {
 
     private void openPage(Player player, int newPage) {
         player.closeInventory();
-        player.openInventory(new ContributionShopGUI(plugin, player, newPage).build());
+        player.openInventory(new ContributionShopGUI(plugin, player, newPage, backAction).build());
     }
 
     public static void open(QuantumClan plugin, Player player) {
-        player.openInventory(new ContributionShopGUI(plugin, player, 0).build());
+        player.openInventory(new ContributionShopGUI(plugin, player, 0, null).build());
     }
 
-    private boolean isItemSlot(int s) {
-        for (int x : ITEM_SLOTS) if (x == s) return true;
-        return false;
+    public static void openFromMenu(QuantumClan plugin, Player player, GUINavigation backAction) {
+        player.openInventory(new ContributionShopGUI(plugin, player, 0, backAction).build());
     }
 
+    private boolean isItemSlot(int s) { for (int x : ITEM_SLOTS) if (x == s) return true; return false; }
     @Override public Inventory getInventory() { return inventory; }
 
     private ItemStack makeItem(Material m, String name, List<Component> lore) {

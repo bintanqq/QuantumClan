@@ -4,7 +4,6 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.config.ShopConfigManager.ShopItem;
 import me.bintanq.quantumclan.model.Clan;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -23,24 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Clan Shop GUI — displays all clan-shop items loaded from shop.yml.
- *
- * Layout (54 slots):
- *  Slots 10-16, 19-25, 28-34 — shop items (max 21 visible per page)
- *  Slot 49 — Close button
- *  Slot 45 — Prev page
- *  Slot 53 — Next page
- *
- * Each item shows:
- *  - Name and lore from shop.yml
- *  - Price in Clan Money
- *  - Type indicator (BUFF / CONSUMABLE / UTILITY)
- *
- * Clicking an item either:
- *  - Opens ShopConfirmGUI if item.confirm == true
- *  - Triggers purchase directly if item.confirm == false
- *
- * Anti-dupe: per-player processing flag prevents double-click spam.
+ * Clan Shop GUI — Bug 4: "Kas" replaced with "Treasury", Bug 7: back button support.
  */
 public class ClanShopGUI implements InventoryHolder {
 
@@ -59,44 +41,42 @@ public class ClanShopGUI implements InventoryHolder {
     private final Player viewer;
     private final int page;
     private final List<ShopItem> items;
+    private final GUINavigation backAction;
     private Inventory inventory;
 
-    public ClanShopGUI(QuantumClan plugin, Player viewer, Clan clan, int page) {
-        this.plugin  = plugin;
-        this.mm      = plugin.getMiniMessage();
-        this.viewer  = viewer;
-        this.clan    = clan;
-        this.page    = Math.max(0, page);
-        this.items   = plugin.getShopConfigManager().getClanShopItems();
+    public ClanShopGUI(QuantumClan plugin, Player viewer, Clan clan, int page, GUINavigation backAction) {
+        this.plugin     = plugin;
+        this.mm         = plugin.getMiniMessage();
+        this.viewer     = viewer;
+        this.clan       = clan;
+        this.page       = Math.max(0, page);
+        this.items      = plugin.getShopConfigManager().getClanShopItems();
+        this.backAction = backAction;
     }
-
-    // ── Build ─────────────────────────────────────────────────
 
     public Inventory build() {
-        inventory = Bukkit.createInventory(this, SIZE,
-                mm.deserialize("<dark_gray>[ <gold>Clan Shop <dark_gray>]"));
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
 
-        fillBorder();
-        placeItems();
-        setNavigation();
-        setClanMoneyDisplay();
+        inventory = Bukkit.createInventory(this, SIZE, mm.deserialize(gc.getClanShopTitle()));
 
-        return inventory;
-    }
-
-    private void fillBorder() {
-        ItemStack glass = makeItem(Material.GRAY_STAINED_GLASS_PANE, " ", Collections.emptyList());
+        ItemStack glass = makeItem(gc.getClanShopFiller(), " ", Collections.emptyList());
         for (int i = 0; i < SIZE; i++) {
             boolean isItemSlot = false;
             for (int s : ITEM_SLOTS) if (s == i) { isItemSlot = true; break; }
             if (!isItemSlot) inventory.setItem(i, glass);
         }
+
+        placeItems();
+        setNavigation();
+        setTreasuryDisplay();
+
+        return inventory;
     }
 
     private void placeItems() {
-        int totalPages = getTotalPages();
-        int start      = page * ITEM_SLOTS.length;
-        int end        = Math.min(start + ITEM_SLOTS.length, items.size());
+        int start = page * ITEM_SLOTS.length;
+        int end   = Math.min(start + ITEM_SLOTS.length, items.size());
 
         for (int i = start; i < end; i++) {
             ShopItem shopItem = items.get(i);
@@ -106,33 +86,32 @@ public class ClanShopGUI implements InventoryHolder {
     }
 
     private ItemStack buildShopItem(ShopItem shopItem) {
+        var msg = plugin.getMessagesManager();
         ItemStack item = new ItemStack(shopItem.getMaterial());
         ItemMeta meta  = item.getItemMeta();
         if (meta == null) return item;
 
-        // Name from shop.yml
         meta.displayName(mm.deserialize("<!italic>" + shopItem.getName()));
 
-        // Lore: inject {price} placeholder then append type/cooldown info
         List<Component> lore = new ArrayList<>();
         for (String line : shopItem.getLore()) {
             String resolved = line
                     .replace("{price}", String.valueOf(shopItem.getPrice()))
-                    .replace("{cost}",  String.valueOf(shopItem.getPrice()));
+                    .replace("{cost}", String.valueOf(shopItem.getPrice()));
             lore.add(mm.deserialize("<!italic>" + resolved));
         }
 
-        // Append stock info (affordable check)
         lore.add(Component.empty());
+        // BUG FIX #4: Use "Treasury" not "Kas"
         if (clan.hasMoney(shopItem.getPrice())) {
-            lore.add(mm.deserialize("<!italic><green>✔ Kas cukup"));
+            lore.add(mm.deserialize("<!italic>" + msg.get("shop.can-afford")));
         } else {
             long deficit = shopItem.getPrice() - clan.getMoney();
-            lore.add(mm.deserialize("<!italic><red>✘ Kas kurang <yellow>" + deficit));
+            lore.add(mm.deserialize("<!italic>" + msg.get("shop.cannot-afford",
+                    "{value}", plugin.getEconomyProvider().format(deficit))));
         }
-
-        // Type badge
-        lore.add(mm.deserialize("<!italic><dark_gray>Tipe: <gray>" + shopItem.getType().name()));
+        lore.add(mm.deserialize("<!italic>" + msg.get("shop.type-label",
+                "{type}", shopItem.getType().name())));
 
         meta.lore(lore);
         item.setItemMeta(meta);
@@ -140,57 +119,68 @@ public class ClanShopGUI implements InventoryHolder {
     }
 
     private void setNavigation() {
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
         int totalPages = getTotalPages();
 
-        inventory.setItem(49, makeItem(Material.BARRIER, "<red>Tutup", Collections.emptyList()));
+        // BUG FIX #7: Back button if from menu
+        String closeName = backAction != null ? msg.get("gui.back") : msg.get("gui.close");
+        inventory.setItem(gc.getClanShopCloseSlot(),
+                makeItem(gc.getClanShopCloseMat(), closeName, Collections.emptyList()));
 
         if (page > 0) {
-            inventory.setItem(45, makeItem(Material.ARROW,
-                    "<yellow>« Sebelumnya",
-                    List.of(mm.deserialize("<gray>Halaman " + page + " / " + totalPages))));
+            inventory.setItem(gc.getClanShopPrevSlot(),
+                    makeItem(Material.ARROW, msg.get("gui.prev"),
+                            List.of(mm.deserialize(msg.get("gui.page-info",
+                                    "{current}", String.valueOf(page),
+                                    "{total}", String.valueOf(totalPages))))));
         }
         if (page < totalPages - 1) {
-            inventory.setItem(53, makeItem(Material.ARROW,
-                    "<yellow>Berikutnya »",
-                    List.of(mm.deserialize("<gray>Halaman " + (page + 2) + " / " + totalPages))));
+            inventory.setItem(gc.getClanShopNextSlot(),
+                    makeItem(Material.ARROW, msg.get("gui.next"),
+                            List.of(mm.deserialize(msg.get("gui.page-info",
+                                    "{current}", String.valueOf(page + 2),
+                                    "{total}", String.valueOf(totalPages))))));
         }
     }
 
-    private void setClanMoneyDisplay() {
+    private void setTreasuryDisplay() {
+        var gc  = plugin.getGuiConfigManager();
+        // BUG FIX #4: Use "Treasury" in the display name, not "Kas"
+        String treasuryName = gc.getClanShopTreasuryName()
+                .replace("{money}", plugin.getEconomyProvider().format(clan.getMoney()));
         List<Component> kasLore = List.of(
-                mm.deserialize("<gray>Kas tersedia untuk pembelian.")
-        );
-        inventory.setItem(4, makeItem(Material.GOLD_INGOT,
-                "<gold>Kas Clan: <yellow>" + clan.getMoney(), kasLore));
+                mm.deserialize(plugin.getMessagesManager().get("shop.treasury-insufficient")));
+        inventory.setItem(gc.getClanShopTreasurySlot(),
+                makeItem(gc.getClanShopTreasuryMat(), treasuryName, kasLore));
     }
-
-    // ── Click handler ─────────────────────────────────────────
 
     public void handleClick(Player player, int slot, ClickType click) {
         UUID uuid = player.getUniqueId();
         if (!processing.add(uuid)) return;
 
         try {
-            // Navigation
-            if (slot == 49) { player.closeInventory(); return; }
-            if (slot == 45 && page > 0) { openPage(player, page - 1); return; }
-            if (slot == 53 && page < getTotalPages() - 1) { openPage(player, page + 1); return; }
+            var gc = plugin.getGuiConfigManager();
 
-            // Item click — find which shop item was clicked
+            if (slot == gc.getClanShopCloseSlot()) {
+                if (backAction != null) { player.closeInventory(); backAction.navigate(); }
+                else player.closeInventory();
+                return;
+            }
+            if (slot == gc.getClanShopPrevSlot() && page > 0) { openPage(player, page - 1); return; }
+            if (slot == gc.getClanShopNextSlot() && page < getTotalPages() - 1) { openPage(player, page + 1); return; }
+
             ShopItem clicked = getShopItemAtSlot(slot);
             if (clicked == null) return;
 
-            // Re-fetch clan to get latest money (from cache)
             Clan latestClan = plugin.getClanManager().getClanById(clan.getId());
             if (latestClan == null) { player.closeInventory(); return; }
 
             if (clicked.isConfirm()) {
-                // Open confirm GUI
                 player.closeInventory();
-                ShopConfirmGUI confirmGui = new ShopConfirmGUI(plugin, player, latestClan, clicked);
+                ShopConfirmGUI confirmGui = new ShopConfirmGUI(plugin, player, latestClan, clicked, backAction);
                 player.openInventory(confirmGui.build());
             } else {
-                // Direct purchase (cheap items, no confirm needed)
                 player.closeInventory();
                 plugin.getClanShopManager().purchase(player, latestClan, clicked);
             }
@@ -214,7 +204,7 @@ public class ClanShopGUI implements InventoryHolder {
         player.closeInventory();
         Clan latestClan = plugin.getClanManager().getClanById(clan.getId());
         if (latestClan == null) return;
-        ClanShopGUI gui = new ClanShopGUI(plugin, player, latestClan, newPage);
+        ClanShopGUI gui = new ClanShopGUI(plugin, player, latestClan, newPage, backAction);
         player.openInventory(gui.build());
     }
 
@@ -222,17 +212,15 @@ public class ClanShopGUI implements InventoryHolder {
         return Math.max(1, (int) Math.ceil(items.size() / (double) ITEM_SLOTS.length));
     }
 
-    // ── Static open helper ────────────────────────────────────
-
     public static void open(QuantumClan plugin, Player player, Clan clan) {
-        ClanShopGUI gui = new ClanShopGUI(plugin, player, clan, 0);
-        player.openInventory(gui.build());
+        player.openInventory(new ClanShopGUI(plugin, player, clan, 0, null).build());
     }
 
-    @Override
-    public Inventory getInventory() { return inventory; }
+    public static void openFromMenu(QuantumClan plugin, Player player, Clan clan, GUINavigation backAction) {
+        player.openInventory(new ClanShopGUI(plugin, player, clan, 0, backAction).build());
+    }
 
-    // ── Item helper ───────────────────────────────────────────
+    @Override public Inventory getInventory() { return inventory; }
 
     private ItemStack makeItem(Material material, String name, List<Component> lore) {
         ItemStack item = new ItemStack(material);

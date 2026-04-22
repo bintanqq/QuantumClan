@@ -2,26 +2,26 @@
 # ║           QuantumClan - roles.yml                    ║
 # ╚══════════════════════════════════════════════════════╝
 #
-# Hierarki role berdasarkan urutan di sini (index 0 = tertinggi).
-# Leader selalu index 0 dan SELALU memiliki semua permission.
-# Tambah role baru di antara Officer dan Member sesuai kebutuhan.
+# Role hierarchy is based on the order here (index 0 = highest).
+# Leader is always at index 0 and ALWAYS possesses all permissions.
+# Add new roles between Officer and Member as needed.
 #
-# Permission nodes yang tersedia:
+# Available permission nodes:
 #   can-kick, can-invite, can-upgrade, can-access-shop,
 #   can-set-home, can-delete-home, can-deposit,
 #   can-declare-bounty, can-manage-war, can-announce,
 #   can-set-role, can-transfer, can-disband
 #
-# true  = role ini boleh melakukan aksi tersebut
-# false = role ini tidak boleh (akan ditolak dengan pesan error)
+# true  = this role is allowed to perform the action
+# false = this role is denied (will be rejected with an error message)
 
 roles:
 
   - name: leader
     display-name: "<gold><bold>Leader"
     color: "#FFD700"
-    # Leader selalu punya semua permission, list ini diabaikan oleh sistem
-    # tapi tetap ditulis untuk dokumentasi
+    # Leader always has all permissions; this list is ignored by the system
+    # but is kept here for documentation purposes.
     permissions:
       can-kick: true
       can-invite: true

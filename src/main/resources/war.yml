@@ -6,34 +6,34 @@
 schedule:
   # type: DAILY | WEEKLY | MONTHLY
   type: WEEKLY
-  # Jam mulai (format HH:mm, server timezone)
+  # Start time (format HH:mm, server timezone)
   time: "20:00"
-  # Untuk WEEKLY: MONDAY TUESDAY WEDNESDAY THURSDAY FRIDAY SATURDAY SUNDAY
+  # For WEEKLY: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
   day: SATURDAY
-  # Untuk MONTHLY: angka 1-28
+  # For MONTHLY: numbers 1-28
   day-of-month: 1
 
 # ── War Settings ──────────────────────────────────────────────
 # Format: LAST_STANDING | KILL_COUNT
 format: KILL_COUNT
 
-# Durasi war dalam menit (untuk KILL_COUNT)
+# War duration in minutes (for KILL_COUNT)
 duration-minutes: 20
 
-# Minimum member online agar clan bisa ikut war
+# Minimum online members required for a clan to participate
 min-members-online: 3
 
-# Maksimum clan yang bisa ikut war (0 = tidak terbatas)
+# Maximum number of clans that can join the war (0 = unlimited)
 max-clans: 0
 
-# Waktu registrasi sebelum war dimulai (menit)
+# Registration window before the war starts (minutes)
 registration-open-minutes: 60
 
-# Waktu countdown setelah registrasi ditutup sebelum teleport (detik)
+# Countdown time after registration closes before teleportation (seconds)
 countdown-seconds: 30
 
 # ── Arena ─────────────────────────────────────────────────────
-# Diset via /qclanadmin war setarena
+# Set via /qclanadmin war setarena
 arena:
   world: "world"
   x: 0.0
@@ -41,7 +41,7 @@ arena:
   z: 0.0
   yaw: 0.0
   pitch: 0.0
-  # Radius arena (untuk WorldGuard region)
+  # Arena radius (for WorldGuard region)
   radius: 100
 
 # ── Reputation Reward ─────────────────────────────────────────
@@ -49,11 +49,11 @@ reputation-reward: 20
 
 # ── Rewards ───────────────────────────────────────────────────
 rewards:
-  # Vault balance untuk setiap member clan pemenang
+  # Vault balance given to each member of the winning clan
   balance: 1000.0
-  # Built-in Coins untuk setiap member clan pemenang
+  # Built-in Coins given to each member of the winning clan
   coins: 500
-  # Item rewards (material + amount, diterima setiap member pemenang)
+  # Item rewards (material + amount, received by every winning member)
   items:
     - material: DIAMOND
       amount: 3
@@ -61,14 +61,14 @@ rewards:
       amount: 5
 
 # ── Broadcast ─────────────────────────────────────────────────
-# Interval broadcast kill count saat war (ticks, 200 = 10 detik)
+# Interval for broadcasting kill counts during war (ticks, 200 = 10 seconds)
 kill-broadcast-interval: 200
 
-# Format broadcast hasil war (MiniMessage)
+# War result broadcast format (MiniMessage)
 broadcast:
-  war-start: "<gold><bold>⚔ CLAN WAR DIMULAI!</bold></gold> <gray>Format: <yellow>{format}</yellow> | Durasi: <yellow>{duration} menit</yellow>"
-  war-end: "<gold><bold>⚔ CLAN WAR SELESAI!</bold></gold> <gray>Pemenang: <green><bold>{winner}</bold></green> dengan <yellow>{score}</yellow> poin!"
-  war-no-winner: "<gold><bold>⚔ CLAN WAR SELESAI!</bold></gold> <gray>Tidak ada pemenang!"
-  kill-count: "<dark_gray>[<gold>War</gold>]</dark_gray> <gray>Skor saat ini: {scores}"
-  registration-open: "<gold>[War]</gold> <gray>Registrasi war dibuka! Gunakan <yellow>/qclan war register</yellow> untuk mendaftar."
-  registration-closed: "<gold>[War]</gold> <gray>Registrasi war ditutup. War dimulai dalam <yellow>{seconds} detik</yellow>!"
+  war-start: "<gold><bold>⚔ CLAN WAR STARTED!</bold></gold> <gray>Format: <yellow>{format}</yellow> | Duration: <yellow>{duration} mins</yellow>"
+  war-end: "<gold><bold>⚔ CLAN WAR FINISHED!</bold></gold> <gray>Winner: <green><bold>{winner}</bold></green> with <yellow>{score}</yellow> points!"
+  war-no-winner: "<gold><bold>⚔ CLAN WAR FINISHED!</bold></gold> <gray>No winner declared!"
+  kill-count: "<dark_gray>[<gold>War</gold>]</dark_gray> <gray>Current scores: {scores}"
+  registration-open: "<gold>[War]</gold> <gray>Registration is open! Use <yellow>/qclan war register</yellow> to join."
+  registration-closed: "<gold>[War]</gold> <gray>Registration closed. War starts in <yellow>{seconds} seconds</yellow>!"

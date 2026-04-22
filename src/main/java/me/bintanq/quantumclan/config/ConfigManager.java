@@ -47,6 +47,26 @@ public class ConfigManager {
     public int  getMaxHomes(int level)     { LevelData d = levelDataMap.get(level); return d != null ? d.maxHomes : 1; }
     public int  getMaxLevel()              { return maxLevel; }
 
+    // ── Feature Toggles ───────────────────────────────────────
+
+    public boolean isFeatureEnabled(String feature) {
+        return cfg.getBoolean("features." + feature, true);
+    }
+
+    public boolean isAnnouncementsEnabled()  { return isFeatureEnabled("announcements"); }
+    public boolean isBountiesEnabled()       { return isFeatureEnabled("bounties"); }
+    public boolean isWarsEnabled()           { return isFeatureEnabled("wars"); }
+    public boolean isLevelingEnabled()       { return isFeatureEnabled("leveling"); }
+    public boolean isHomesEnabled()          { return isFeatureEnabled("homes"); }
+    public boolean isClanShopEnabled()       { return isFeatureEnabled("clan-shop"); }
+    public boolean isContributionsEnabled()  { return isFeatureEnabled("contributions"); }
+    public boolean isCoinsShopEnabled()      { return isFeatureEnabled("coins-shop"); }
+    public boolean isReputationEnabled()     { return isFeatureEnabled("reputation"); }
+    public boolean isXpBoostEnabled()        { return isFeatureEnabled("xp-boost"); }
+    public boolean isSpyScrollEnabled()      { return isFeatureEnabled("spy-scroll"); }
+    public boolean isDeathProtectionEnabled(){ return isFeatureEnabled("death-protection"); }
+    public boolean isClanShieldEnabled()     { return isFeatureEnabled("clan-shield"); }
+
     // ── Clan creation ─────────────────────────────────────────
 
     public double getClanCreationCost() { return cfg.getDouble("clan-creation-cost", 5000.0); }
@@ -83,7 +103,7 @@ public class ConfigManager {
 
     // ── Clan Hall ─────────────────────────────────────────────
 
-    public boolean isClanHallEnabled() { return cfg.getBoolean("clan-hall.enabled", false); }
+    public boolean isClanHallEnabled() { return cfg.getBoolean("features.clan-hall", false) || cfg.getBoolean("clan-hall.enabled", false); }
     public String  getClanHallEngine() { return cfg.getString("clan-hall.engine", "AUTO"); }
 
     // ── Disband ───────────────────────────────────────────────
@@ -103,20 +123,10 @@ public class ConfigManager {
 
     // ── Contribution weights ──────────────────────────────────
 
-    /**
-     * Points awarded per deposit-amount-unit.
-     * e.g. deposit-per-unit=1, deposit-amount-unit=100 → 1 point per 100 deposited
-     */
-    public int getContribDepositPerUnit()   { return cfg.getInt("contribution-weights.deposit-per-unit", 1); }
-
-    /**
-     * The denomination unit for deposit contribution.
-     * e.g. 1000 = 1 point per 1000, 100 = 1 point per 100
-     */
+    public int getContribDepositPerUnit()    { return cfg.getInt("contribution-weights.deposit-per-unit", 1); }
     public int getContribDepositAmountUnit() { return cfg.getInt("contribution-weights.deposit-amount-unit", 1000); }
-
-    public int getContribBountyComplete() { return cfg.getInt("contribution-weights.bounty-complete", 10); }
-    public int getContribWarWin()         { return cfg.getInt("contribution-weights.war-win", 25); }
+    public int getContribBountyComplete()    { return cfg.getInt("contribution-weights.bounty-complete", 10); }
+    public int getContribWarWin()            { return cfg.getInt("contribution-weights.war-win", 25); }
 
     // ── XP Boost ──────────────────────────────────────────────
 

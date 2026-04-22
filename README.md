@@ -297,3 +297,28 @@ Output jar: `plugin/target/QuantumClan-x.x.x.jar`
 ## 📄 License
 
 MIT — see [LICENSE](LICENSE).
+
+
+BUG LIST
+1. Ketika Upgrade level 2 chat malah level 3
+2. Lore/nama gui itu masih hardcoded dan berbahasa indonesia harusnya inggris
+3. Cost di coinsshop double text nya
+4. Jangan ada kata KAS lagi tapi ganti jadi apa gitu kas itu terlalu indo banget
+5. Clan banner aneh banget, bannernya cuman putih doang jir lah harusnya itu bisa di customize per clan gasih?
+6. Annoying banget ketika kita click item di gui gitu kan misal gagal atau apa itu langsung ngeclose dan itu annoying sih contoh ketika click clan homes dan ga ada homes jangan ngeclose jir aneh
+7. Dan juga di gui ini gabisa kah tombol back aja jangan close tapi kalo ngebuka dari command langsung ke gui spesifik itu gpp close aja tapi kalo dari main menu atau dari menu lain itu back biar bagus
+8. masih ada chat yang ngawur misal insufficient balance, harusnya you need $1.000 ini malah you have $1.000 wtf itu pas duit kurang re check lagi kalo ada message yang  ngawur
+9. add /clan help itu based on permission ngeluarin chatnya
+10. pas ngetik /clanadmin itu dia random banget jir chatny  kaya simbol simbol gajelas tolong fix (kalo bisa jangan hardcoded untuk help dll)
+11. POKONYA GUA MINTA SEMUA URUSAN TEXT YANG NGARUH KE PLAYER JANGAN SAMPE ADA YANG HARDCODED SAMA SEKALI
+
+Question:
+1. System Clan Hall itu gimana sih itu di set ama admin gitu kah berarti ada 1 clan hall misal di spawn dan itu bisa dipake semua clan gitu apa gmn?
+
+Feat Add:
+1. Add Opsi untuk kaya disable/enable announcement dll pokonya perbanyak opsi untuk semuanya agar lebih customizable
+
+QA:
+1. Check Semua Apakah ada unused key di semua yaml kalau ada hapus aja
+2. Ganti key yang masih bahasa indonesia (Kalau ada)
+3. API System Check apakah udah oke atau ada sesuatu yang rusak

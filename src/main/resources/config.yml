@@ -18,6 +18,38 @@ economy-provider: VAULT
 # Customizable display name for the built-in coin currency
 coins-name: "Coins"
 
+# ── Feature Toggles ───────────────────────────────────────────
+# Enable or disable specific features entirely
+features:
+  # Clan announcement system (/qclan announce)
+  announcements: true
+  # Bounty system (/qclan bounty)
+  bounties: true
+  # Clan war system (/qclan war)
+  wars: true
+  # Clan leveling/upgrade system (/qclan upgrade)
+  leveling: true
+  # Clan homes (/qclan home, sethome, delhome)
+  homes: true
+  # Clan shop (/qclan shop)
+  clan-shop: true
+  # Contribution points and shop (/qclan contribution)
+  contributions: true
+  # Coins shop (/qclan coins)
+  coins-shop: true
+  # Clan Hall (schematic placement)
+  clan-hall: false
+  # XP Boost from clan shop
+  xp-boost: true
+  # Spy Scroll from clan shop
+  spy-scroll: true
+  # Death Protection from clan shop
+  death-protection: true
+  # Clan Shield utility from clan shop
+  clan-shield: true
+  # Reputation system (tracks clan ranking)
+  reputation: true
+
 # ── Chat Tag ──────────────────────────────────────────────────
 chat:
   tag-enabled: true
@@ -38,6 +70,9 @@ bounty-expire-hours: 48
 bounty-min-amount: 100.0
 
 # ── Clan Hall ─────────────────────────────────────────────────
+# NOTE: Each clan has its own Hall location. An admin places the schematic
+# for a clan at a specific location using the schematic engine below.
+# The 'features.clan-hall' toggle above must also be true.
 clan-hall:
   enabled: false
   # AUTO detects FAWE first, falls back to NBT. Force: NBT or FAWE
@@ -64,7 +99,7 @@ contribution-weights:
   # Points awarded per deposit-amount-unit deposited
   deposit-per-unit: 1
   # The denomination unit for deposit contribution calculation
-  # e.g. 100 = 1 point per 100 deposited, 50 = 1 point per 50 deposited
+  # e.g. 1000 = 1 point per 1000 deposited
   deposit-amount-unit: 1000
   bounty-complete: 10
   war-win: 25

@@ -23,21 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Confirmation GUI for expensive clan shop purchases.
- *
- * Layout (27 slots):
- *  Slot 11 — YES (Green Wool) — confirm purchase
- *  Slot 13 — Item preview
- *  Slot 15 — NO  (Red Wool)   — cancel, back to shop
- *
- * Anti-dupe: per-player processing flag + purchase is delegated to
- * ClanShopManager which has its own atomic transaction guard.
+ * Propagates the backAction so Cancel returns to the shop correctly.
  */
 public class ShopConfirmGUI implements InventoryHolder {
 
-    private static final int SIZE     = 27;
-    private static final int SLOT_YES = 11;
+    private static final int SIZE        = 27;
+    private static final int SLOT_YES    = 11;
     private static final int SLOT_PREVIEW = 13;
-    private static final int SLOT_NO  = 15;
+    private static final int SLOT_NO     = 15;
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
@@ -46,34 +39,35 @@ public class ShopConfirmGUI implements InventoryHolder {
     private final Player viewer;
     private final Clan clan;
     private final ShopItem shopItem;
+    private final GUINavigation shopBackAction; // the back action of the shop (to return to main menu)
     private Inventory inventory;
 
-    public ShopConfirmGUI(QuantumClan plugin, Player viewer, Clan clan, ShopItem shopItem) {
-        this.plugin    = plugin;
-        this.mm        = plugin.getMiniMessage();
-        this.viewer    = viewer;
-        this.clan      = clan;
-        this.shopItem  = shopItem;
+    public ShopConfirmGUI(QuantumClan plugin, Player viewer, Clan clan, ShopItem shopItem, GUINavigation shopBackAction) {
+        this.plugin         = plugin;
+        this.mm             = plugin.getMiniMessage();
+        this.viewer         = viewer;
+        this.clan           = clan;
+        this.shopItem       = shopItem;
+        this.shopBackAction = shopBackAction;
     }
 
-    // ── Build ─────────────────────────────────────────────────
-
     public Inventory build() {
-        inventory = Bukkit.createInventory(this, SIZE,
-                mm.deserialize("<dark_gray>[ <gold>Konfirmasi Pembelian <dark_gray>]"));
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
 
-        // Border
-        ItemStack glass = makeItem(Material.GRAY_STAINED_GLASS_PANE, " ", Collections.emptyList());
-        for (int i = 0; i < SIZE; i++) inventory.setItem(i, glass);
+        inventory = Bukkit.createInventory(this, gc.getShopConfirmSize(),
+                mm.deserialize(gc.getShopConfirmTitle()));
+
+        ItemStack glass = makeItem(gc.getShopConfirmFiller(), " ", Collections.emptyList());
+        for (int i = 0; i < gc.getShopConfirmSize(); i++) inventory.setItem(i, glass);
 
         // YES button
-        inventory.setItem(SLOT_YES, makeItem(Material.LIME_WOOL,
-                "<green><bold>✔ BELI",
-                List.of(
-                        mm.deserialize("<gray>Konfirmasi pembelian:"),
-                        mm.deserialize("<yellow>" + shopItem.getName()),
-                        mm.deserialize("<gray>Harga: <gold>" + shopItem.getPrice() + " Clan Money")
-                )));
+        List<Component> yesLore = new ArrayList<>();
+        yesLore.add(mm.deserialize("<gray>Confirm purchase:"));
+        yesLore.add(mm.deserialize("<white>" + shopItem.getName()));
+        yesLore.add(mm.deserialize("<gray>Price: <gold>" + plugin.getEconomyProvider().format(shopItem.getPrice()) + " treasury"));
+        inventory.setItem(gc.getShopConfirmYesSlot(),
+                makeItem(gc.getShopConfirmYesMat(), gc.getShopConfirmYesName(), yesLore));
 
         // Item preview
         ItemStack preview = new ItemStack(shopItem.getMaterial());
@@ -82,47 +76,40 @@ public class ShopConfirmGUI implements InventoryHolder {
             pm.displayName(mm.deserialize("<!italic>" + shopItem.getName()));
             List<Component> lore = new ArrayList<>();
             for (String line : shopItem.getLore()) {
-                String resolved = line
+                lore.add(mm.deserialize("<!italic>" + line
                         .replace("{price}", String.valueOf(shopItem.getPrice()))
-                        .replace("{cost}",  String.valueOf(shopItem.getPrice()));
-                lore.add(mm.deserialize("<!italic>" + resolved));
+                        .replace("{cost}", String.valueOf(shopItem.getPrice()))));
             }
             pm.lore(lore);
             preview.setItemMeta(pm);
         }
-        inventory.setItem(SLOT_PREVIEW, preview);
+        inventory.setItem(gc.getShopConfirmPreviewSlot(), preview);
 
         // NO button
-        inventory.setItem(SLOT_NO, makeItem(Material.RED_WOOL,
-                "<red><bold>✘ BATAL",
-                List.of(mm.deserialize("<gray>Kembali ke toko."))));
+        inventory.setItem(gc.getShopConfirmNoSlot(),
+                makeItem(gc.getShopConfirmNoMat(), gc.getShopConfirmNoName(),
+                        List.of(mm.deserialize("<gray>Return to shop."))));
 
         return inventory;
     }
-
-    // ── Click handler ─────────────────────────────────────────
 
     public void handleClick(Player player, int slot, ClickType click) {
         UUID uuid = player.getUniqueId();
         if (!processing.add(uuid)) return;
 
         try {
-            switch (slot) {
-                case SLOT_YES -> {
-                    player.closeInventory();
-                    // Delegate to ClanShopManager — handles balance check, deduct, reward
-                    Clan latestClan = plugin.getClanManager().getClanById(clan.getId());
-                    if (latestClan == null) return;
-                    plugin.getClanShopManager().purchase(player, latestClan, shopItem);
-                }
-                case SLOT_NO -> {
-                    // Go back to shop
-                    player.closeInventory();
-                    Clan latestClan = plugin.getClanManager().getClanById(clan.getId());
-                    if (latestClan == null) return;
-                    ClanShopGUI.open(plugin, player, latestClan);
-                }
-                default -> { /* Border — ignore */ }
+            var gc = plugin.getGuiConfigManager();
+            if (slot == gc.getShopConfirmYesSlot()) {
+                player.closeInventory();
+                Clan latestClan = plugin.getClanManager().getClanById(clan.getId());
+                if (latestClan == null) return;
+                plugin.getClanShopManager().purchase(player, latestClan, shopItem);
+            } else if (slot == gc.getShopConfirmNoSlot()) {
+                // Go back to shop
+                Clan latestClan = plugin.getClanManager().getClanById(clan.getId());
+                if (latestClan == null) { player.closeInventory(); return; }
+                player.closeInventory();
+                ClanShopGUI.openFromMenu(plugin, player, latestClan, shopBackAction);
             }
         } finally {
             processing.remove(uuid);
@@ -131,8 +118,6 @@ public class ShopConfirmGUI implements InventoryHolder {
 
     @Override
     public Inventory getInventory() { return inventory; }
-
-    // ── Helper ────────────────────────────────────────────────
 
     private ItemStack makeItem(Material material, String name, List<Component> lore) {
         ItemStack item = new ItemStack(material);

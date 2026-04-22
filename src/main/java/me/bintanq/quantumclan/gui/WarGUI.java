@@ -24,102 +24,112 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * War GUI — shows current war status, registered clans, and registration button.
  *
- * Layout (27 slots):
- *  Slot 11 — War status info
- *  Slot 13 — Register / Unregister button
- *  Slot 15 — Registered clans list
- *  Slot 22 — Close
+ * BUG FIX #2: All text from messages.yml/gui.yml — no hardcoded strings.
+ * BUG FIX #7: Back button when opened from main menu.
  */
 public class WarGUI implements InventoryHolder {
 
-    private static final int SLOT_STATUS   = 11;
-    private static final int SLOT_ACTION   = 13;
-    private static final int SLOT_CLANS    = 15;
-    private static final int SLOT_CLOSE    = 22;
+    private static final int SLOT_STATUS = 11;
+    private static final int SLOT_ACTION = 13;
+    private static final int SLOT_CLANS  = 15;
+    private static final int SLOT_CLOSE  = 22;
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
     private final QuantumClan plugin;
     private final MiniMessage mm;
+    private final GUINavigation backAction;
     private Inventory inventory;
 
-    public WarGUI(QuantumClan plugin) {
-        this.plugin = plugin;
-        this.mm     = plugin.getMiniMessage();
+    public WarGUI(QuantumClan plugin, GUINavigation backAction) {
+        this.plugin     = plugin;
+        this.mm         = plugin.getMiniMessage();
+        this.backAction = backAction;
     }
 
     public Inventory build() {
-        inventory = Bukkit.createInventory(this, 27,
-                mm.deserialize("<dark_gray>[ <red>⚔ Clan War <dark_gray>]"));
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
 
-        ItemStack glass = makeItem(Material.GRAY_STAINED_GLASS_PANE, " ", Collections.emptyList());
-        for (int i = 0; i < 27; i++) inventory.setItem(i, glass);
+        inventory = Bukkit.createInventory(this, gc.getWarSize(), mm.deserialize(gc.getWarTitle()));
+
+        ItemStack glass = makeItem(gc.getWarFiller(), " ", Collections.emptyList());
+        for (int i = 0; i < gc.getWarSize(); i++) inventory.setItem(i, glass);
 
         WarSession war = plugin.getWarManager().getActiveSession();
 
         buildStatusItem(war);
         buildActionItem(war);
         buildClanListItem(war);
-        inventory.setItem(SLOT_CLOSE, makeItem(Material.BARRIER, "<red>Tutup",
-                Collections.emptyList()));
+
+        String closeOrBack = backAction != null ? msg.get("gui.back") : msg.get("gui.war-close");
+        inventory.setItem(SLOT_CLOSE, makeItem(Material.BARRIER, closeOrBack, Collections.emptyList()));
 
         return inventory;
     }
 
     private void buildStatusItem(WarSession war) {
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
+
         if (war == null) {
-            String next = plugin.getWarScheduler().getNextWarTime();
-            inventory.setItem(SLOT_STATUS, makeItem(Material.CLOCK,
-                    "<gray>Tidak Ada War Aktif",
-                    List.of(mm.deserialize("<gray>War berikutnya: <yellow>" + next))));
+            String nextTime = plugin.getWarScheduler().getNextWarTime();
+            inventory.setItem(SLOT_STATUS, makeItem(gc.getWarStatusNoWarMat(),
+                    msg.get("gui.war-no-active"),
+                    List.of(mm.deserialize(msg.get("gui.war-next-time", "{time}", nextTime)))));
             return;
         }
 
         String stateStr = switch (war.getState()) {
-            case REGISTRATION -> "<green>Registrasi Dibuka";
-            case COUNTDOWN    -> "<yellow>Countdown...";
-            case ACTIVE       -> "<red>⚔ War Berlangsung";
-            case ENDED        -> "<gray>War Selesai";
+            case REGISTRATION -> msg.get("gui.war-state-registration");
+            case COUNTDOWN    -> msg.get("gui.war-state-countdown");
+            case ACTIVE       -> msg.get("gui.war-state-active");
+            case ENDED        -> msg.get("gui.war-state-ended");
         };
 
         List<Component> lore = new ArrayList<>();
-        lore.add(mm.deserialize("<gray>Status: " + stateStr));
-        lore.add(mm.deserialize("<gray>Format: <yellow>"
-                + plugin.getWarConfigManager().getWarFormat().name()));
-        lore.add(mm.deserialize("<gray>Clan terdaftar: <yellow>"
-                + war.getRegisteredClanIds().size()));
+        lore.add(mm.deserialize(msg.get("gui.war-format-lore",
+                "{format}", plugin.getWarConfigManager().getWarFormat().name())));
+        lore.add(mm.deserialize(msg.get("gui.war-clans-lore",
+                "{count}", String.valueOf(war.getRegisteredClanIds().size()))));
         if (war.isActive()) {
-            lore.add(mm.deserialize("<gray>Durasi: <yellow>"
-                    + plugin.getWarConfigManager().getWarDurationMinutes() + " menit"));
+            lore.add(mm.deserialize(msg.get("gui.war-duration-lore",
+                    "{duration}", String.valueOf(plugin.getWarConfigManager().getWarDurationMinutes()))));
         }
+        lore.add(mm.deserialize(stateStr));
 
-        inventory.setItem(SLOT_STATUS, makeItem(Material.IRON_SWORD, "<red>⚔ Status War", lore));
+        inventory.setItem(SLOT_STATUS, makeItem(gc.getWarStatusActiveMat(),
+                msg.get("gui.war-status-name"), lore));
     }
 
     private void buildActionItem(WarSession war) {
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
+
         if (war == null || war.getState() != WarSession.State.REGISTRATION) {
-            inventory.setItem(SLOT_ACTION, makeItem(Material.BARRIER,
-                    "<gray>Registrasi Tutup",
-                    List.of(mm.deserialize("<gray>Tidak ada war dalam periode registrasi."))));
+            inventory.setItem(SLOT_ACTION, makeItem(gc.getWarActionClosedMat(),
+                    msg.get("gui.war-action-closed"),
+                    List.of(mm.deserialize(msg.get("gui.war-action-lore1")))));
             return;
         }
 
-        // Check if viewer's clan is registered — need to find clan via non-player context
-        // Action button is generic; actual clan-check happens on click
-        inventory.setItem(SLOT_ACTION, makeItem(Material.GREEN_WOOL,
-                "<green>⚔ Daftar / Keluar War",
+        inventory.setItem(SLOT_ACTION, makeItem(gc.getWarActionOpenMat(),
+                msg.get("gui.war-action-open"),
                 List.of(
-                        mm.deserialize("<gray>Klik untuk mendaftar atau"),
-                        mm.deserialize("<gray>membatalkan pendaftaran clan."),
-                        mm.deserialize("<gray>Min. online: <yellow>"
-                                + plugin.getWarConfigManager().getMinMembersOnline())
+                        mm.deserialize(msg.get("gui.war-action-lore1")),
+                        mm.deserialize(msg.get("gui.war-action-lore2")),
+                        mm.deserialize(msg.get("gui.war-action-lore3",
+                                "{min}", String.valueOf(plugin.getWarConfigManager().getMinMembersOnline())))
                 )));
     }
 
     private void buildClanListItem(WarSession war) {
+        var gc  = plugin.getGuiConfigManager();
+        var msg = plugin.getMessagesManager();
+
         if (war == null || war.getRegisteredClanIds().isEmpty()) {
             inventory.setItem(SLOT_CLANS, makeItem(Material.PAPER,
-                    "<gray>Belum Ada Clan Terdaftar", Collections.emptyList()));
+                    msg.get("gui.war-clans-empty"), Collections.emptyList()));
             return;
         }
 
@@ -128,19 +138,24 @@ public class WarGUI implements InventoryHolder {
             Clan c = plugin.getClanManager().getClanById(clanId);
             if (c == null) continue;
             int online = plugin.getClanManager().getOnlineCount(clanId);
-            lore.add(mm.deserialize(c.getColoredTag() + " <gray>" + c.getName()
+            lore.add(mm.deserialize(c.getColoredTag() + " <white>" + c.getName()
                     + " <dark_gray>(" + online + " online)"));
         }
 
         inventory.setItem(SLOT_CLANS, makeItem(Material.PAPER,
-                "<yellow>Clan Terdaftar (" + war.getRegisteredClanIds().size() + ")", lore));
+                msg.get("gui.war-clans-name", "{count}", String.valueOf(war.getRegisteredClanIds().size())),
+                lore));
     }
 
     public void handleClick(Player player, int slot, ClickType click) {
         UUID uuid = player.getUniqueId();
         if (!processing.add(uuid)) return;
         try {
-            if (slot == SLOT_CLOSE) { player.closeInventory(); return; }
+            if (slot == SLOT_CLOSE) {
+                if (backAction != null) { player.closeInventory(); backAction.navigate(); }
+                else player.closeInventory();
+                return;
+            }
             if (slot != SLOT_ACTION) return;
 
             player.closeInventory();
@@ -151,15 +166,11 @@ public class WarGUI implements InventoryHolder {
             }
 
             Clan clan = plugin.getClanManager().getClanByPlayer(uuid);
-            if (clan == null) {
-                plugin.sendMessage(player, "clan.not-in-clan"); return;
-            }
+            if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
 
             if (war.isClanRegistered(clan.getId())) {
-                // Unregister
                 plugin.getWarManager().unregisterClan(player, clan);
             } else {
-                // Register
                 plugin.getWarManager().registerClan(player, clan);
             }
         } finally {
@@ -167,8 +178,14 @@ public class WarGUI implements InventoryHolder {
         }
     }
 
+    /** Open directly from command (no back button). */
     public static void open(QuantumClan plugin, Player player) {
-        player.openInventory(new WarGUI(plugin).build());
+        player.openInventory(new WarGUI(plugin, null).build());
+    }
+
+    /** Open from parent menu (shows back button). */
+    public static void openFromMenu(QuantumClan plugin, Player player, GUINavigation backAction) {
+        player.openInventory(new WarGUI(plugin, backAction).build());
     }
 
     @Override public Inventory getInventory() { return inventory; }
