@@ -138,34 +138,37 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         if (entry == null) entry = "<aqua>/qclan {cmd} <dark_gray>- <gray>{desc}";
 
         String[][] cmds = {
-                { "create",       msg.get("help.cmd-create") },
-                { "invite",       msg.get("help.cmd-invite") },
-                { "accept",       msg.get("help.cmd-accept") },
-                { "decline",      msg.get("help.cmd-decline") },
-                { "kick",         msg.get("help.cmd-kick") },
-                { "leave",        msg.get("help.cmd-leave") },
-                { "info",         msg.get("help.cmd-info") },
-                { "home",         msg.get("help.cmd-home") },
-                { "sethome",      msg.get("help.cmd-sethome") },
-                { "delhome",      msg.get("help.cmd-delhome") },
-                { "deposit",      msg.get("help.cmd-deposit") },
-                { "shop",         msg.get("help.cmd-shop") },
-                { "bounty",       msg.get("help.cmd-bounty") },
-                { "war",          msg.get("help.cmd-war") },
-                { "upgrade",      msg.get("help.cmd-upgrade") },
-                { "top",          msg.get("help.cmd-top") },
-                { "role",         msg.get("help.cmd-role") },
-                { "transfer",     msg.get("help.cmd-transfer") },
-                { "disband",      msg.get("help.cmd-disband") },
-                { "announce",     msg.get("help.cmd-announce") },
-                { "contribution", msg.get("help.cmd-contribution") },
-                { "coins",        msg.get("help.cmd-coins") },
+                { "create",       "quantumclan.clan.create",       msg.get("help.cmd-create") },
+                { "invite",       "quantumclan.clan.invite",       msg.get("help.cmd-invite") },
+                { "accept",       "quantumclan.use",               msg.get("help.cmd-accept") },
+                { "decline",      "quantumclan.use",               msg.get("help.cmd-decline") },
+                { "kick",         "quantumclan.clan.kick",         msg.get("help.cmd-kick") },
+                { "leave",        "quantumclan.clan.leave",        msg.get("help.cmd-leave") },
+                { "info",         "quantumclan.clan.info",         msg.get("help.cmd-info") },
+                { "home",         "quantumclan.home.use",          msg.get("help.cmd-home") },
+                { "sethome",      "quantumclan.home.set",          msg.get("help.cmd-sethome") },
+                { "delhome",      "quantumclan.home.delete",       msg.get("help.cmd-delhome") },
+                { "deposit",      "quantumclan.clan.deposit",      msg.get("help.cmd-deposit") },
+                { "shop",         "quantumclan.shop.use",          msg.get("help.cmd-shop") },
+                { "bounty",       "quantumclan.bounty.board",      msg.get("help.cmd-bounty") },
+                { "war",          "quantumclan.war.register",      msg.get("help.cmd-war") },
+                { "upgrade",      "quantumclan.clan.upgrade",      msg.get("help.cmd-upgrade") },
+                { "top",          "quantumclan.top",               msg.get("help.cmd-top") },
+                { "role",         "quantumclan.clan.role",         msg.get("help.cmd-role") },
+                { "transfer",     "quantumclan.clan.transfer",     msg.get("help.cmd-transfer") },
+                { "disband",      "quantumclan.clan.disband",      msg.get("help.cmd-disband") },
+                { "announce",     "quantumclan.clan.announce",     msg.get("help.cmd-announce") },
+                { "contribution", "quantumclan.contribution.shop", msg.get("help.cmd-contribution") },
+                { "coins",        "quantumclan.coins.shop",        msg.get("help.cmd-coins") },
         };
 
-        for (String[] pair : cmds) {
-            plugin.sendRaw(player, entry
-                    .replace("{cmd}", pair[0])
-                    .replace("{desc}", pair[1]));
+        final String finalEntry = entry;
+        for (String[] triple : cmds) {
+            if (player.hasPermission(triple[1])) {
+                plugin.sendRaw(player, finalEntry
+                        .replace("{cmd}", triple[0])
+                        .replace("{desc}", triple[2]));
+            }
         }
 
         plugin.sendRaw(player, msg.get("help.footer"));

@@ -82,25 +82,26 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
 
     private void sendAdminHelp(Player player) {
         var msg = plugin.getMessagesManager();
-
         plugin.sendRaw(player, msg.get("help.admin-header"));
 
         String entry = msg.getRaw("help.admin-entry");
         if (entry == null) entry = "<gold>/qclanadmin {cmd} <dark_gray>- <gray>{desc}";
 
         String[][] cmds = {
-                { "reload",                      msg.get("help.admin-cmd-reload") },
-                { "give coins <player> <amount>", msg.get("help.admin-cmd-give") },
-                { "setarena",                    msg.get("help.admin-cmd-setarena") },
-                { "war <start|end>",             msg.get("help.admin-cmd-war") },
-                { "clan <info|delete|setlevel|setreputation> <clan>",
-                        msg.get("help.admin-cmd-clan") },
+                { "reload",                                      "quantumclan.admin.reload",   msg.get("help.admin-cmd-reload") },
+                { "give coins <player> <amount>",                "quantumclan.admin.coins",    msg.get("help.admin-cmd-give") },
+                { "setarena",                                    "quantumclan.admin.setarena", msg.get("help.admin-cmd-setarena") },
+                { "war <start|end>",                             "quantumclan.admin.war",      msg.get("help.admin-cmd-war") },
+                { "clan <info|delete|setlevel|setreputation>",   "quantumclan.admin.clan",     msg.get("help.admin-cmd-clan") },
         };
 
-        for (String[] pair : cmds) {
-            plugin.sendRaw(player, entry
-                    .replace("{cmd}", pair[0])
-                    .replace("{desc}", pair[1]));
+        final String finalEntry = entry;
+        for (String[] triple : cmds) {
+            if (player.hasPermission(triple[1])) {
+                plugin.sendRaw(player, finalEntry
+                        .replace("{cmd}", triple[0])
+                        .replace("{desc}", triple[2]));
+            }
         }
 
         plugin.sendRaw(player, msg.get("help.footer"));

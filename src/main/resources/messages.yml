@@ -170,6 +170,10 @@ contribution:
   shop-purchase-success: "<aqua>Redeemed <white>{value} points</white> for <aqua>{item}</aqua>."
   shop-insufficient: "<white>Insufficient contribution points. You currently have <aqua>{value} points</aqua>."
   shop-purchase-failed: "<white>Redemption failed. Your points have been refunded."
+  can-afford: "<aqua>✔ Points sufficient"
+  cannot-afford: "<white>✘ Need <aqua>{value}</aqua> more points"
+  points-display: "<white>Balance: <aqua>{points} Points"
+  points-hint: "<gray>Earn points by depositing, completing bounties, and winning wars."
 
 # ── Coins ─────────────────────────────────────────────────────
 coins:

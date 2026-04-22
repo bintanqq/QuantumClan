@@ -17,6 +17,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -248,35 +249,28 @@ public class ClanShopManager {
         return item;
     }
 
-    /**
-     * BUG FIX #5: Creates a clan-specific banner with the clan's color and
-     * a unique pattern combination derived from the clan's tag characters.
-     * Each clan gets a distinct visual banner instead of a plain white one.
-     */
     private ItemStack makeClanBannerItem(Clan clan) {
-        // Determine base color from tag color
-        DyeColor baseColor = tagColorToDyeColor(clan.getTagColor());
-        DyeColor accentColor = baseColor == DyeColor.WHITE ? DyeColor.LIGHT_GRAY : DyeColor.WHITE;
+        // 1. Tentukan base color
+        //    Kalau clan sudah beli tag color → pakai itu
+        //    Kalau belum → derive dari hash nama clan
+        DyeColor baseColor = resolveBaseColor(clan);
+        DyeColor accentColor = resolveAccentColor(clan, baseColor);
 
         Material bannerMaterial = dyeColorToBannerMaterial(baseColor);
         ItemStack item = new ItemStack(bannerMaterial);
         BannerMeta meta = (BannerMeta) item.getItemMeta();
 
         if (meta != null) {
-            // Add clan-specific decorative patterns
-            // Base gradient
+            // Layer 1: gradient background
             meta.addPattern(new Pattern(accentColor, PatternType.GRADIENT));
-            // Border pattern
+            // Layer 2: border
             meta.addPattern(new Pattern(accentColor, PatternType.BORDER));
-            // Clan initial letter pattern (based on first char of tag)
-            PatternType letterPattern = getLetterPattern(clan.getTag());
-            if (letterPattern != null) {
-                meta.addPattern(new Pattern(baseColor, letterPattern));
-            }
-            // Diagonal stripe as signature
+            // Layer 3: unique pattern dari hash nama clan
+            PatternType uniquePattern = resolveUniquePattern(clan);
+            meta.addPattern(new Pattern(baseColor, uniquePattern));
+            // Layer 4: diagonal signature
             meta.addPattern(new Pattern(accentColor, PatternType.DIAGONAL_LEFT));
 
-            // Name and lore from messages.yml
             meta.displayName(plugin.getMiniMessage().deserialize(
                     "<!italic>" + plugin.getMessagesManager().get("shop.banner-name",
                             "{tag}", clan.getColoredTag())));
@@ -293,28 +287,73 @@ public class ClanShopManager {
     }
 
     /**
-     * Converts a MiniMessage color tag to a DyeColor for the banner base.
+     * Kalau clan punya tag color (beli dari coins shop) → pakai itu.
+     * Kalau belum → derive dari hash nama clan, cycling semua 16 DyeColor.
+     * Dengan 16 warna × banyak accent/pattern, collision visual sangat jarang.
      */
+    private DyeColor resolveBaseColor(Clan clan) {
+        String tagColor = clan.getTagColor();
+        if (tagColor != null && !tagColor.isBlank()) {
+            return tagColorToDyeColor(tagColor);
+        }
+        // Hash nama clan → index ke palette penuh
+        DyeColor[] all = DyeColor.values(); // 16 warna
+        int idx = Math.abs(clan.getName().hashCode()) % all.length;
+        return all[idx];
+    }
+
+    /**
+     * Accent color = DyeColor yang berbeda dari base, juga derived dari hash.
+     * Pakai clan ID (UUID) sebagai seed kedua supaya beda dari base.
+     */
+    private DyeColor resolveAccentColor(Clan clan, DyeColor base) {
+        DyeColor[] all = DyeColor.values();
+        // Seed berbeda dari resolveBaseColor supaya accent ≠ base
+        int idx = Math.abs(clan.getId().hashCode()) % all.length;
+        DyeColor accent = all[idx];
+        // Kalau kebetulan sama dengan base, geser satu
+        if (accent == base) {
+            idx = (idx + 1) % all.length;
+            accent = all[idx];
+        }
+        return accent;
+    }
+
+    /**
+     * Pattern unik dari kombinasi hash nama + tag clan.
+     * PatternType.values() di Paper 1.21 ada ~40 pattern.
+     */
+    private PatternType resolveUniquePattern(Clan clan) {
+        List<PatternType> patterns = new ArrayList<>(
+                org.bukkit.Registry.BANNER_PATTERN.stream().toList()
+        );
+        int seed = (clan.getName() + clan.getTag()).hashCode();
+        int idx = Math.abs(seed) % patterns.size();
+        return patterns.get(idx);
+    }
+
     private DyeColor tagColorToDyeColor(String tagColor) {
         if (tagColor == null || tagColor.isBlank()) return DyeColor.WHITE;
         String lower = tagColor.toLowerCase();
-        if (lower.contains("gold"))         return DyeColor.YELLOW;
-        if (lower.contains("red"))          return DyeColor.RED;
-        if (lower.contains("blue"))         return DyeColor.BLUE;
-        if (lower.contains("green"))        return DyeColor.GREEN;
+        if (lower.contains("gold"))                        return DyeColor.YELLOW;
+        if (lower.contains("dark_red"))                    return DyeColor.RED;
+        if (lower.contains("red"))                         return DyeColor.RED;
+        if (lower.contains("dark_blue"))                   return DyeColor.BLUE;
+        if (lower.contains("blue"))                        return DyeColor.BLUE;
+        if (lower.contains("dark_green"))                  return DyeColor.GREEN;
+        if (lower.contains("green"))                       return DyeColor.LIME;
+        if (lower.contains("dark_aqua"))                   return DyeColor.CYAN;
         if (lower.contains("aqua") || lower.contains("cyan")) return DyeColor.CYAN;
-        if (lower.contains("purple") || lower.contains("light_purple")) return DyeColor.PURPLE;
-        if (lower.contains("dark_green"))   return DyeColor.GREEN;
-        if (lower.contains("dark_red"))     return DyeColor.RED;
-        if (lower.contains("dark_blue"))    return DyeColor.BLUE;
-        if (lower.contains("dark_aqua"))    return DyeColor.CYAN;
-        if (lower.contains("dark_purple"))  return DyeColor.PURPLE;
-        if (lower.contains("yellow"))       return DyeColor.YELLOW;
-        if (lower.contains("white"))        return DyeColor.WHITE;
-        if (lower.contains("gray") || lower.contains("grey")) return DyeColor.LIGHT_GRAY;
-        if (lower.contains("black"))        return DyeColor.BLACK;
-        if (lower.contains("orange"))       return DyeColor.ORANGE;
-        if (lower.contains("pink"))         return DyeColor.PINK;
+        if (lower.contains("dark_purple"))                 return DyeColor.PURPLE;
+        if (lower.contains("light_purple"))                return DyeColor.MAGENTA;
+        if (lower.contains("purple"))                      return DyeColor.PURPLE;
+        if (lower.contains("yellow"))                      return DyeColor.YELLOW;
+        if (lower.contains("white"))                       return DyeColor.WHITE;
+        if (lower.contains("dark_gray") || lower.contains("dark_grey")) return DyeColor.GRAY;
+        if (lower.contains("gray") || lower.contains("grey"))           return DyeColor.LIGHT_GRAY;
+        if (lower.contains("black"))                       return DyeColor.BLACK;
+        if (lower.contains("orange"))                      return DyeColor.ORANGE;
+        if (lower.contains("pink"))                        return DyeColor.PINK;
         return DyeColor.WHITE;
     }
 
@@ -337,25 +376,6 @@ public class ClanShopManager {
             case LIGHT_BLUE   -> Material.LIGHT_BLUE_BANNER;
             default           -> Material.WHITE_BANNER;
         };
-    }
-
-    /**
-     * Returns a decorative pattern loosely based on the clan tag's first character.
-     * Not a real letter — just a unique visual marker per clan.
-     */
-    private PatternType getLetterPattern(String tag) {
-        if (tag == null || tag.isEmpty()) return PatternType.CROSS;
-        char first = Character.toUpperCase(tag.charAt(0));
-        // Cycle through some visually distinct patterns based on char code
-        PatternType[] patterns = {
-                PatternType.RHOMBUS, PatternType.CROSS, PatternType.FLOWER,
-                PatternType.CREEPER, PatternType.SKULL, PatternType.MOJANG,
-                PatternType.TRIANGLE_TOP, PatternType.TRIANGLE_BOTTOM,
-                PatternType.SQUARE_TOP_LEFT, PatternType.SQUARE_TOP_RIGHT,
-                PatternType.HALF_HORIZONTAL, PatternType.HALF_VERTICAL,
-                PatternType.CURLY_BORDER, PatternType.BRICKS
-        };
-        return patterns[(first - 'A') % patterns.length];
     }
 
     private void giveOrDrop(Player player, ItemStack item, String itemName) {

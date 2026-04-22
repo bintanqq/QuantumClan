@@ -3,6 +3,9 @@
 # ║   Reload: /qclanadmin reload                         ║
 # ╚══════════════════════════════════════════════════════╝
 
+# DO NOT CHANGE IF YOU DONT UNDERSTAND
+config-version: 1
+
 # ── Clan Creation ─────────────────────────────────────────────
 clan-creation-cost: 5000.0
 max-name-length: 24

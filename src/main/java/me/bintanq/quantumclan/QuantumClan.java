@@ -23,6 +23,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.logging.Level;
 
 public class QuantumClan extends JavaPlugin {
@@ -36,6 +37,7 @@ public class QuantumClan extends JavaPlugin {
     private WarConfigManager    warConfigManager;
     private RolesConfigManager  rolesConfigManager;
     private GuiConfigManager    guiConfigManager;
+    private ConfigMigrator migrator;
 
     // ── Database ──────────────────────────────────────────────
     private DatabaseManager  databaseManager;
@@ -196,11 +198,26 @@ public class QuantumClan extends JavaPlugin {
 
     private void saveDefaultConfigs() {
         saveDefaultConfig();
-        saveResource("messages.yml", false);
-        saveResource("shop.yml",     false);
-        saveResource("war.yml",      false);
-        saveResource("roles.yml",    false);
-        saveResource("gui.yml",      false);
+        saveResourceIfAbsent("messages.yml");
+        saveResourceIfAbsent("shop.yml");
+        saveResourceIfAbsent("war.yml");
+        saveResourceIfAbsent("roles.yml");
+        saveResourceIfAbsent("gui.yml");
+
+        migrator = new ConfigMigrator(this);
+        migrator.migrate("config.yml");
+        migrator.migrate("messages.yml");
+        migrator.migrate("shop.yml");
+        migrator.migrate("war.yml");
+        migrator.migrate("roles.yml");
+        migrator.migrate("gui.yml");
+    }
+
+    private void saveResourceIfAbsent(String resourceName) {
+        File file = new File(getDataFolder(), resourceName);
+        if (!file.exists()) {
+            saveResource(resourceName, false);
+        }
     }
 
     private boolean loadConfigs() {
