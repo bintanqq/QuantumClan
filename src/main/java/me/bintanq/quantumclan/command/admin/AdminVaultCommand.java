@@ -12,6 +12,8 @@ import java.util.Arrays;
  * Handles /qclanadmin vault <subcommand>.
  * All messages come from messages.yml — no hardcoded strings.
  */
+import org.bukkit.command.CommandSender;
+
 public class AdminVaultCommand implements SubCommand {
 
     private final QuantumClan plugin;
@@ -20,37 +22,41 @@ public class AdminVaultCommand implements SubCommand {
         this.plugin = plugin;
     }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
         if (args.length == 0) {
-            sendHelp(player);
+            sendHelp(sender);
             return;
         }
         switch (args[0].toLowerCase()) {
-            case "clear"   -> handleClear(player, Arrays.copyOfRange(args, 1, args.length));
-            case "inspect" -> handleInspect(player, Arrays.copyOfRange(args, 1, args.length));
-            default        -> sendHelp(player);
+            case "clear"   -> handleClear(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "inspect" -> handleInspect(sender, Arrays.copyOfRange(args, 1, args.length));
+            default        -> sendHelp(sender);
         }
     }
 
-    private void handleClear(Player player, String[] args) {
+    private void handleClear(CommandSender sender, String[] args) {
         if (args.length == 0) {
-            plugin.sendMessage(player, "admin.vault-usage");
+            plugin.sendMessage(sender, "admin.vault-usage");
             return;
         }
         String clanQuery = String.join(" ", args);
         Clan clan = plugin.getClanManager().getClanByName(clanQuery);
         if (clan == null) {
-            plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery);
+            plugin.sendMessage(sender, "clan.not-found", "{clan}", clanQuery);
             return;
         }
         plugin.getClanVaultManager().clearVault(clan.getId())
                 .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () ->
-                        plugin.sendMessage(player,
+                        plugin.sendMessage(sender,
                                 ok ? "vault.admin-clear-success" : "vault.admin-clear-failed",
                                 "{clan}", clan.getName())));
     }
 
-    private void handleInspect(Player player, String[] args) {
+    private void handleInspect(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (args.length == 0) {
             plugin.sendMessage(player, "admin.vault-usage");
             return;
@@ -65,12 +71,12 @@ public class AdminVaultCommand implements SubCommand {
         plugin.sendMessage(player, "vault.admin-inspect-opened", "{clan}", clan.getName());
     }
 
-    private void sendHelp(Player player) {
-        plugin.sendMessage(player, "help.admin-header");
-        plugin.sendRaw(player, plugin.getMessagesManager().get("help.admin-entry")
+    private void sendHelp(CommandSender sender) {
+        plugin.sendMessage(sender, "help.admin-header");
+        plugin.sendRaw(sender, plugin.getMessagesManager().get("help.admin-entry")
                 .replace("{cmd}", "vault clear <clan>")
                 .replace("{desc}", plugin.getMessagesManager().get("help.admin-cmd-vault")));
-        plugin.sendRaw(player, plugin.getMessagesManager().get("help.admin-entry")
+        plugin.sendRaw(sender, plugin.getMessagesManager().get("help.admin-entry")
                 .replace("{cmd}", "vault inspect <clan>")
                 .replace("{desc}", plugin.getMessagesManager().get("help.admin-cmd-vault-inspect")));
     }

@@ -5,6 +5,7 @@ import me.bintanq.quantumclan.model.Clan;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -18,7 +19,11 @@ public class AnnounceCommand implements SubCommand {
         this.plugin = plugin;
     }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (!plugin.checkPerm(player, "quantumclan.clan.announce")) return;
 
         Clan clan = plugin.getPlayerClan(player);

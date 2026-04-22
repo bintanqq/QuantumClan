@@ -3,12 +3,17 @@ package me.bintanq.quantumclan.command.sub;
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class DelHomeCommand implements SubCommand {
     private final QuantumClan plugin;
     public DelHomeCommand(QuantumClan plugin) { this.plugin = plugin; }
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (!plugin.checkPerm(player, "quantumclan.home.delete")) return;
         if (args.length == 0) { plugin.sendMessage(player, "home.delhome-usage"); return; }
 

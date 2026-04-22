@@ -3,12 +3,17 @@ package me.bintanq.quantumclan.command.sub;
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class LeaveCommand implements SubCommand {
     private final QuantumClan plugin;
     public LeaveCommand(QuantumClan plugin) { this.plugin = plugin; }
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (!plugin.checkPerm(player, "quantumclan.clan.leave")) return;
         Clan clan = plugin.getPlayerClan(player);
         if (clan == null) return;

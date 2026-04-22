@@ -1,6 +1,6 @@
 package me.bintanq.quantumclan.command.sub;
 
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 
 /**
  * Common interface for all plugin subcommands.
@@ -8,8 +8,8 @@ import org.bukkit.entity.Player;
 public interface SubCommand {
     /**
      * Executes the subcommand.
-     * @param player The player who executed the command.
+     * @param sender The sender who executed the command (Player or Console).
      * @param args The arguments passed to the subcommand (excluding the subcommand name itself).
      */
-    void execute(Player player, String[] args);
+    void execute(CommandSender sender, String[] args);
 }

@@ -46,60 +46,60 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-
-        if (!(sender instanceof Player player)) {
-            plugin.sendMessage(sender, "error.player-only");
-            return true;
-        }
-        if (!player.hasPermission("quantumclan.admin")) {
+ 
+        if (sender instanceof Player player && !player.hasPermission("quantumclan.admin")) {
             plugin.sendMessage(player, "error.no-permission");
             return true;
+        } else if (!(sender instanceof Player) && !sender.hasPermission("quantumclan.admin")) {
+            // Console usually has all perms, but just in case
+            plugin.sendMessage(sender, "error.no-permission");
+            return true;
         }
-
+ 
         if (args.length == 0) {
-            sendAdminHelp(player);
+            sendAdminHelp(sender);
             return true;
         }
-
+ 
         String subName = args[0].toLowerCase();
-
+ 
         if (subName.equals("help")) {
-            sendAdminHelp(player);
+            sendAdminHelp(sender);
             return true;
         }
-
+ 
         if (subName.equals("give")) {
             String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
             if (subArgs.length > 0 && subArgs[0].equalsIgnoreCase("coins")) {
                 SubCommand coinsCmd = subCommands.get("coins");
                 if (coinsCmd != null) {
-                    coinsCmd.execute(player, Arrays.copyOfRange(subArgs, 1, subArgs.length));
+                    coinsCmd.execute(sender, Arrays.copyOfRange(subArgs, 1, subArgs.length));
                 }
             } else {
-                plugin.sendMessage(player, "admin.help-give-usage");
+                plugin.sendMessage(sender, "admin.help-give-usage");
             }
             return true;
         }
-
+ 
         SubCommand cmd = subCommands.get(subName);
         if (cmd != null) {
             String[] subArgs = Arrays.copyOfRange(args, 1, args.length);
-            cmd.execute(player, subArgs);
+            cmd.execute(sender, subArgs);
         } else {
-            sendAdminHelp(player);
+            sendAdminHelp(sender);
         }
         return true;
     }
-
+ 
     // ── Help ─────────────────────────────────────────────────────────────────
-
-    private void sendAdminHelp(Player player) {
+ 
+    private void sendAdminHelp(CommandSender sender) {
         var msg = plugin.getMessagesManager();
-        plugin.sendRaw(player, msg.get("help.admin-header"));
-
+        plugin.sendRaw(sender, msg.get("help.admin-header"));
+ 
         String entry = msg.getRaw("help.admin-entry");
         if (entry == null) entry = "<aqua>/qclanadmin {cmd} <dark_gray>- <gray>{desc}";
-
+ 
         String[][] cmds = {
                 { "reload",                                    "quantumclan.admin.reload",   msg.get("help.admin-cmd-reload") },
                 { "give coins <player> <amount>",              "quantumclan.admin.coins",    msg.get("help.admin-cmd-give") },
@@ -109,17 +109,17 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                 { "hall <setregion|grant|revoke|...>",         "quantumclan.admin",          msg.get("help.admin-cmd-hall") },
                 { "vault <clear|inspect>",                     "quantumclan.admin.vault",    msg.get("help.admin-cmd-vault") },
         };
-
+ 
         final String finalEntry = entry;
         for (String[] triple : cmds) {
-            if (player.hasPermission(triple[1])) {
-                plugin.sendRaw(player, finalEntry
+            if (sender.hasPermission(triple[1])) {
+                plugin.sendRaw(sender, finalEntry
                         .replace("{cmd}", triple[0])
                         .replace("{desc}", triple[2] != null ? triple[2] : ""));
             }
         }
-
-        plugin.sendRaw(player, msg.get("help.footer"));
+ 
+        plugin.sendRaw(sender, msg.get("help.footer"));
     }
 
     // ── Tab complete ─────────────────────────────────────────────────────────

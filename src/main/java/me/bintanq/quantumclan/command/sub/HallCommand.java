@@ -4,6 +4,7 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.gui.ClanHallGUI;
 import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.WarSession;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -22,7 +23,11 @@ public class HallCommand implements SubCommand {
         this.plugin = plugin;
     }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (!plugin.getHallConfigManager().isEnabled()) {
             plugin.sendMessage(player, "hall.disabled");
             return;

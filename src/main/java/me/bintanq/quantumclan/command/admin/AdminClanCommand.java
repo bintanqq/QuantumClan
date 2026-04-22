@@ -5,6 +5,7 @@ import me.bintanq.quantumclan.command.sub.SubCommand;
 import me.bintanq.quantumclan.gui.ClanInfoGUI;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
@@ -17,9 +18,9 @@ public class AdminClanCommand implements SubCommand {
         this.plugin = plugin;
     }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
         if (args.length == 0) {
-            plugin.sendMessage(player, "admin.clan-usage");
+            plugin.sendMessage(sender, "admin.clan-usage");
             return;
         }
 
@@ -27,6 +28,10 @@ public class AdminClanCommand implements SubCommand {
 
         switch (sub) {
             case "info" -> {
+                if (!(sender instanceof Player player)) {
+                    plugin.sendMessage(sender, "error.player-only");
+                    return;
+                }
                 if (args.length < 2) { plugin.sendMessage(player, "admin.clan-info-usage"); return; }
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
@@ -34,50 +39,47 @@ public class AdminClanCommand implements SubCommand {
                 ClanInfoGUI.open(plugin, player, clan);
             }
             case "delete" -> {
-                if (args.length < 2) { plugin.sendMessage(player, "admin.clan-delete-usage"); return; }
+                if (args.length < 2) { plugin.sendMessage(sender, "admin.clan-delete-usage"); return; }
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
-                if (clan == null) { plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery); return; }
+                if (clan == null) { plugin.sendMessage(sender, "clan.not-found", "{clan}", clanQuery); return; }
                 String name = clan.getName();
                 plugin.getClanManager().disbandClan(clan.getId()).thenAccept(ok ->
                         Bukkit.getScheduler().runTask(plugin, () ->
-                                plugin.sendMessage(player, "admin.clan-deleted", "{clan}", name)));
+                                plugin.sendMessage(sender, "admin.clan-deleted", "{clan}", name)));
             }
             case "setlevel" -> {
-                // Syntax: setlevel <level> <clan...> OR setlevel <clan...> <level>
-                // We use: /qclanadmin clan setlevel <clan> <level>
-                // Level is always the LAST arg, clan name is everything in between
-                if (args.length < 3) { plugin.sendMessage(player, "admin.clan-setlevel-usage"); return; }
+                if (args.length < 3) { plugin.sendMessage(sender, "admin.clan-setlevel-usage"); return; }
                 String levelStr = args[args.length - 1];
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length - 1));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
-                if (clan == null) { plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery); return; }
+                if (clan == null) { plugin.sendMessage(sender, "clan.not-found", "{clan}", clanQuery); return; }
                 int level;
-                try { level = Integer.parseInt(levelStr); } catch (NumberFormatException e) { plugin.sendMessage(player, "error.invalid-number"); return; }
+                try { level = Integer.parseInt(levelStr); } catch (NumberFormatException e) { plugin.sendMessage(sender, "error.invalid-number"); return; }
                 level = Math.max(1, Math.min(level, plugin.getConfigManager().getMaxLevel()));
                 int finalLevel = level;
                 plugin.getClanManager().adminSetLevel(clan.getId(), level).thenAccept(ok ->
                         Bukkit.getScheduler().runTask(plugin, () ->
-                                plugin.sendMessage(player, "admin.clan-level-set",
+                                plugin.sendMessage(sender, "admin.clan-level-set",
                                         "{clan}", clan.getName(),
                                         "{value}", String.valueOf(finalLevel))));
             }
             case "setreputation" -> {
-                if (args.length < 3) { plugin.sendMessage(player, "admin.clan-setreputation-usage"); return; }
+                if (args.length < 3) { plugin.sendMessage(sender, "admin.clan-setreputation-usage"); return; }
                 String repStr = args[args.length - 1];
                 String clanQuery = String.join(" ", Arrays.copyOfRange(args, 1, args.length - 1));
                 Clan clan = plugin.getClanManager().getClanByName(clanQuery);
-                if (clan == null) { plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery); return; }
+                if (clan == null) { plugin.sendMessage(sender, "clan.not-found", "{clan}", clanQuery); return; }
                 int rep;
-                try { rep = Integer.parseInt(repStr); } catch (NumberFormatException e) { plugin.sendMessage(player, "error.invalid-number"); return; }
+                try { rep = Integer.parseInt(repStr); } catch (NumberFormatException e) { plugin.sendMessage(sender, "error.invalid-number"); return; }
                 int finalRep = rep;
                 plugin.getClanManager().setReputation(clan.getId(), rep).thenAccept(ok ->
                         Bukkit.getScheduler().runTask(plugin, () ->
-                                plugin.sendMessage(player, "admin.clan-reputation-set",
+                                plugin.sendMessage(sender, "admin.clan-reputation-set",
                                         "{clan}", clan.getName(),
                                         "{value}", String.valueOf(finalRep))));
             }
-            default -> plugin.sendMessage(player, "admin.clan-usage");
+            default -> plugin.sendMessage(sender, "admin.clan-usage");
         }
     }
 }

@@ -8,6 +8,7 @@ import me.bintanq.quantumclan.model.ClanMember;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -23,7 +24,11 @@ public class BountyCommand implements SubCommand {
         this.plugin = plugin;
     }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (args.length == 0) {
             plugin.sendMessage(player, "error.unknown-subcommand");
             return;

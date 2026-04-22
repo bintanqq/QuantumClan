@@ -4,6 +4,7 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.command.sub.SubCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class AdminCoinsCommand implements SubCommand {
@@ -11,9 +12,9 @@ public class AdminCoinsCommand implements SubCommand {
 
     public AdminCoinsCommand(QuantumClan plugin) { this.plugin = plugin; }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            plugin.sendMessage(player, "error.unknown-subcommand");
+            plugin.sendMessage(sender, "error.unknown-subcommand");
             return;
         }
         @SuppressWarnings("deprecation")
@@ -22,21 +23,21 @@ public class AdminCoinsCommand implements SubCommand {
         try {
             amount = Long.parseLong(args[1]);
         } catch (NumberFormatException e) {
-            plugin.sendMessage(player, "error.invalid-number");
+            plugin.sendMessage(sender, "error.invalid-number");
             return;
         }
         if (amount <= 0) {
-            plugin.sendMessage(player, "coins.grant-invalid");
+            plugin.sendMessage(sender, "coins.grant-invalid");
             return;
         }
         plugin.getCoinsProvider().grant(target.getUniqueId(), amount, "admin-grant")
                 .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () -> {
                     if (!ok) {
-                        plugin.sendMessage(player, "admin.coins-grant-failed");
+                        plugin.sendMessage(sender, "admin.coins-grant-failed");
                         return;
                     }
                     String targetName = target.getName() != null ? target.getName() : args[0];
-                    plugin.sendMessage(player, "coins.grant-success",
+                    plugin.sendMessage(sender, "coins.grant-success",
                             "{player}", targetName,
                             "{value}", String.valueOf(amount));
                     Player online = Bukkit.getPlayer(target.getUniqueId());

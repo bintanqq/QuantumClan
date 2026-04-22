@@ -3,6 +3,7 @@ package me.bintanq.quantumclan.command.sub;
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.model.Clan;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -15,7 +16,11 @@ public class CreateCommand implements SubCommand {
 
     public CreateCommand(QuantumClan plugin) { this.plugin = plugin; }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (!plugin.checkPerm(player, "quantumclan.clan.create")) return;
         if (plugin.getClanManager().isInClan(player.getUniqueId())) {
             plugin.sendMessage(player, "clan.create-already-in-clan"); return;

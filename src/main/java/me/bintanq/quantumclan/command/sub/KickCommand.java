@@ -5,6 +5,7 @@ import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.ClanMember;
 import me.bintanq.quantumclan.model.ClanRole;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -17,7 +18,11 @@ public class KickCommand implements SubCommand {
         this.plugin = plugin;
     }
 
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (!plugin.checkPerm(player, "quantumclan.clan.kick")) return;
         if (args.length == 0) {
             plugin.sendMessage(player, "error.unknown-subcommand");

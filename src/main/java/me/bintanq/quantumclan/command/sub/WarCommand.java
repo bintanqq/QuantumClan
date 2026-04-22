@@ -4,12 +4,17 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.gui.WarGUI;
 import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.WarSession;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class WarCommand implements SubCommand {
     private final QuantumClan plugin;
     public WarCommand(QuantumClan plugin) { this.plugin = plugin; }
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (args.length == 0) { WarGUI.open(plugin, player); return; }
         Clan clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
         if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }

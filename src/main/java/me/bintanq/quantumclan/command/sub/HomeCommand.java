@@ -6,12 +6,17 @@ import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.ClanRole;
 import me.bintanq.quantumclan.model.ClanMember;
 import org.bukkit.Location;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class HomeCommand implements SubCommand {
     private final QuantumClan plugin;
     public HomeCommand(QuantumClan plugin) { this.plugin = plugin; }
-    public void execute(Player player, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            plugin.sendMessage(sender, "error.player-only");
+            return;
+        }
         if (!plugin.checkPerm(player, "quantumclan.home.use")) return;
         Clan clan = plugin.getPlayerClan(player);
         if (clan == null) return;
