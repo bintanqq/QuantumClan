@@ -22,9 +22,8 @@ public class KickCommand {
             plugin.sendMessage(player, "error.no-permission");
             return;
         }
-
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclan kick <player>");
+            plugin.sendMessage(player, "error.unknown-subcommand");
             return;
         }
 
@@ -33,22 +32,18 @@ public class KickCommand {
             plugin.sendMessage(player, "clan.not-in-clan");
             return;
         }
-
         if (!plugin.getClanManager().hasRolePermission(player.getUniqueId(), "can-kick")) {
             plugin.sendMessage(player, "error.role-no-permission",
                     "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole());
             return;
         }
 
-        // Resolve target by name — can be offline
         String targetName = args[0];
         UUID targetUuid = resolveUuid(targetName);
-
         if (targetUuid == null) {
             plugin.sendMessage(player, "error.player-not-found", "{player}", targetName);
             return;
         }
-
         if (targetUuid.equals(player.getUniqueId())) {
             plugin.sendMessage(player, "clan.kick-self");
             return;
@@ -60,7 +55,6 @@ public class KickCommand {
             return;
         }
 
-        // Hierarchy check: kicker must outrank the target
         ClanMember kickerMember = plugin.getClanManager().getMember(player.getUniqueId());
         if (kickerMember == null) {
             plugin.sendMessage(player, "error.no-permission");
@@ -70,79 +64,45 @@ public class KickCommand {
         ClanRole kickerRole = plugin.getRolesConfigManager().getRole(kickerMember.getRole());
         ClanRole targetRole = plugin.getRolesConfigManager().getRole(targetMember.getRole());
 
-        if (kickerRole == null || targetRole == null) {
-            plugin.sendMessage(player, "error.no-permission");
-            return;
-        }
-
-        if (!kickerRole.outranks(targetRole)) {
+        if (kickerRole == null || targetRole == null || !kickerRole.outranks(targetRole)
+                || targetRole.isLeader()) {
             plugin.sendMessage(player, "clan.kick-higher-role");
             return;
         }
 
-        // Can't kick the leader
-        if (targetRole.isLeader()) {
-            plugin.sendMessage(player, "clan.kick-higher-role");
-            return;
-        }
-
-        // Resolve display name for messages
         Player targetOnline = Bukkit.getPlayer(targetUuid);
         String displayName = targetOnline != null
                 ? targetOnline.getName()
                 : Bukkit.getOfflinePlayer(targetUuid).getName();
         if (displayName == null) displayName = targetName;
-        final String finalDisplayName = displayName;
+        final String finalName = displayName;
 
         plugin.getClanManager().removeMember(targetUuid).thenAccept(ok ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (!ok) {
-                        plugin.sendRaw(player, "<red>Gagal mengeluarkan member.");
+                        plugin.sendMessage(player, "error.transaction-processing");
                         return;
                     }
-
-                    // Notify kicker
-                    plugin.sendMessage(player, "clan.kick-success", "{player}", finalDisplayName);
-
-                    // Notify target if online
+                    plugin.sendMessage(player, "clan.kick-success", "{player}", finalName);
                     if (targetOnline != null && targetOnline.isOnline()) {
                         plugin.sendMessage(targetOnline, "clan.kick-broadcast",
-                                "{player}", finalDisplayName,
-                                "{target}", player.getName());
+                                "{player}", finalName, "{target}", player.getName());
                     }
-
-                    // Notify remaining members
                     plugin.getClanManager().getOnlineMembers(clan.getId()).forEach(m -> {
                         if (!m.equals(player)) {
                             plugin.sendMessage(m, "clan.kick-broadcast",
-                                    "{player}", finalDisplayName,
-                                    "{target}", player.getName());
+                                    "{player}", finalName, "{target}", player.getName());
                         }
                     });
                 }));
     }
 
-    /**
-     * Resolves a UUID from player name.
-     * Checks online players first, then offline player cache.
-     */
     @SuppressWarnings("deprecation")
     private UUID resolveUuid(String name) {
-        // Check online players first
         Player online = Bukkit.getPlayer(name);
         if (online != null) return online.getUniqueId();
-
-        // Check clan cache — iterate all members to find by name
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.getName().equalsIgnoreCase(name)) return p.getUniqueId();
-        }
-
-        // Fallback: offline player lookup (may return an empty UUID if never joined)
         org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(name);
-        if (op.hasPlayedBefore() || op.isOnline()) {
-            return op.getUniqueId();
-        }
-
+        if (op.hasPlayedBefore() || op.isOnline()) return op.getUniqueId();
         return null;
     }
 }

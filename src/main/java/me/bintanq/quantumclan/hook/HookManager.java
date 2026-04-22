@@ -9,8 +9,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 /**
  * Manages all optional plugin hooks for QuantumClan.
  *
- * REQUIRED:
- *   - Vault (Economy)
+ * REQUIRED: Vault (Economy)
  *
  * OPTIONAL:
  *   - PlayerPoints
@@ -19,41 +18,28 @@ import org.bukkit.plugin.RegisteredServiceProvider;
  *   - WorldGuard
  *   - FastAsyncWorldEdit (FAWE)
  *   - Citizens (NPC backend for Clan Hall)
- *   - ZNPCSPlus (NPC backend for Clan Hall)
- *   - FancyNpcs (NPC backend for Clan Hall)
  */
 public class HookManager {
 
     private final QuantumClan plugin;
     private final MiniMessage mm = MiniMessage.miniMessage();
 
-    // ── Required ──────────────────────────────────────────────
     private Economy vaultEconomy;
-    private boolean vaultEnabled = false;
-
-    // ── Optional ──────────────────────────────────────────────
+    private boolean vaultEnabled          = false;
     private boolean playerPointsEnabled   = false;
     private boolean placeholderApiEnabled = false;
     private boolean luckPermsEnabled      = false;
     private boolean worldGuardEnabled     = false;
     private boolean faweEnabled           = false;
+    private boolean citizensEnabled       = false;
 
-    // ── NPC backends (for Clan Hall) ──────────────────────────
-    private boolean citizensEnabled  = false;
-    private boolean znpcsPlusEnabled = false;
-    private boolean fancyNpcsEnabled = false;
-
-    // Raw instances
-    private Object playerPointsApi  = null;
-    private Object luckPermsApi     = null;
+    private Object playerPointsApi = null;
+    private Object luckPermsApi    = null;
 
     public HookManager(QuantumClan plugin) {
         this.plugin = plugin;
     }
 
-    /**
-     * Initialises all hooks. Called once from onEnable().
-     */
     public void init() {
         hookVault();
         hookPlayerPoints();
@@ -61,16 +47,13 @@ public class HookManager {
         hookLuckPerms();
         hookWorldGuard();
         hookFawe();
-        // NPC backends for Clan Hall
         hookCitizens();
-        hookZNPCSPlus();
-        hookFancyNpcs();
     }
 
     // ── Vault ─────────────────────────────────────────────────
 
     private void hookVault() {
-        if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
+        if (!isPluginPresent("Vault")) {
             logHook("vault-disabled");
             return;
         }
@@ -171,7 +154,7 @@ public class HookManager {
 
     private void hookCitizens() {
         if (!isPluginPresent("Citizens")) {
-            plugin.getLogger().info("[Hook] Citizens: Not found (NPC fallback will be used)");
+            plugin.getLogger().info("[Hook] Citizens: Not found — armor stand NPC fallback will be used.");
             return;
         }
         try {
@@ -180,36 +163,6 @@ public class HookManager {
             plugin.getLogger().info("[Hook] Citizens: Connected ✓");
         } catch (ClassNotFoundException e) {
             plugin.getLogger().warning("[Hook] Citizens: Class not found — " + e.getMessage());
-        }
-    }
-
-    // ── ZNPCSPlus ─────────────────────────────────────────────
-
-    private void hookZNPCSPlus() {
-        if (!isPluginPresent("ZNPCsPlus")) {
-            return; // Silent — optional
-        }
-        try {
-            Class.forName("lol.pyr.znpcsplus.api.NpcApi");
-            znpcsPlusEnabled = true;
-            plugin.getLogger().info("[Hook] ZNPCSPlus: Connected ✓");
-        } catch (ClassNotFoundException e) {
-            plugin.getLogger().warning("[Hook] ZNPCSPlus: Class not found — " + e.getMessage());
-        }
-    }
-
-    // ── FancyNpcs ─────────────────────────────────────────────
-
-    private void hookFancyNpcs() {
-        if (!isPluginPresent("FancyNpcs")) {
-            return; // Silent — optional
-        }
-        try {
-            Class.forName("de.oliver.fancynpcs.api.FancyNpcsPlugin");
-            fancyNpcsEnabled = true;
-            plugin.getLogger().info("[Hook] FancyNpcs: Connected ✓");
-        } catch (ClassNotFoundException e) {
-            plugin.getLogger().warning("[Hook] FancyNpcs: Class not found — " + e.getMessage());
         }
     }
 
@@ -236,10 +189,7 @@ public class HookManager {
     public boolean isWorldGuardEnabled()     { return worldGuardEnabled; }
     public boolean isFaweEnabled()           { return faweEnabled; }
     public boolean isCitizensEnabled()       { return citizensEnabled; }
-    public boolean isZNPCsPlusEnabled()      { return znpcsPlusEnabled; }
-    public boolean isFancyNpcsEnabled()      { return fancyNpcsEnabled; }
-
-    public boolean isAnyHologramEnabled()   { return false; }
+    public boolean isAnyHologramEnabled()    { return false; }
 
     public net.luckperms.api.LuckPerms getLuckPerms() {
         if (!luckPermsEnabled || luckPermsApi == null) return null;

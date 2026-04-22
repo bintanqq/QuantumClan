@@ -17,12 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages the Clan Vault system.
  *
- * BUG FIX 2: openVault now checks that the player is inside the Clan Hall
- *            (if the hall system is enabled). If the player is not in the hall,
- *            they receive the hall.no-access message.
+ * Access is now gated at the point of entry:
+ *  - VaultBlockListener handles block-click access (requires being inside hall)
+ *  - /qclan vault command is removed (vault is block-only)
+ *  - Admin /qclanadmin vault inspect|clear still works regardless of location
  *
- * BUG FIX 4: On open, the slot count is always recalculated from the clan's
- *            CURRENT level so an upgraded vault is immediately reflected.
+ * Slot count recalculated from current clan level on every open (BUG FIX 4).
  */
 public class ClanVaultManager {
 
@@ -39,32 +39,17 @@ public class ClanVaultManager {
         this.vaultDAO = vaultDAO;
     }
 
-    // ── Open vault ────────────────────────────────────────────
+    // ── Open vault (called by VaultBlockListener) ─────────────
 
     /**
      * Opens the clan vault GUI for a player.
-     *
-     * BUG FIX 2: If the hall system is enabled and the vault feature requires
-     *            players to be inside the hall, this check is enforced here.
+     * Access and hall checks are performed by the caller (VaultBlockListener).
+     * This method only handles concurrency and GUI opening.
      */
     public void openVault(Player player, Clan clan) {
-        // BUG FIX 2: Hall-only access check
-        if (plugin.getHallConfigManager().isEnabled()) {
-            if (!plugin.getClanHallManager().isInsideHall(player.getUniqueId())) {
-                plugin.sendMessage(player, "vault.hall-only");
-                return;
-            }
-            // Also verify the clan actually has hall access
-            if (!plugin.getClanHallManager().hasAccess(clan.getId())) {
-                plugin.sendMessage(player, "hall.no-access");
-                return;
-            }
-        }
-
         String clanId = clan.getId();
         UUID   uuid   = player.getUniqueId();
 
-        // Concurrent access check
         if (vaultOpener.containsKey(clanId)) {
             UUID opener = vaultOpener.get(clanId);
             if (!opener.equals(uuid)) {
@@ -78,7 +63,6 @@ public class ClanVaultManager {
             closeVaultSilent(uuid, clanId);
         }
 
-        // BUG FIX 4: always recalculate slot count from CURRENT level
         int slotCount = getVaultSlotCount(clan);
 
         if (openVaults.containsKey(clanId)) {
@@ -90,14 +74,13 @@ public class ClanVaultManager {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     String snapshot = VaultDAO.serialize(contents);
                     originalSerialized.put(clanId, snapshot != null ? snapshot : "");
-
                     openVaults.put(clanId, contents);
                     vaultOpener.put(clanId, uuid);
-
                     doOpenGui(player, clan, contents, slotCount);
-                })
-        );
+                }));
     }
+
+    // ── Admin inspect ─────────────────────────────────────────
 
     public void openVaultAdmin(Player admin, Clan clan) {
         String clanId   = clan.getId();
@@ -107,19 +90,14 @@ public class ClanVaultManager {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     adminInspectors.add(admin.getUniqueId());
                     openVaults.put(clanId + ":admin:" + admin.getUniqueId(), contents);
-                    doOpenAdminGui(admin, clan, contents, slotCount);
-                })
-        );
+                    ClanVaultGUI gui = new ClanVaultGUI(plugin, admin, clan, contents, true);
+                    admin.openInventory(gui.build());
+                }));
     }
 
     private void doOpenGui(Player player, Clan clan, ItemStack[] contents, int slotCount) {
         ClanVaultGUI gui = new ClanVaultGUI(plugin, player, clan, contents, false);
         player.openInventory(gui.build());
-    }
-
-    private void doOpenAdminGui(Player admin, Clan clan, ItemStack[] contents, int slotCount) {
-        ClanVaultGUI gui = new ClanVaultGUI(plugin, admin, clan, contents, true);
-        admin.openInventory(gui.build());
     }
 
     // ── Close vault ───────────────────────────────────────────
@@ -137,19 +115,16 @@ public class ClanVaultManager {
 
         ItemStack[] current = openVaults.remove(clanId);
         vaultOpener.remove(clanId);
-
         if (current == null) return;
 
         String currentSerialized = VaultDAO.serialize(current);
         String original          = originalSerialized.remove(clanId);
-
         boolean isDirty = !java.util.Objects.equals(currentSerialized, original);
 
         if (isDirty && currentSerialized != null) {
             vaultDAO.saveVault(clanId, current).thenAccept(ok -> {
-                if (!ok) {
-                    plugin.getLogger().warning("[ClanVaultManager] Failed to save vault for clan " + clanId);
-                }
+                if (!ok) plugin.getLogger().warning(
+                        "[ClanVaultManager] Failed to save vault for clan " + clanId);
             });
         }
     }
@@ -167,8 +142,8 @@ public class ClanVaultManager {
             UUID opener = vaultOpener.remove(clanId);
             openVaults.remove(clanId);
             originalSerialized.remove(clanId);
-            Player p = opener != null ? Bukkit.getPlayer(opener) : null;
-            if (p != null) {
+            if (opener != null) {
+                Player p = Bukkit.getPlayer(opener);
                 Bukkit.getScheduler().runTask(plugin, () -> p.closeInventory());
             }
         }
@@ -177,15 +152,10 @@ public class ClanVaultManager {
 
     // ── Slot count ────────────────────────────────────────────
 
-    /**
-     * BUG FIX 4: Always reads vault rows from CURRENT clan level.
-     */
     public int getVaultSlotCount(Clan clan) {
-        // Re-fetch the clan from cache to ensure we have latest level
         Clan latest = plugin.getClanManager().getClanById(clan.getId());
         int level = (latest != null) ? latest.getLevel() : clan.getLevel();
-        int rows  = plugin.getConfigManager().getVaultRows(level);
-        rows = Math.max(1, Math.min(6, rows));
+        int rows  = Math.max(1, Math.min(6, plugin.getConfigManager().getVaultRows(level)));
         return rows * 9;
     }
 

@@ -3,21 +3,18 @@ package me.bintanq.quantumclan.module;
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.config.ShopConfigManager.ShopItem;
 import me.bintanq.quantumclan.model.Clan;
+import me.bintanq.quantumclan.util.BannerUtil;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.block.banner.Pattern;
-import org.bukkit.block.banner.PatternType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -25,11 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles all clan shop purchase logic.
- *
- * BUG FIX #4: Removed all "KAS" references — replaced with "Treasury".
- * BUG FIX #5: Clan Banner now creates a dye-colored banner with clan-specific
- *             patterns based on the clan's tag color. Each banner is unique per clan.
- * BUG FIX #11: All messages come from messages.yml — zero hardcoded player text.
+ * Banner creation delegated to BannerUtil (DRY).
+ * All player-facing messages come from messages.yml.
  */
 public class ClanShopManager {
 
@@ -40,9 +34,9 @@ public class ClanShopManager {
     private final NamespacedKey keyClanTag;
 
     public ClanShopManager(QuantumClan plugin) {
-        this.plugin      = plugin;
-        keySpyTarget = new NamespacedKey(plugin, "qc_spy_target");
-        keyClanTag   = new NamespacedKey(plugin, "qc_clan_tag");
+        this.plugin   = plugin;
+        keySpyTarget  = new NamespacedKey(plugin, "qc_spy_target");
+        keyClanTag    = new NamespacedKey(plugin, "qc_clan_tag");
     }
 
     public void purchase(Player player, Clan clan, ShopItem item) {
@@ -83,13 +77,11 @@ public class ClanShopManager {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         try {
                             deliverReward(player, latest, item);
-                            plugin.sendMessage(player, "shop.purchase-success",
-                                    "{value}", item.getName());
+                            plugin.sendMessage(player, "shop.purchase-success", "{value}", item.getName());
                         } catch (Exception e) {
                             plugin.getClanManager().depositMoney(uuid, cost);
                             plugin.sendMessage(player, "shop.purchase-failed");
-                            plugin.getLogger().warning("[ClanShopManager] Reward delivery failed, rolled back: "
-                                    + e.getMessage());
+                            plugin.getLogger().warning("[ClanShopManager] Reward delivery failed, rolled back: " + e.getMessage());
                         } finally {
                             processing.remove(uuid);
                         }
@@ -104,6 +96,8 @@ public class ClanShopManager {
             case UTILITY    -> deliverUtility(player, clan, item);
         }
     }
+
+    // ── BUFF ──────────────────────────────────────────────────
 
     private void deliverBuff(Player player, Clan clan, ShopItem item) {
         PotionEffectType effectType = PotionEffectType.getByName(item.getEffect().toUpperCase());
@@ -120,10 +114,9 @@ public class ClanShopManager {
         Instant expiresAt = Instant.now().plusSeconds(durationSec);
         for (UUID memberUuid : clan.getMemberUuids()) {
             if (Bukkit.getPlayer(memberUuid) != null) continue;
-            String buffId = UUID.randomUUID().toString();
             plugin.getMemberDAO().insertPendingBuff(
-                    buffId, memberUuid, item.getEffect().toUpperCase(),
-                    amplifier, durationSec, expiresAt);
+                    UUID.randomUUID().toString(), memberUuid,
+                    item.getEffect().toUpperCase(), amplifier, durationSec, expiresAt);
         }
 
         plugin.getClanManager().getOnlineMembers(clan.getId()).forEach(m ->
@@ -132,6 +125,8 @@ public class ClanShopManager {
                         "{duration}", String.valueOf(durationSec / 60)));
     }
 
+    // ── CONSUMABLE ────────────────────────────────────────────
+
     private void deliverConsumable(Player player, Clan clan, ShopItem item) {
         switch (item.getId()) {
             case "spy_scroll" -> {
@@ -139,14 +134,11 @@ public class ClanShopManager {
                     plugin.sendMessage(player, "error.unknown-subcommand");
                     return;
                 }
-                ItemStack scroll = makeSpyScrollItem(player);
-                giveOrDrop(player, scroll, item.getName());
+                giveOrDrop(player, makeSpyScrollItem(player), item.getName());
             }
-            case "clan_banner" -> {
-                // BUG FIX #5: Create a proper clan-colored banner with patterns
-                ItemStack banner = makeClanBannerItem(clan);
-                giveOrDrop(player, banner, item.getName());
-            }
+            case "clan_banner" -> giveOrDrop(player,
+                    BannerUtil.makeClanBanner(plugin, clan, keyClanTag), item.getName());
+
             case "clan_announcement" -> {
                 if (!plugin.getConfigManager().isAnnouncementsEnabled()) {
                     plugin.sendMessage(player, "error.unknown-subcommand");
@@ -162,19 +154,10 @@ public class ClanShopManager {
                         plugin.getMessagesManager().get("shop.announcement-prompt"),
                         msg -> {
                             plugin.getBuffTracker().setAnnounceCooldown(clan.getId());
-                            String broadcast = plugin.getMessagesManager()
-                                    .get("clan.announce-broadcast",
-                                            "{tag}", clan.getFormattedTag(),
-                                            "{message}", msg);
-                            String[] lines = broadcast.split("\\{newline\\}");
-                            net.kyori.adventure.text.Component bc = net.kyori.adventure.text.Component.empty();
-                            for (int i = 0; i < lines.length; i++) {
-                                String line = lines[i];
-                                if (!line.isBlank()) bc = bc.append(plugin.getMiniMessage().deserialize(line));
-                                if (i < lines.length - 1) bc = bc.append(net.kyori.adventure.text.Component.newline());
-                            }
-                            final net.kyori.adventure.text.Component finalBc = bc;
-                            Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(finalBc));
+                            String raw = plugin.getMessagesManager().get("clan.announce-broadcast",
+                                    "{tag}", clan.getFormattedTag(), "{message}", msg);
+                            Component broadcast = buildBroadcastComponent(raw);
+                            Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(broadcast));
                         },
                         () -> {
                             plugin.getClanManager().depositMoney(player.getUniqueId(), item.getPrice());
@@ -194,12 +177,11 @@ public class ClanShopManager {
                 }
                 plugin.getBuffTracker().grantDeathProtection(player.getUniqueId());
             }
-            default -> {
-                ItemStack generic = new ItemStack(item.getMaterial());
-                giveOrDrop(player, generic, item.getName());
-            }
+            default -> giveOrDrop(player, new ItemStack(item.getMaterial()), item.getName());
         }
     }
+
+    // ── UTILITY ───────────────────────────────────────────────
 
     private void deliverUtility(Player player, Clan clan, ShopItem item) {
         switch (item.getId()) {
@@ -209,10 +191,10 @@ public class ClanShopManager {
                     return;
                 }
                 plugin.getBuffTracker().activateXpBoost(clan.getId(), item.getDuration());
-                String boostLabel = plugin.getMessagesManager().get("shop.xp-boost-label",
+                String label = plugin.getMessagesManager().get("shop.xp-boost-label",
                         "{multiplier}", String.valueOf(plugin.getConfigManager().getXpBoostMultiplier()));
                 plugin.getClanManager().getOnlineMembers(clan.getId()).forEach(m ->
-                        plugin.sendMessage(m, "shop.buff-applied", "{value}", boostLabel));
+                        plugin.sendMessage(m, "shop.buff-applied", "{value}", label));
             }
             case "clan_shield" -> {
                 if (!plugin.getConfigManager().isClanShieldEnabled()) {
@@ -221,161 +203,42 @@ public class ClanShopManager {
                 }
                 clan.applyShield(item.getDuration());
                 plugin.getClanDAO().updateShield(clan.getId(), clan.getShieldUntil());
-                String shieldLabel = plugin.getMessagesManager().get("shop.shield-label");
+                String label = plugin.getMessagesManager().get("shop.shield-label");
                 plugin.getClanManager().getOnlineMembers(clan.getId()).forEach(m ->
-                        plugin.sendMessage(m, "shop.buff-applied", "{value}", shieldLabel));
+                        plugin.sendMessage(m, "shop.buff-applied", "{value}", label));
             }
             default -> plugin.getLogger().warning("[ClanShopManager] Unknown UTILITY id: " + item.getId());
         }
     }
 
+    // ── Helpers ───────────────────────────────────────────────
+
     private ItemStack makeSpyScrollItem(Player buyer) {
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta  = item.getItemMeta();
-        if (meta != null) {
-            meta.displayName(plugin.getMiniMessage().deserialize(
-                    "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-name")));
-            meta.lore(List.of(
-                    plugin.getMiniMessage().deserialize(
-                            "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-lore1")),
-                    plugin.getMiniMessage().deserialize(
-                            "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-lore2",
-                                    "{duration}", String.valueOf(plugin.getConfigManager().getSpyScrollDuration() / 60)))
-            ));
-            meta.getPersistentDataContainer().set(keySpyTarget,
-                    PersistentDataType.STRING, buyer.getUniqueId().toString());
-            item.setItemMeta(meta);
-        }
+        if (meta == null) return item;
+        meta.displayName(plugin.getMiniMessage().deserialize(
+                "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-name")));
+        meta.lore(List.of(
+                plugin.getMiniMessage().deserialize(
+                        "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-lore1")),
+                plugin.getMiniMessage().deserialize(
+                        "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-lore2",
+                                "{duration}", String.valueOf(plugin.getConfigManager().getSpyScrollDuration() / 60)))));
+        meta.getPersistentDataContainer().set(keySpyTarget,
+                PersistentDataType.STRING, buyer.getUniqueId().toString());
+        item.setItemMeta(meta);
         return item;
     }
 
-    private ItemStack makeClanBannerItem(Clan clan) {
-        // 1. Tentukan base color
-        //    Kalau clan sudah beli tag color → pakai itu
-        //    Kalau belum → derive dari hash nama clan
-        DyeColor baseColor = resolveBaseColor(clan);
-        DyeColor accentColor = resolveAccentColor(clan, baseColor);
-
-        Material bannerMaterial = dyeColorToBannerMaterial(baseColor);
-        ItemStack item = new ItemStack(bannerMaterial);
-        BannerMeta meta = (BannerMeta) item.getItemMeta();
-
-        if (meta != null) {
-            // Layer 1: gradient background
-            meta.addPattern(new Pattern(accentColor, PatternType.GRADIENT));
-            // Layer 2: border
-            meta.addPattern(new Pattern(accentColor, PatternType.BORDER));
-            // Layer 3: unique pattern dari hash nama clan
-            PatternType uniquePattern = resolveUniquePattern(clan);
-            meta.addPattern(new Pattern(baseColor, uniquePattern));
-            // Layer 4: diagonal signature
-            meta.addPattern(new Pattern(accentColor, PatternType.DIAGONAL_LEFT));
-
-            meta.displayName(plugin.getMiniMessage().deserialize(
-                    "<!italic>" + plugin.getMessagesManager().get("shop.banner-name",
-                            "{tag}", clan.getColoredTag())));
-            meta.lore(List.of(
-                    plugin.getMiniMessage().deserialize(
-                            "<!italic>" + plugin.getMessagesManager().get("shop.banner-lore",
-                                    "{clan}", clan.getName()))
-            ));
-            meta.getPersistentDataContainer().set(keyClanTag,
-                    PersistentDataType.STRING, clan.getId());
-            item.setItemMeta(meta);
+    private Component buildBroadcastComponent(String raw) {
+        String[] lines = raw.split("\\{newline\\}");
+        Component bc = Component.empty();
+        for (int i = 0; i < lines.length; i++) {
+            if (!lines[i].isBlank()) bc = bc.append(plugin.getMiniMessage().deserialize(lines[i]));
+            if (i < lines.length - 1) bc = bc.append(Component.newline());
         }
-        return item;
-    }
-
-    /**
-     * Kalau clan punya tag color (beli dari coins shop) → pakai itu.
-     * Kalau belum → derive dari hash nama clan, cycling semua 16 DyeColor.
-     * Dengan 16 warna × banyak accent/pattern, collision visual sangat jarang.
-     */
-    private DyeColor resolveBaseColor(Clan clan) {
-        String tagColor = clan.getTagColor();
-        if (tagColor != null && !tagColor.isBlank()) {
-            return tagColorToDyeColor(tagColor);
-        }
-        // Hash nama clan → index ke palette penuh
-        DyeColor[] all = DyeColor.values(); // 16 warna
-        int idx = Math.abs(clan.getName().hashCode()) % all.length;
-        return all[idx];
-    }
-
-    /**
-     * Accent color = DyeColor yang berbeda dari base, juga derived dari hash.
-     * Pakai clan ID (UUID) sebagai seed kedua supaya beda dari base.
-     */
-    private DyeColor resolveAccentColor(Clan clan, DyeColor base) {
-        DyeColor[] all = DyeColor.values();
-        // Seed berbeda dari resolveBaseColor supaya accent ≠ base
-        int idx = Math.abs(clan.getId().hashCode()) % all.length;
-        DyeColor accent = all[idx];
-        // Kalau kebetulan sama dengan base, geser satu
-        if (accent == base) {
-            idx = (idx + 1) % all.length;
-            accent = all[idx];
-        }
-        return accent;
-    }
-
-    /**
-     * Pattern unik dari kombinasi hash nama + tag clan.
-     * PatternType.values() di Paper 1.21 ada ~40 pattern.
-     */
-    private PatternType resolveUniquePattern(Clan clan) {
-        List<PatternType> patterns = new ArrayList<>(
-                org.bukkit.Registry.BANNER_PATTERN.stream().toList()
-        );
-        int seed = (clan.getName() + clan.getTag()).hashCode();
-        int idx = Math.abs(seed) % patterns.size();
-        return patterns.get(idx);
-    }
-
-    private DyeColor tagColorToDyeColor(String tagColor) {
-        if (tagColor == null || tagColor.isBlank()) return DyeColor.WHITE;
-        String lower = tagColor.toLowerCase();
-        if (lower.contains("gold"))                        return DyeColor.YELLOW;
-        if (lower.contains("dark_red"))                    return DyeColor.RED;
-        if (lower.contains("red"))                         return DyeColor.RED;
-        if (lower.contains("dark_blue"))                   return DyeColor.BLUE;
-        if (lower.contains("blue"))                        return DyeColor.BLUE;
-        if (lower.contains("dark_green"))                  return DyeColor.GREEN;
-        if (lower.contains("green"))                       return DyeColor.LIME;
-        if (lower.contains("dark_aqua"))                   return DyeColor.CYAN;
-        if (lower.contains("aqua") || lower.contains("cyan")) return DyeColor.CYAN;
-        if (lower.contains("dark_purple"))                 return DyeColor.PURPLE;
-        if (lower.contains("light_purple"))                return DyeColor.MAGENTA;
-        if (lower.contains("purple"))                      return DyeColor.PURPLE;
-        if (lower.contains("yellow"))                      return DyeColor.YELLOW;
-        if (lower.contains("white"))                       return DyeColor.WHITE;
-        if (lower.contains("dark_gray") || lower.contains("dark_grey")) return DyeColor.GRAY;
-        if (lower.contains("gray") || lower.contains("grey"))           return DyeColor.LIGHT_GRAY;
-        if (lower.contains("black"))                       return DyeColor.BLACK;
-        if (lower.contains("orange"))                      return DyeColor.ORANGE;
-        if (lower.contains("pink"))                        return DyeColor.PINK;
-        return DyeColor.WHITE;
-    }
-
-    private Material dyeColorToBannerMaterial(DyeColor color) {
-        return switch (color) {
-            case RED          -> Material.RED_BANNER;
-            case BLUE         -> Material.BLUE_BANNER;
-            case GREEN        -> Material.GREEN_BANNER;
-            case YELLOW       -> Material.YELLOW_BANNER;
-            case CYAN         -> Material.CYAN_BANNER;
-            case PURPLE       -> Material.PURPLE_BANNER;
-            case ORANGE       -> Material.ORANGE_BANNER;
-            case PINK         -> Material.PINK_BANNER;
-            case GRAY         -> Material.GRAY_BANNER;
-            case LIGHT_GRAY   -> Material.LIGHT_GRAY_BANNER;
-            case BLACK        -> Material.BLACK_BANNER;
-            case BROWN        -> Material.BROWN_BANNER;
-            case LIME         -> Material.LIME_BANNER;
-            case MAGENTA      -> Material.MAGENTA_BANNER;
-            case LIGHT_BLUE   -> Material.LIGHT_BLUE_BANNER;
-            default           -> Material.WHITE_BANNER;
-        };
+        return bc;
     }
 
     private void giveOrDrop(Player player, ItemStack item, String itemName) {

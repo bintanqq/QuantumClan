@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 /**
  * Routes /qclanadmin <subcommand> to the appropriate admin handler.
- * No arguments → shows help from messages.yml.
+ * All help text comes from messages.yml — no hardcoded color strings.
  */
 public class QClanAdminCommand implements CommandExecutor, TabCompleter {
 
@@ -29,8 +29,8 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
     private final AdminClanCommand     clan;
     private final AdminWarCommand      war;
     private final AdminSetArenaCommand setArena;
-    private AdminHallCommand     hall;
     private final AdminVaultCommand    vault;
+    private AdminHallCommand           hall;
 
     public QClanAdminCommand(QuantumClan plugin) {
         this.plugin  = plugin;
@@ -44,9 +44,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
 
     private AdminHallCommand getHallCommand() {
         if (hall == null) {
-            if (Bukkit.getPluginManager().getPlugin("WorldGuard") != null) {
-                hall = new AdminHallCommand(plugin);
-            }
+            hall = new AdminHallCommand(plugin);
         }
         return hall;
     }
@@ -79,21 +77,14 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                 if (subArgs.length > 0 && subArgs[0].equalsIgnoreCase("coins")) {
                     coins.execute(player, Arrays.copyOfRange(subArgs, 1, subArgs.length));
                 } else {
-                    plugin.sendRaw(player, "<red>/qclanadmin give coins <player> <amount>");
+                    plugin.sendMessage(player, "admin.help-give-usage");
                 }
             }
             case "setarena" -> setArena.execute(player, subArgs);
             case "war"      -> war.execute(player, subArgs);
             case "clan"     -> clan.execute(player, subArgs);
-            case "hall" -> {
-                AdminHallCommand cmd = getHallCommand();
-                if (cmd != null) {
-                    cmd.execute(player, subArgs);
-                } else {
-                    plugin.sendRaw(player, "<red>WorldGuard needed!");
-                }
-            }
-            case "vault" -> vault.execute(player, subArgs);
+            case "hall"     -> getHallCommand().execute(player, subArgs);
+            case "vault"    -> vault.execute(player, subArgs);
             default         -> sendAdminHelp(player);
         }
         return true;
@@ -106,15 +97,16 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         plugin.sendRaw(player, msg.get("help.admin-header"));
 
         String entry = msg.getRaw("help.admin-entry");
-        if (entry == null) entry = "<gold>/qclanadmin {cmd} <dark_gray>- <gray>{desc}";
+        if (entry == null) entry = "<aqua>/qclanadmin {cmd} <dark_gray>- <gray>{desc}";
 
         String[][] cmds = {
-                { "reload",                                      "quantumclan.admin.reload",   msg.get("help.admin-cmd-reload") },
-                { "give coins <player> <amount>",                "quantumclan.admin.coins",    msg.get("help.admin-cmd-give") },
-                { "setarena",                                    "quantumclan.admin.setarena", msg.get("help.admin-cmd-setarena") },
-                { "war <start|end>",                             "quantumclan.admin.war",      msg.get("help.admin-cmd-war") },
-                { "clan <info|delete|setlevel|setreputation>",   "quantumclan.admin.clan",     msg.get("help.admin-cmd-clan") },
-                { "hall <setregion|grant|revoke|...>",           "quantumclan.admin",          "Manage the Clan Hall" },
+                { "reload",                                    "quantumclan.admin.reload",   msg.get("help.admin-cmd-reload") },
+                { "give coins <player> <amount>",              "quantumclan.admin.coins",    msg.get("help.admin-cmd-give") },
+                { "setarena",                                  "quantumclan.admin.setarena", msg.get("help.admin-cmd-setarena") },
+                { "war <start|end>",                           "quantumclan.admin.war",      msg.get("help.admin-cmd-war") },
+                { "clan <info|delete|setlevel|setreputation>", "quantumclan.admin.clan",     msg.get("help.admin-cmd-clan") },
+                { "hall <setregion|grant|revoke|...>",         "quantumclan.admin",          msg.get("help.admin-cmd-hall") },
+                { "vault <clear|inspect>",                     "quantumclan.admin.vault",    msg.get("help.admin-cmd-vault") },
         };
 
         final String finalEntry = entry;
@@ -139,7 +131,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player p) || !p.hasPermission("quantumclan.admin")) return List.of();
 
         if (args.length == 1) {
-            return List.of("reload", "give", "setarena", "war", "clan", "hall", "help", "vault").stream()
+            return List.of("reload", "give", "setarena", "war", "clan", "hall", "vault", "help").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -149,7 +141,8 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                 case "war"    -> List.of("start", "end");
                 case "clan"   -> List.of("info", "delete", "setlevel", "setreputation");
                 case "hall"   -> List.of("setregion", "setschematic", "paste", "addnpc",
-                        "removenpc", "listnpc", "setcost", "grant", "revoke", "info", "reload");
+                        "removenpc", "listnpc", "setcost", "grant", "revoke",
+                        "info", "reload", "setvaultblock", "clearvaultblock");
                 case "vault"  -> List.of("clear", "inspect");
                 default       -> List.of();
             };

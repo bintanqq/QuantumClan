@@ -33,6 +33,15 @@ hall:
       y: 64
       z: 0
 
+  # Vault block — players right-click this block to open their clan vault.
+  # Set via: /qclanadmin hall setvaultblock (look at the block you want)
+  # Clear via: /qclanadmin hall clearvaultblock
+  vault-block:
+    world: ""
+    x: 0
+    y: 0
+    z: 0
+
   passive-buffs:
     enabled: true
     # Seconds between each buff refresh cycle (prevents expiry while inside)

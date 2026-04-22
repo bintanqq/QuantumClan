@@ -197,6 +197,7 @@ admin:
   war-already-running: "<white>A war session is already running."
   coins-grant-failed: "<white>Failed to grant {coins-name}. Please try again."
   coins-granted: "<aqua>Successfully granted <white>{value} {coins-name}</white> to <aqua>{player}</aqua>."
+  help-give-usage: "<white>Usage: <aqua>/qclanadmin give coins <player> <amount>"
 
 # ── Hook Status (console only) ────────────────────────────────
 hook:
@@ -391,6 +392,8 @@ hall:
     help-revoke: "<aqua>revoke <clan> <dark_gray>- <gray>Revoke hall access"
     help-info: "<aqua>info <dark_gray>- <gray>Show hall status"
     help-reload: "<aqua>reload <dark_gray>- <gray>Reload halls.yml"
+    help-setvaultblock: "<aqua>setvaultblock <dark_gray>- <gray>Set vault block (look at a block)"
+    help-clearvaultblock: "<aqua>clearvaultblock <dark_gray>- <gray>Remove vault block"
     usage-setschematic: "<white>Usage: <aqua>/qclanadmin hall setschematic <file>"
     usage-addnpc: "<white>Usage: <aqua>/qclanadmin hall addnpc <TYPE> [name]"
     usage-removenpc: "<white>Usage: <aqua>/qclanadmin hall removenpc <type>"
@@ -403,16 +406,38 @@ hall:
     info-mode: "<gray>Mode: <white>{value}"
     info-region: "<gray>Region: <white>{world} [{x1},{y1},{z1}] → [{x2},{y2},{z2}]"
     info-schematic: "<gray>Schematic: <white>{value}"
+    info-vaultblock: "<gray>Vault block: <white>{value}"
+    info-not-set: "<gray>Not configured"
     info-clans: "<gray>Clans with access: <white>{value}"
     info-players: "<gray>Players inside: <white>{value}"
     info-npcs: "<gray>NPC Points: <white>{value}"
     worldguard-region-created: "<aqua>WorldGuard region <white>{region}</white> auto-created!"
+    setregion-corner1: "<aqua>First corner set at <white>{x}, {y}, {z}</white>. Run the command again at the second corner."
+    setregion-done: "<aqua>Hall region set: <white>[{x1},{y1},{z1}] → [{x2},{y2},{z2}]"
+    schematic-not-found: "<white>Schematic file <aqua>{file}</aqua> was not found in halls/schematics/."
+    schematic-set: "<aqua>Schematic set to <white>{file}</white>."
+    no-schematic-provider: "<white>No schematic provider is available. Install FAWE or use NBT format."
+    paste-origin-not-set: "<white>Paste origin is not configured. Set it in halls.yml."
+    paste-started: "<aqua>Pasting <white>{file}</white>..."
+    paste-success: "<aqua>Schematic pasted successfully!"
+    paste-failed: "<white>Failed to paste schematic. Check console for details."
+    cost-set: "<aqua>Hall purchase cost set to <white>{cost}</white>."
+    grant-success: "<aqua>Hall access granted to clan <white>{clan}</white>."
+    grant-failed: "<white>Failed to grant hall access to clan <aqua>{clan}</aqua>."
+    revoke-success: "<aqua>Hall access revoked from clan <white>{clan}</white>."
+    revoke-failed: "<white>Failed to revoke hall access from clan <aqua>{clan}</aqua>."
+    reload-success: "<aqua>halls.yml reloaded successfully!"
+    npc-list-empty: "<white>No NPC points configured. Use <aqua>/qclanadmin hall addnpc</aqua>."
+    npc-list-header: "<dark_gray>━━ <aqua>NPC Points <dark_gray>━━"
+    setvaultblock-success: "<aqua>Vault block set at <white>{world} {x},{y},{z}</white>. Players right-click to open clan vault."
+    setvaultblock-no-block: "<white>Look at a block within 5 blocks and try again."
+    clearvaultblock-success: "<aqua>Vault block location cleared."
 
-
-  # ── Discount hints (appended to shop/upgrade GUIs when in hall) ────────
+  # Discount hints
   discount-active: "<green>✦ Hall Discount: -{pct}%"
   discount-cost-original: "<dark_gray><st>{original}</st>"
 
+# ── Vault ─────────────────────────────────────────────────────
 vault:
   in-use: "<white>Vault is currently being used by <aqua>{player}</aqua>. Try again in a moment."
   opener-unknown: "<white>another member"
@@ -428,15 +453,15 @@ vault:
   info-name: "<gold>Vault Info"
   info-name-admin: "<red>Vault — Admin Inspect"
   close-name: "<red>Close Vault"
-  hall-only: "<white>The Clan Vault can only be accessed inside the <aqua>Clan Hall</aqua>."
+  hall-only: "<white>The Clan Vault can only be accessed by interacting with the vault block inside the <aqua>Clan Hall</aqua>."
 
 # ── Help ──────────────────────────────────────────────────────
 help:
   header: "<dark_gray>━━━━━ <aqua>QuantumClan Help <dark_gray>━━━━━"
   footer: "<dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   entry: "<aqua>/qclan {cmd} <dark_gray>- <gray>{desc}"
-  admin-header: "<dark_gray>━━━━ <gold>Admin Commands <dark_gray>━━━━"
-  admin-entry: "<gold>/qclanadmin {cmd} <dark_gray>- <gray>{desc}"
+  admin-header: "<dark_gray>━━━━ <aqua>Admin Commands <dark_gray>━━━━"
+  admin-entry: "<aqua>/qclanadmin {cmd} <dark_gray>- <gray>{desc}"
   cmd-create: "Create a new clan"
   cmd-invite: "Invite a player to your clan"
   cmd-accept: "Accept a clan invite"
@@ -459,8 +484,11 @@ help:
   cmd-announce: "Send a server-wide announcement"
   cmd-contribution: "Open the contribution shop"
   cmd-coins: "Open the coins shop"
+  cmd-hall: "Access or purchase Clan Hall"
   admin-cmd-reload: "Reload all configuration files"
   admin-cmd-give: "Give coins to a player"
   admin-cmd-setarena: "Set the war arena at your location"
   admin-cmd-war: "Manually start or end a war"
   admin-cmd-clan: "Manage clans (info/delete/setlevel/setreputation)"
+  admin-cmd-hall: "Manage the Clan Hall system"
+  admin-cmd-vault: "Admin vault management (clear/inspect)"

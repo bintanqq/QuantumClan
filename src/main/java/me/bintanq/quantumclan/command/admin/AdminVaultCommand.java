@@ -8,11 +8,8 @@ import org.bukkit.entity.Player;
 import java.util.Arrays;
 
 /**
- * Handles /qclanadmin vault <subcommand>
- *
- * Subcommands:
- *   clear <clan>    — clear all items from a clan's vault
- *   inspect <clan>  — open vault as admin (read-only view)
+ * Handles /qclanadmin vault <subcommand>.
+ * All messages come from messages.yml — no hardcoded strings.
  */
 public class AdminVaultCommand {
 
@@ -27,7 +24,6 @@ public class AdminVaultCommand {
             sendHelp(player);
             return;
         }
-
         switch (args[0].toLowerCase()) {
             case "clear"   -> handleClear(player, Arrays.copyOfRange(args, 1, args.length));
             case "inspect" -> handleInspect(player, Arrays.copyOfRange(args, 1, args.length));
@@ -35,11 +31,9 @@ public class AdminVaultCommand {
         }
     }
 
-    // ── /qclanadmin vault clear <clan> ────────────────────────
-
     private void handleClear(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin vault clear <clan>");
+            plugin.sendMessage(player, "admin.help-give-usage");
             return;
         }
         String clanQuery = String.join(" ", args);
@@ -48,24 +42,16 @@ public class AdminVaultCommand {
             plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery);
             return;
         }
-
         plugin.getClanVaultManager().clearVault(clan.getId())
-                .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (ok) {
-                        plugin.sendMessage(player, "vault.admin-clear-success",
-                                "{clan}", clan.getName());
-                    } else {
-                        plugin.sendMessage(player, "vault.admin-clear-failed",
-                                "{clan}", clan.getName());
-                    }
-                }));
+                .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () ->
+                        plugin.sendMessage(player,
+                                ok ? "vault.admin-clear-success" : "vault.admin-clear-failed",
+                                "{clan}", clan.getName())));
     }
-
-    // ── /qclanadmin vault inspect <clan> ─────────────────────
 
     private void handleInspect(Player player, String[] args) {
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclanadmin vault inspect <clan>");
+            plugin.sendMessage(player, "admin.help-give-usage");
             return;
         }
         String clanQuery = String.join(" ", args);
@@ -74,14 +60,17 @@ public class AdminVaultCommand {
             plugin.sendMessage(player, "clan.not-found", "{clan}", clanQuery);
             return;
         }
-
         plugin.getClanVaultManager().openVaultAdmin(player, clan);
         plugin.sendMessage(player, "vault.admin-inspect-opened", "{clan}", clan.getName());
     }
 
     private void sendHelp(Player player) {
-        plugin.sendRaw(player, "<dark_gray>━━ <gold>/qclanadmin vault <dark_gray>━━");
-        plugin.sendRaw(player, "<gold>clear <clan> <dark_gray>- <gray>Clear vault contents");
-        plugin.sendRaw(player, "<gold>inspect <clan> <dark_gray>- <gray>View vault (read-only)");
+        plugin.sendMessage(player, "help.admin-header");
+        plugin.sendRaw(player, plugin.getMessagesManager().get("help.admin-entry")
+                .replace("{cmd}", "vault clear <clan>")
+                .replace("{desc}", plugin.getMessagesManager().get("help.admin-cmd-vault")));
+        plugin.sendRaw(player, plugin.getMessagesManager().get("help.admin-entry")
+                .replace("{cmd}", "vault inspect <clan>")
+                .replace("{desc}", "View vault contents (read-only)"));
     }
 }

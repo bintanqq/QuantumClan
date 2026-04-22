@@ -16,7 +16,6 @@ import java.util.logging.Level;
 
 /**
  * Reads and exposes all configuration from halls.yml.
- * Never access FileConfiguration directly from outside this class.
  */
 public class HallConfigManager {
 
@@ -54,7 +53,6 @@ public class HallConfigManager {
         save();
     }
 
-    /** Returns true if mode is PERMANENT, false if DURATION. */
     public boolean isPermanentMode() {
         return "PERMANENT".equalsIgnoreCase(cfg.getString("hall.purchase.mode", "DURATION"));
     }
@@ -95,7 +93,6 @@ public class HallConfigManager {
         save();
     }
 
-    /** Returns true if the location is inside the hall region (inclusive). */
     public boolean isInsideRegion(Location loc) {
         if (loc == null || loc.getWorld() == null) return false;
         if (!loc.getWorld().getName().equals(getRegionWorld())) return false;
@@ -105,7 +102,6 @@ public class HallConfigManager {
                 && z >= getRegionMinZ() && z <= getRegionMaxZ();
     }
 
-    /** Returns the hall teleport location (center of region at min Y). */
     public Location getTeleportLocation() {
         World world = Bukkit.getWorld(getRegionWorld());
         if (world == null) return null;
@@ -113,6 +109,45 @@ public class HallConfigManager {
         double y = getRegionMinY() + 1;
         double z = (getRegionMinZ() + getRegionMaxZ()) / 2.0;
         return new Location(world, x, y, z);
+    }
+
+    // ── Vault Block ───────────────────────────────────────────
+
+    /**
+     * Returns the location of the vault interaction block,
+     * or null if not configured.
+     *
+     * Players right-clicking this block open their clan vault.
+     */
+    public Location getVaultBlockLocation() {
+        String world = cfg.getString("hall.vault-block.world");
+        if (world == null || world.isBlank()) return null;
+        double x = cfg.getDouble("hall.vault-block.x", 0);
+        double y = cfg.getDouble("hall.vault-block.y", 0);
+        double z = cfg.getDouble("hall.vault-block.z", 0);
+        World w = Bukkit.getWorld(world);
+        if (w == null) return null;
+        return new Location(w, x, y, z);
+    }
+
+    /**
+     * Saves the vault block location to halls.yml.
+     * Called by /qclanadmin hall setvaultblock.
+     */
+    public void setVaultBlockLocation(Location loc) {
+        cfg.set("hall.vault-block.world", loc.getWorld().getName());
+        cfg.set("hall.vault-block.x", loc.getBlockX());
+        cfg.set("hall.vault-block.y", loc.getBlockY());
+        cfg.set("hall.vault-block.z", loc.getBlockZ());
+        save();
+    }
+
+    /**
+     * Clears the vault block location.
+     */
+    public void clearVaultBlockLocation() {
+        cfg.set("hall.vault-block", null);
+        save();
     }
 
     // ── Schematic ─────────────────────────────────────────────
@@ -164,7 +199,6 @@ public class HallConfigManager {
         return cfg.getBoolean("hall.discounts.enabled", true);
     }
 
-    /** Returns discount as a decimal multiplier, e.g. 20% → 0.80 */
     public double getDiscountMultiplier(String shopType) {
         int pct = cfg.getInt("hall.discounts." + shopType, 0);
         pct = Math.max(0, Math.min(100, pct));

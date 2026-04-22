@@ -363,7 +363,8 @@ public class QuantumClan extends JavaPlugin {
         pm.registerEvents(new InventoryClickListener(this), this);
         pm.registerEvents(new WarListener(this),            this);
         pm.registerEvents(new PlayerMoveListener(this),     this);
-        pm.registerEvents(new HallListener(this),           this);  // NEW
+        pm.registerEvents(new HallListener(this),           this);
+        pm.registerEvents(new VaultBlockListener(this), this);
     }
 
     private void registerCommands() {

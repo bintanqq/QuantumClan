@@ -10,10 +10,10 @@ import java.io.File;
 import java.util.Arrays;
 
 /**
- * Handles /qclanadmin hall <subcommand>
+ * Handles /qclanadmin hall <subcommand>.
  *
- * BUG FIX 7: All help text now comes from messages.yml instead of being
- *            hardcoded with arbitrary colors and symbols.
+ * All player-facing text comes from messages.yml — no hardcoded strings.
+ * Added: setvaultblock / clearvaultblock for the physical vault block feature.
  */
 public class AdminHallCommand {
 
@@ -30,18 +30,20 @@ public class AdminHallCommand {
         }
 
         switch (args[0].toLowerCase()) {
-            case "setregion"    -> handleSetRegion(player);
-            case "setschematic" -> handleSetSchematic(player, Arrays.copyOfRange(args, 1, args.length));
-            case "paste"        -> handlePaste(player);
-            case "addnpc"       -> handleAddNpc(player, Arrays.copyOfRange(args, 1, args.length));
-            case "removenpc"    -> handleRemoveNpc(player, Arrays.copyOfRange(args, 1, args.length));
-            case "listnpc"      -> handleListNpc(player);
-            case "setcost"      -> handleSetCost(player, Arrays.copyOfRange(args, 1, args.length));
-            case "grant"        -> handleGrant(player, Arrays.copyOfRange(args, 1, args.length));
-            case "revoke"       -> handleRevoke(player, Arrays.copyOfRange(args, 1, args.length));
-            case "info"         -> handleInfo(player);
-            case "reload"       -> handleReload(player);
-            default             -> sendHelp(player);
+            case "setregion"      -> handleSetRegion(player);
+            case "setschematic"   -> handleSetSchematic(player, Arrays.copyOfRange(args, 1, args.length));
+            case "paste"          -> handlePaste(player);
+            case "addnpc"         -> handleAddNpc(player, Arrays.copyOfRange(args, 1, args.length));
+            case "removenpc"      -> handleRemoveNpc(player, Arrays.copyOfRange(args, 1, args.length));
+            case "listnpc"        -> handleListNpc(player);
+            case "setcost"        -> handleSetCost(player, Arrays.copyOfRange(args, 1, args.length));
+            case "grant"          -> handleGrant(player, Arrays.copyOfRange(args, 1, args.length));
+            case "revoke"         -> handleRevoke(player, Arrays.copyOfRange(args, 1, args.length));
+            case "info"           -> handleInfo(player);
+            case "reload"         -> handleReload(player);
+            case "setvaultblock"  -> handleSetVaultBlock(player);
+            case "clearvaultblock"-> handleClearVaultBlock(player);
+            default               -> sendHelp(player);
         }
     }
 
@@ -73,20 +75,18 @@ public class AdminHallCommand {
 
             if (plugin.getHookManager().isWorldGuardEnabled()) {
                 try {
-                    // Panggil wrapper di sini
                     me.bintanq.quantumclan.hook.WorldGuardWrapper.createRegion(
                             plugin.getHallConfigManager().getWorldGuardRegionName(), min, max);
-
-                    String regionName = plugin.getHallConfigManager().getWorldGuardRegionName();
-                    plugin.sendMessage(player, "hall.admin.worldguard-region-created", "{region}", regionName);
+                    plugin.sendMessage(player, "hall.admin.worldguard-region-created",
+                            "{region}", plugin.getHallConfigManager().getWorldGuardRegionName());
                 } catch (NoClassDefFoundError | Exception e) {
-                    plugin.getLogger().warning("[ClanHall] WorldGuard not found or failed: " + e.getMessage());
+                    plugin.getLogger().warning("[ClanHall] WorldGuard region creation failed: " + e.getMessage());
                 }
             }
 
             plugin.sendMessage(player, "hall.admin.setregion-done",
-                    "{x1}", String.valueOf((int)minX), "{y1}", String.valueOf((int)minY), "{z1}", String.valueOf((int)minZ),
-                    "{x2}", String.valueOf((int)maxX), "{y2}", String.valueOf((int)maxY), "{z2}", String.valueOf((int)maxZ));
+                    "{x1}", String.valueOf((int) minX), "{y1}", String.valueOf((int) minY), "{z1}", String.valueOf((int) minZ),
+                    "{x2}", String.valueOf((int) maxX), "{y2}", String.valueOf((int) maxY), "{z2}", String.valueOf((int) maxZ));
         }
     }
 
@@ -98,8 +98,7 @@ public class AdminHallCommand {
             return;
         }
         String filename = args[0];
-        File schematicDir = new File(plugin.getDataFolder(), "halls/schematics");
-        File schematicFile = new File(schematicDir, filename);
+        File schematicFile = new File(new File(plugin.getDataFolder(), "halls/schematics"), filename);
         if (!schematicFile.exists()) {
             plugin.sendMessage(player, "hall.admin.schematic-not-found", "{file}", filename);
             return;
@@ -115,29 +114,21 @@ public class AdminHallCommand {
             plugin.sendMessage(player, "hall.admin.no-schematic-provider");
             return;
         }
-
         String filename = plugin.getHallConfigManager().getSchematicFile();
-        File schematicDir = new File(plugin.getDataFolder(), "halls/schematics");
-        File schematicFile = new File(schematicDir, filename);
-
+        File schematicFile = new File(new File(plugin.getDataFolder(), "halls/schematics"), filename);
         if (!schematicFile.exists()) {
             plugin.sendMessage(player, "hall.admin.schematic-not-found", "{file}", filename);
             return;
         }
-
         Location origin = plugin.getHallConfigManager().getSchematicPasteOrigin();
         if (origin == null) {
             plugin.sendMessage(player, "hall.admin.paste-origin-not-set");
             return;
         }
-
         plugin.sendMessage(player, "hall.admin.paste-started", "{file}", filename);
-
         plugin.getSchematicProvider().paste(schematicFile, origin, false).thenAccept(ok ->
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (ok) plugin.sendMessage(player, "hall.admin.paste-success");
-                    else    plugin.sendMessage(player, "hall.admin.paste-failed");
-                }));
+                Bukkit.getScheduler().runTask(plugin, () -> plugin.sendMessage(player,
+                        ok ? "hall.admin.paste-success" : "hall.admin.paste-failed")));
     }
 
     // ── addnpc ────────────────────────────────────────────────
@@ -172,11 +163,10 @@ public class AdminHallCommand {
         }
         plugin.sendMessage(player, "hall.admin.npc-list-header");
         for (var npc : npcs) {
-            plugin.sendRaw(player,
-                    "<gray> - <white>" + npc.key
-                            + "<dark_gray>: <aqua>" + npc.type
-                            + " <dark_gray>@ <gray>" + npc.world
-                            + " " + String.format("%.0f,%.0f,%.0f", npc.x, npc.y, npc.z));
+            plugin.sendRaw(player, "<gray> - <white>" + npc.key
+                    + "<dark_gray>: <aqua>" + npc.type
+                    + " <dark_gray>@ <gray>" + npc.world
+                    + " " + String.format("%.0f,%.0f,%.0f", npc.x, npc.y, npc.z));
         }
     }
 
@@ -212,10 +202,10 @@ public class AdminHallCommand {
             return;
         }
         plugin.getClanHallManager().grantAccess(clan.getId())
-                .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (ok) plugin.sendMessage(player, "hall.admin.grant-success", "{clan}", clan.getName());
-                    else    plugin.sendMessage(player, "hall.admin.grant-failed",  "{clan}", clan.getName());
-                }));
+                .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () ->
+                        plugin.sendMessage(player,
+                                ok ? "hall.admin.grant-success" : "hall.admin.grant-failed",
+                                "{clan}", clan.getName())));
     }
 
     // ── revoke ────────────────────────────────────────────────
@@ -232,29 +222,36 @@ public class AdminHallCommand {
             return;
         }
         plugin.getClanHallManager().revokeAccess(clan.getId())
-                .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (ok) plugin.sendMessage(player, "hall.admin.revoke-success", "{clan}", clan.getName());
-                    else    plugin.sendMessage(player, "hall.admin.revoke-failed",  "{clan}", clan.getName());
-                }));
+                .thenAccept(ok -> Bukkit.getScheduler().runTask(plugin, () ->
+                        plugin.sendMessage(player,
+                                ok ? "hall.admin.revoke-success" : "hall.admin.revoke-failed",
+                                "{clan}", clan.getName())));
     }
 
     // ── info ──────────────────────────────────────────────────
 
     private void handleInfo(Player player) {
         var cfg = plugin.getHallConfigManager();
+        Location vaultLoc = cfg.getVaultBlockLocation();
+        String vaultStr = vaultLoc != null
+                ? String.format("%s [%d,%d,%d]", vaultLoc.getWorld().getName(),
+                vaultLoc.getBlockX(), vaultLoc.getBlockY(), vaultLoc.getBlockZ())
+                : plugin.getMessagesManager().get("hall.admin.info-not-set");
+
         plugin.sendMessage(player, "hall.admin.info-header");
         plugin.sendMessage(player, "hall.admin.info-enabled",    "{value}", String.valueOf(cfg.isEnabled()));
         plugin.sendMessage(player, "hall.admin.info-cost",       "{value}", plugin.getEconomyProvider().format(cfg.getPurchaseCost()));
         plugin.sendMessage(player, "hall.admin.info-mode",       "{value}", cfg.isPermanentMode() ? "PERMANENT" : "DURATION (" + cfg.getDurationDays() + " days)");
         plugin.sendMessage(player, "hall.admin.info-region",
                 "{world}", cfg.getRegionWorld(),
-                "{x1}", String.valueOf((int)cfg.getRegionMinX()),
-                "{y1}", String.valueOf((int)cfg.getRegionMinY()),
-                "{z1}", String.valueOf((int)cfg.getRegionMinZ()),
-                "{x2}", String.valueOf((int)cfg.getRegionMaxX()),
-                "{y2}", String.valueOf((int)cfg.getRegionMaxY()),
-                "{z2}", String.valueOf((int)cfg.getRegionMaxZ()));
+                "{x1}", String.valueOf((int) cfg.getRegionMinX()),
+                "{y1}", String.valueOf((int) cfg.getRegionMinY()),
+                "{z1}", String.valueOf((int) cfg.getRegionMinZ()),
+                "{x2}", String.valueOf((int) cfg.getRegionMaxX()),
+                "{y2}", String.valueOf((int) cfg.getRegionMaxY()),
+                "{z2}", String.valueOf((int) cfg.getRegionMaxZ()));
         plugin.sendMessage(player, "hall.admin.info-schematic",  "{value}", cfg.getSchematicFile());
+        plugin.sendMessage(player, "hall.admin.info-vaultblock", "{value}", vaultStr);
         plugin.sendMessage(player, "hall.admin.info-clans",      "{value}", String.valueOf(plugin.getClanHallManager().getAccessClanIds().size()));
         plugin.sendMessage(player, "hall.admin.info-players",    "{value}", String.valueOf(plugin.getClanHallManager().getPlayersInsideHall().size()));
         plugin.sendMessage(player, "hall.admin.info-npcs",       "{value}", String.valueOf(plugin.getHallNPCManager().listNpcPoints().size()));
@@ -267,7 +264,30 @@ public class AdminHallCommand {
         plugin.sendMessage(player, "hall.admin.reload-success");
     }
 
-    // ── Help (BUG FIX 7) ──────────────────────────────────────
+    // ── setvaultblock ─────────────────────────────────────────
+
+    private void handleSetVaultBlock(Player player) {
+        Location target = player.getTargetBlockExact(5);
+        if (target == null) {
+            plugin.sendMessage(player, "hall.admin.setvaultblock-no-block");
+            return;
+        }
+        plugin.getHallConfigManager().setVaultBlockLocation(target);
+        plugin.sendMessage(player, "hall.admin.setvaultblock-success",
+                "{x}", String.valueOf(target.getBlockX()),
+                "{y}", String.valueOf(target.getBlockY()),
+                "{z}", String.valueOf(target.getBlockZ()),
+                "{world}", target.getWorld().getName());
+    }
+
+    // ── clearvaultblock ───────────────────────────────────────
+
+    private void handleClearVaultBlock(Player player) {
+        plugin.getHallConfigManager().clearVaultBlockLocation();
+        plugin.sendMessage(player, "hall.admin.clearvaultblock-success");
+    }
+
+    // ── Help ──────────────────────────────────────────────────
 
     private void sendHelp(Player player) {
         plugin.sendMessage(player, "hall.admin.help-header");
@@ -282,5 +302,7 @@ public class AdminHallCommand {
         plugin.sendMessage(player, "hall.admin.help-revoke");
         plugin.sendMessage(player, "hall.admin.help-info");
         plugin.sendMessage(player, "hall.admin.help-reload");
+        plugin.sendMessage(player, "hall.admin.help-setvaultblock");
+        plugin.sendMessage(player, "hall.admin.help-clearvaultblock");
     }
 }
