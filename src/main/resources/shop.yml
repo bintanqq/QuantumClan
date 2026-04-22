@@ -2,29 +2,27 @@
 # ║           QuantumClan - shop.yml                     ║
 # ╚══════════════════════════════════════════════════════╝
 #
-# TYPE:
-#   BUFF       → potion effect ke semua member clan
-#   CONSUMABLE → item khusus satu kali pakai / fungsional
-#   UTILITY    → upgrade permanen clan
+# CLAN SHOP — purchased with Clan Money (shared treasury)
+# TYPE: BUFF | CONSUMABLE | UTILITY
 #
-# effect values: STRENGTH, SPEED, HASTE, REGENERATION, INVISIBILITY
-# amplifier: 0 = level I, 1 = level II, dst.
-# price: Clan Money (kas bersama)
-# duration: detik (untuk BUFF)
-# confirm: true = tampilkan GUI konfirmasi sebelum beli
+# CONTRIBUTION SHOP — purchased with Contribution Points
+# TYPE: BUFF_PERSONAL | ITEM
+#
+# COINS SHOP — purchased with built-in Coins (secondary currency)
+# TYPE: BUFF_PERSONAL | ITEM
 
+# ── Clan Shop ─────────────────────────────────────────────────
 clan-shop:
 
-  # ── BUFF items ──────────────────────────────────────────────
   - id: buff_strength_1
     type: BUFF
     name: "<red>Clan Strength I"
     lore:
-      - "<gray>Berikan efek <red>Strength I</red>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>10 menit"
+      - "<white>Grants <red>Strength I</red>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>10 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: DIAMOND_SWORD
     effect: STRENGTH
     amplifier: 0
@@ -36,11 +34,11 @@ clan-shop:
     type: BUFF
     name: "<red>Clan Strength II"
     lore:
-      - "<gray>Berikan efek <red>Strength II</red>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>10 menit"
+      - "<white>Grants <red>Strength II</red>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>10 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: NETHERITE_SWORD
     effect: STRENGTH
     amplifier: 1
@@ -52,11 +50,11 @@ clan-shop:
     type: BUFF
     name: "<aqua>Clan Speed I"
     lore:
-      - "<gray>Berikan efek <aqua>Speed I</aqua>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>10 menit"
+      - "<white>Grants <aqua>Speed I</aqua>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>10 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: SUGAR
     effect: SPEED
     amplifier: 0
@@ -68,11 +66,11 @@ clan-shop:
     type: BUFF
     name: "<aqua>Clan Speed II"
     lore:
-      - "<gray>Berikan efek <aqua>Speed II</aqua>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>10 menit"
+      - "<white>Grants <aqua>Speed II</aqua>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>10 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: RABBIT_FOOT
     effect: SPEED
     amplifier: 1
@@ -84,11 +82,11 @@ clan-shop:
     type: BUFF
     name: "<yellow>Clan Haste I"
     lore:
-      - "<gray>Berikan efek <yellow>Haste I</yellow>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>15 menit"
+      - "<white>Grants <yellow>Haste I</yellow>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>15 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: GOLDEN_PICKAXE
     effect: HASTE
     amplifier: 0
@@ -100,11 +98,11 @@ clan-shop:
     type: BUFF
     name: "<yellow>Clan Haste II"
     lore:
-      - "<gray>Berikan efek <yellow>Haste II</yellow>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>15 menit"
+      - "<white>Grants <yellow>Haste II</yellow>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>15 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: NETHERITE_PICKAXE
     effect: HASTE
     amplifier: 1
@@ -116,11 +114,11 @@ clan-shop:
     type: BUFF
     name: "<light_purple>Clan Regeneration I"
     lore:
-      - "<gray>Berikan efek <light_purple>Regeneration I</light_purple>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>5 menit"
+      - "<white>Grants <light_purple>Regeneration I</light_purple>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>5 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: GLISTERING_MELON_SLICE
     effect: REGENERATION
     amplifier: 0
@@ -132,11 +130,11 @@ clan-shop:
     type: BUFF
     name: "<white>Clan Invisibility"
     lore:
-      - "<gray>Berikan efek <white>Invisibility</white>"
-      - "<gray>kepada seluruh member clan."
-      - "<gray>Durasi: <yellow>3 menit"
+      - "<white>Grants <white>Invisibility</white>"
+      - "<white>to all clan members."
+      - "<white>Duration: <aqua>3 minutes"
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: GLASS_BOTTLE
     effect: INVISIBILITY
     amplifier: 0
@@ -144,29 +142,28 @@ clan-shop:
     price: 8000
     confirm: true
 
-  # ── CONSUMABLE items ─────────────────────────────────────────
   - id: clan_banner
     type: CONSUMABLE
     name: "<gold>Clan Banner"
     lore:
-      - "<gray>Banner resmi clan yang bisa"
-      - "<gray>di-place sebagai dekorasi."
-      - "<gray>Ditandai dengan tag clan."
+      - "<white>An official clan banner that"
+      - "<white>can be placed as decoration."
+      - "<white>Marked with your clan tag."
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: WHITE_BANNER
     price: 500
     confirm: false
 
   - id: spy_scroll
     type: CONSUMABLE
-    name: "<dark_aqua>Spy Scroll"
+    name: "<aqua>Spy Scroll"
     lore:
-      - "<gray>Reveal lokasi target player"
-      - "<gray>clan lain di actionbar + compass"
-      - "<gray>selama <yellow>5 menit</yellow>."
+      - "<white>Reveals a target player's"
+      - "<white>location in actionbar + compass"
+      - "<white>for <aqua>5 minutes</aqua>."
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: PAPER
     price: 3000
     confirm: true
@@ -175,10 +172,11 @@ clan-shop:
     type: CONSUMABLE
     name: "<gold>Clan Announcement"
     lore:
-      - "<gray>Broadcast pesan ke seluruh server."
-      - "<gray>Cooldown: <yellow>1 jam</yellow>."
+      - "<white>Broadcast a message to"
+      - "<white>the entire server."
+      - "<white>Cooldown: <aqua>1 hour</aqua>."
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: BELL
     price: 5000
     confirm: true
@@ -187,24 +185,23 @@ clan-shop:
     type: CONSUMABLE
     name: "<green>Death Protection"
     lore:
-      - "<gray>Keep inventory sekali pakai"
-      - "<gray>saat kematian berikutnya."
-      - "<gray>Cooldown: <yellow>1 jam</yellow> per player."
+      - "<white>One-time keep inventory"
+      - "<white>on your next death."
+      - "<white>Cooldown: <aqua>1 hour</aqua> per player."
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: TOTEM_OF_UNDYING
     price: 10000
     confirm: true
 
-  # ── UTILITY items ────────────────────────────────────────────
   - id: xp_boost
     type: UTILITY
     name: "<green>XP Boost"
     lore:
-      - "<gray>Multiplier XP x2 untuk semua"
-      - "<gray>member selama <yellow>30 menit</yellow>."
+      - "<white>2x XP multiplier for all"
+      - "<white>members for <aqua>30 minutes</aqua>."
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: EXPERIENCE_BOTTLE
     duration: 1800
     price: 15000
@@ -212,30 +209,28 @@ clan-shop:
 
   - id: clan_shield
     type: UTILITY
-    name: "<blue>Clan Shield"
+    name: "<aqua>Clan Shield"
     lore:
-      - "<gray>Proteksi dari bounty selama"
-      - "<gray><yellow>24 jam</yellow>."
+      - "<white>Protects clan from bounties"
+      - "<white>for <aqua>24 hours</aqua>."
       - ""
-      - "<gray>Harga: <gold>{price} Clan Money"
+      - "<white>Price: <aqua>{price} Clan Money"
     material: SHIELD
     duration: 86400
     price: 20000
     confirm: true
 
-# ── Contribution Shop ────────────────────────────────────────
-# cost-points: Contribution Points yang dibutuhkan
+# ── Contribution Shop ─────────────────────────────────────────
 contribution-shop:
 
   - id: contrib_strength
     type: BUFF_PERSONAL
     name: "<red>Personal Strength I"
     lore:
-      - "<gray>Dapatkan efek <red>Strength I</red>"
-      - "<gray>untuk dirimu sendiri."
-      - "<gray>Durasi: <yellow>5 menit"
+      - "<white>Grants yourself <red>Strength I</red>."
+      - "<white>Duration: <aqua>5 minutes"
       - ""
-      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+      - "<white>Cost: <aqua>{cost} Contribution Points"
     material: BLAZE_POWDER
     effect: STRENGTH
     amplifier: 0
@@ -246,11 +241,10 @@ contribution-shop:
     type: BUFF_PERSONAL
     name: "<aqua>Personal Speed II"
     lore:
-      - "<gray>Dapatkan efek <aqua>Speed II</aqua>"
-      - "<gray>untuk dirimu sendiri."
-      - "<gray>Durasi: <yellow>5 menit"
+      - "<white>Grants yourself <aqua>Speed II</aqua>."
+      - "<white>Duration: <aqua>5 minutes"
       - ""
-      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+      - "<white>Cost: <aqua>{cost} Contribution Points"
     material: FEATHER
     effect: SPEED
     amplifier: 1
@@ -261,11 +255,10 @@ contribution-shop:
     type: BUFF_PERSONAL
     name: "<light_purple>Personal Regeneration II"
     lore:
-      - "<gray>Dapatkan efek <light_purple>Regeneration II</light_purple>"
-      - "<gray>untuk dirimu sendiri."
-      - "<gray>Durasi: <yellow>3 menit"
+      - "<white>Grants yourself <light_purple>Regeneration II</light_purple>."
+      - "<white>Duration: <aqua>3 minutes"
       - ""
-      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+      - "<white>Cost: <aqua>{cost} Contribution Points"
     material: GOLDEN_APPLE
     effect: REGENERATION
     amplifier: 1
@@ -276,20 +269,128 @@ contribution-shop:
     type: ITEM
     name: "<gold>Clan Banner"
     lore:
-      - "<gray>Dapatkan 1x Clan Banner."
+      - "<white>Receive 1x Clan Banner."
       - ""
-      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+      - "<white>Cost: <aqua>{cost} Contribution Points"
     material: WHITE_BANNER
     amount: 1
     cost-points: 30
 
   - id: contrib_spy_scroll
     type: ITEM
-    name: "<dark_aqua>Spy Scroll"
+    name: "<aqua>Spy Scroll"
     lore:
-      - "<gray>Dapatkan 1x Spy Scroll."
+      - "<white>Receive 1x Spy Scroll."
       - ""
-      - "<gray>Biaya: <aqua>{cost} Contribution Points"
+      - "<white>Cost: <aqua>{cost} Contribution Points"
     material: PAPER
     amount: 1
     cost-points: 80
+
+# ── Coins Shop ────────────────────────────────────────────────
+# These items are purchased with the built-in Coins currency.
+# cost-coins: amount of Coins required
+coins-shop:
+
+  - id: coins_strength
+    type: BUFF_PERSONAL
+    name: "<red>Premium Strength II"
+    lore:
+      - "<white>Grants yourself <red>Strength II</red>."
+      - "<white>Duration: <aqua>15 minutes"
+      - ""
+      - "<white>Cost: <aqua>{cost} {coins-name}"
+    material: NETHER_STAR
+    effect: STRENGTH
+    amplifier: 1
+    duration: 900
+    cost-coins: 100
+
+  - id: coins_speed
+    type: BUFF_PERSONAL
+    name: "<aqua>Premium Speed II"
+    lore:
+      - "<white>Grants yourself <aqua>Speed II</aqua>."
+      - "<white>Duration: <aqua>15 minutes"
+      - ""
+      - "<white>Cost: <aqua>{cost} {coins-name}"
+    material: RABBIT_FOOT
+    effect: SPEED
+    amplifier: 1
+    duration: 900
+    cost-coins: 80
+
+  - id: coins_regen
+    type: BUFF_PERSONAL
+    name: "<light_purple>Premium Regeneration II"
+    lore:
+      - "<white>Grants yourself <light_purple>Regeneration II</light_purple>."
+      - "<white>Duration: <aqua>10 minutes"
+      - ""
+      - "<white>Cost: <aqua>{cost} {coins-name}"
+    material: GLISTERING_MELON_SLICE
+    effect: REGENERATION
+    amplifier: 1
+    duration: 600
+    cost-coins: 120
+
+  - id: coins_tag_color_gold
+    type: ITEM
+    name: "<gold>Tag Color — Gold"
+    lore:
+      - "<white>Change your clan tag color"
+      - "<white>to <gold>Gold</gold>."
+      - "<white>Applied immediately."
+      - ""
+      - "<white>Cost: <aqua>{cost} {coins-name}"
+    material: GOLD_INGOT
+    amount: 1
+    cost-coins: 500
+    # Special action identifier for the CoinsShopManager
+    action: TAG_COLOR
+    action-value: "<gold>"
+
+  - id: coins_tag_color_aqua
+    type: ITEM
+    name: "<aqua>Tag Color — Aqua"
+    lore:
+      - "<white>Change your clan tag color"
+      - "<white>to <aqua>Aqua</aqua>."
+      - "<white>Applied immediately."
+      - ""
+      - "<white>Cost: <aqua>{cost} {coins-name}"
+    material: PRISMARINE_CRYSTALS
+    amount: 1
+    cost-coins: 500
+    action: TAG_COLOR
+    action-value: "<aqua>"
+
+  - id: coins_tag_color_red
+    type: ITEM
+    name: "<red>Tag Color — Red"
+    lore:
+      - "<white>Change your clan tag color"
+      - "<white>to <red>Red</red>."
+      - "<white>Applied immediately."
+      - ""
+      - "<white>Cost: <aqua>{cost} {coins-name}"
+    material: REDSTONE
+    amount: 1
+    cost-coins: 500
+    action: TAG_COLOR
+    action-value: "<red>"
+
+  - id: coins_tag_color_light_purple
+    type: ITEM
+    name: "<light_purple>Tag Color — Purple"
+    lore:
+      - "<white>Change your clan tag color"
+      - "<white>to <light_purple>Purple</light_purple>."
+      - "<white>Applied immediately."
+      - ""
+      - "<white>Cost: <aqua>{cost} {coins-name}"
+    material: AMETHYST_SHARD
+    amount: 1
+    cost-coins: 500
+    action: TAG_COLOR
+    action-value: "<light_purple>"

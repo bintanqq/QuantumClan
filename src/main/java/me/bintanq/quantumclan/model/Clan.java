@@ -3,7 +3,6 @@ package me.bintanq.quantumclan.model;
 import org.bukkit.Location;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -12,40 +11,28 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * In-memory model representing a Clan.
  * Kept in ClanManager's cache — all fields are the authoritative in-memory state.
- * DAO reads/writes sync this with SQLite.
  */
 public class Clan {
 
-    // ── Identity ──────────────────────────────────────────────
-    private final String id;          // UUID string, PK
+    private final String id;
     private String name;
-    private String tag;               // max 8 chars
-    private String tagColor;          // MiniMessage color tag e.g. "<gold>"
+    private String tag;
+    private String tagColor; // MiniMessage color prefix e.g. "<gold>" or "" for none
     private UUID leaderUuid;
 
-    // ── Stats ─────────────────────────────────────────────────
     private int level;
-    private long money;               // Clan Money (kas bersama)
+    private long money;
     private int reputation;
 
-    // ── Shield ────────────────────────────────────────────────
-    private Instant shieldUntil;      // null = no active shield
+    private Instant shieldUntil;
 
-    // ── Clan Hall ─────────────────────────────────────────────
     private String hallWorld;
     private double hallX, hallY, hallZ;
 
-    // ── Timestamps ────────────────────────────────────────────
     private final Instant createdAt;
 
-    // ── Runtime-only (not persisted directly) ─────────────────
-    /** Member UUIDs — loaded from clan_members table into cache. */
     private final CopyOnWriteArrayList<UUID> memberUuids = new CopyOnWriteArrayList<>();
-
-    /** Clan homes — loaded from clan_homes table into cache. */
-    private final CopyOnWriteArrayList<ClanHome> homes = new CopyOnWriteArrayList<>();
-
-    // ── Constructor ───────────────────────────────────────────
+    private final CopyOnWriteArrayList<ClanHome> homes    = new CopyOnWriteArrayList<>();
 
     public Clan(String id, String name, String tag, String tagColor,
                 int level, long money, int reputation, UUID leaderUuid,
@@ -68,7 +55,6 @@ public class Clan {
         this.createdAt   = createdAt;
     }
 
-    /** Convenience constructor for new clan creation. */
     public static Clan create(String name, String tag, UUID leaderUuid) {
         return new Clan(
                 UUID.randomUUID().toString(),
@@ -158,10 +144,24 @@ public class Clan {
     // ── Tag display ───────────────────────────────────────────
 
     /**
-     * Returns the colored tag string in MiniMessage format.
-     * e.g. "<gold>[NWF]</gold>"
+     * Returns the tag wrapped in its color — WITHOUT surrounding brackets.
+     * The brackets are added by the chat format config tag-format.
+     * e.g. tagColor="<gold>", tag="NWF" → "<gold>NWF</gold>"
+     *
+     * For GUI display where brackets are wanted, use getFormattedTag().
      */
     public String getColoredTag() {
+        if (tagColor == null || tagColor.isBlank()) {
+            return tag;
+        }
+        return tagColor + tag + "<reset>";
+    }
+
+    /**
+     * Returns the tag with brackets AND color for GUI/chat display.
+     * e.g. "<gold>[NWF]</gold>"
+     */
+    public String getFormattedTag() {
         if (tagColor == null || tagColor.isBlank()) {
             return "[" + tag + "]";
         }
@@ -221,44 +221,32 @@ public class Clan {
 
     // ── Getters / Setters ─────────────────────────────────────
 
-    public String  getId()          { return id; }
-    public String  getName()        { return name; }
-    public void    setName(String n){ this.name = n; }
-
-    public String  getTag()         { return tag; }
-    public void    setTag(String t) { this.tag = t; }
-
+    public String  getId()                   { return id; }
+    public String  getName()                 { return name; }
+    public void    setName(String n)         { this.name = n; }
+    public String  getTag()                  { return tag; }
+    public void    setTag(String t)          { this.tag = t; }
     public String  getTagColor()             { return tagColor; }
     public void    setTagColor(String color) { this.tagColor = color; }
-
     public UUID    getLeaderUuid()           { return leaderUuid; }
     public void    setLeaderUuid(UUID uuid)  { this.leaderUuid = uuid; }
-
     public int     getLevel()               { return level; }
     public void    setLevel(int level)      { this.level = level; }
-
     public long    getMoney()               { return money; }
     public void    setMoney(long money)     { this.money = money; }
-
     public int     getReputation()          { return reputation; }
     public void    setReputation(int rep)   { this.reputation = rep; }
     public void    addReputation(int amount){ this.reputation += amount; }
-
     public Instant getShieldUntil()         { return shieldUntil; }
     public void    setShieldUntil(Instant i){ this.shieldUntil = i; }
-
     public String  getHallWorld()           { return hallWorld; }
     public void    setHallWorld(String w)   { this.hallWorld = w; }
-
     public double  getHallX()              { return hallX; }
     public void    setHallX(double x)      { this.hallX = x; }
-
     public double  getHallY()              { return hallY; }
     public void    setHallY(double y)      { this.hallY = y; }
-
     public double  getHallZ()              { return hallZ; }
     public void    setHallZ(double z)      { this.hallZ = z; }
-
     public Instant getCreatedAt()          { return createdAt; }
 
     @Override

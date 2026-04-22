@@ -10,15 +10,12 @@ import java.util.Map;
 /**
  * Reads and caches all values from config.yml.
  * Re-created via QuantumClan#reload().
- *
- * Supported economy providers: VAULT | PLAYERPOINTS | COINS
  */
 public class ConfigManager {
 
     private final QuantumClan plugin;
     private final FileConfiguration cfg;
 
-    // level (1-based) → LevelData
     private final Map<Integer, LevelData> levelDataMap = new HashMap<>();
     private int maxLevel = 10;
 
@@ -45,22 +42,10 @@ public class ConfigManager {
         maxLevel = cfg.getInt("max-level", levelDataMap.size());
     }
 
-    public long getLevelCost(int level) {
-        LevelData data = levelDataMap.get(level);
-        return data != null ? data.cost : Long.MAX_VALUE;
-    }
-
-    public int getMaxMembers(int level) {
-        LevelData data = levelDataMap.get(level);
-        return data != null ? data.maxMembers : 10;
-    }
-
-    public int getMaxHomes(int level) {
-        LevelData data = levelDataMap.get(level);
-        return data != null ? data.maxHomes : 1;
-    }
-
-    public int getMaxLevel() { return maxLevel; }
+    public long getLevelCost(int level)    { LevelData d = levelDataMap.get(level); return d != null ? d.cost : Long.MAX_VALUE; }
+    public int  getMaxMembers(int level)   { LevelData d = levelDataMap.get(level); return d != null ? d.maxMembers : 10; }
+    public int  getMaxHomes(int level)     { LevelData d = levelDataMap.get(level); return d != null ? d.maxHomes : 1; }
+    public int  getMaxLevel()              { return maxLevel; }
 
     // ── Clan creation ─────────────────────────────────────────
 
@@ -71,39 +56,25 @@ public class ConfigManager {
 
     // ── Economy ───────────────────────────────────────────────
 
-    /** Supported values: VAULT, PLAYERPOINTS, COINS */
     public String getEconomyProvider() { return cfg.getString("economy-provider", "VAULT"); }
 
-    // ── Chat tag (prefix/suffix) ──────────────────────────────
+    // ── Coins ─────────────────────────────────────────────────
 
-    /**
-     * Apakah tag clan ditampilkan di chat.
-     */
-    public boolean isClanChatTagEnabled() {
-        return cfg.getBoolean("chat.tag-enabled", true);
-    }
+    /** Configurable display name for the built-in coin currency. */
+    public String getCoinsName() { return cfg.getString("coins-name", "Coins"); }
 
-    /**
-     * Posisi tag: PREFIX (di depan nama) atau SUFFIX (di belakang nama).
-     */
-    public String getChatTagPosition() {
-        return cfg.getString("chat.tag-position", "PREFIX").toUpperCase();
-    }
+    // ── Chat tag ──────────────────────────────────────────────
 
-    /**
-     * Format tag yang ditampilkan. Placeholder: {tag}
-     * Contoh default: "<gray>[{tag}<gray>]"
-     */
-    public String getChatTagFormat() {
-        return cfg.getString("chat.tag-format", "<gray>[{tag}<gray>] ");
-    }
+    public boolean isClanChatTagEnabled() { return cfg.getBoolean("chat.tag-enabled", true); }
+    public String  getChatTagPosition()   { return cfg.getString("chat.tag-position", "PREFIX").toUpperCase(); }
+    public String  getChatTagFormat()     { return cfg.getString("chat.tag-format", "<gray>[{tag}<gray>] "); }
 
     // ── Cooldowns ─────────────────────────────────────────────
 
-    public int getTeleportCooldown()          { return cfg.getInt("teleport-cooldown", 3); }
-    public int getHomeTeleportCooldown()      { return cfg.getInt("home-teleport-cooldown", 30); }
-    public int getAnnounceCooldown()          { return cfg.getInt("announce-cooldown", 3600); }
-    public int getDeathProtectionCooldown()   { return cfg.getInt("death-protection-cooldown", 3600); }
+    public int getTeleportCooldown()        { return cfg.getInt("teleport-cooldown", 3); }
+    public int getHomeTeleportCooldown()    { return cfg.getInt("home-teleport-cooldown", 30); }
+    public int getAnnounceCooldown()        { return cfg.getInt("announce-cooldown", 3600); }
+    public int getDeathProtectionCooldown() { return cfg.getInt("death-protection-cooldown", 3600); }
 
     // ── Bounty ────────────────────────────────────────────────
 
@@ -114,6 +85,11 @@ public class ConfigManager {
 
     public boolean isClanHallEnabled() { return cfg.getBoolean("clan-hall.enabled", false); }
     public String  getClanHallEngine() { return cfg.getString("clan-hall.engine", "AUTO"); }
+
+    // ── Disband ───────────────────────────────────────────────
+
+    public boolean isDisbandRefundTreasury()    { return cfg.getBoolean("disband.refund-treasury", true); }
+    public boolean isDisbandRefundCreationCost() { return cfg.getBoolean("disband.refund-creation-cost", false); }
 
     // ── Leaderboard ───────────────────────────────────────────
 
@@ -127,17 +103,20 @@ public class ConfigManager {
 
     // ── Contribution weights ──────────────────────────────────
 
-    public int getContribDepositPerThousand() { return cfg.getInt("contribution-weights.deposit-per-thousand", 1); }
-    public int getContribBountyComplete()     { return cfg.getInt("contribution-weights.bounty-complete", 10); }
-    public int getContribWarWin()             { return cfg.getInt("contribution-weights.war-win", 25); }
+    /**
+     * Points awarded per deposit-amount-unit.
+     * e.g. deposit-per-unit=1, deposit-amount-unit=100 → 1 point per 100 deposited
+     */
+    public int getContribDepositPerUnit()   { return cfg.getInt("contribution-weights.deposit-per-unit", 1); }
 
-    // ── Hologram ──────────────────────────────────────────────
+    /**
+     * The denomination unit for deposit contribution.
+     * e.g. 1000 = 1 point per 1000, 100 = 1 point per 100
+     */
+    public int getContribDepositAmountUnit() { return cfg.getInt("contribution-weights.deposit-amount-unit", 1000); }
 
-    public long   getHologramUpdateInterval() { return cfg.getLong("hologram.update-interval", 6000L); }
-    public String getHologramWorld()          { return cfg.getString("hologram.location.world", "world"); }
-    public double getHologramX()              { return cfg.getDouble("hologram.location.x", 0.0); }
-    public double getHologramY()              { return cfg.getDouble("hologram.location.y", 64.0); }
-    public double getHologramZ()              { return cfg.getDouble("hologram.location.z", 0.0); }
+    public int getContribBountyComplete() { return cfg.getInt("contribution-weights.bounty-complete", 10); }
+    public int getContribWarWin()         { return cfg.getInt("contribution-weights.war-win", 25); }
 
     // ── XP Boost ──────────────────────────────────────────────
 

@@ -2,6 +2,7 @@ package me.bintanq.quantumclan.command;
 
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.command.sub.*;
+import me.bintanq.quantumclan.gui.MainMenuGUI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -16,12 +17,12 @@ import java.util.stream.Collectors;
 
 /**
  * Routes /qclan <subcommand> to the appropriate SubCommand handler.
+ * With no arguments, opens the Main Menu GUI.
  */
 public class QClanCommand implements CommandExecutor, TabCompleter {
 
     private final QuantumClan plugin;
 
-    // Sub-command instances
     private final CreateCommand       create;
     private final InviteCommand       invite;
     private final KickCommand         kick;
@@ -43,6 +44,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
     private final ContributionCommand contribution;
     private final AcceptCommand       accept;
     private final DeclineCommand      decline;
+    private final CoinsCommand        coins;
 
     public QClanCommand(QuantumClan plugin) {
         this.plugin       = plugin;
@@ -67,6 +69,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         contribution = new ContributionCommand(plugin);
         accept       = new AcceptCommand(plugin);
         decline      = new DeclineCommand(plugin);
+        coins        = new CoinsCommand(plugin);
     }
 
     @Override
@@ -83,8 +86,9 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // BUG FIX #3: No args → open Main Menu GUI instead of text help
         if (args.length == 0) {
-            sendHelp(player);
+            MainMenuGUI.open(plugin, player);
             return true;
         }
 
@@ -114,6 +118,8 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             case "announce"     -> announce.execute(player, subArgs);
             case "contribution",
                  "contrib"      -> contribution.execute(player, subArgs);
+            case "coins"        -> coins.execute(player, subArgs);
+            case "menu"         -> MainMenuGUI.open(plugin, player);
             default             -> plugin.sendMessage(player, "error.unknown-subcommand");
         }
 
@@ -132,7 +138,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                     "create", "invite", "accept", "decline", "kick", "leave", "info",
                     "home", "sethome", "delhome", "deposit", "shop", "bounty",
                     "war", "upgrade", "top", "role", "transfer", "disband",
-                    "announce", "contribution"
+                    "announce", "contribution", "coins", "menu"
             );
             String partial = args[0].toLowerCase();
             return subs.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
@@ -143,24 +149,25 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             return switch (sub) {
                 case "bounty" -> {
                     if (args.length == 2) {
-                        List<String> opts = List.of("place", "board", "submit");
-                        yield opts.stream().filter(s -> s.startsWith(args[1].toLowerCase()))
+                        yield List.of("place", "board", "submit").stream()
+                                .filter(s -> s.startsWith(args[1].toLowerCase()))
                                 .collect(Collectors.toList());
                     }
                     yield List.of();
                 }
                 case "war" -> {
                     if (args.length == 2) {
-                        List<String> opts = List.of("register", "leave");
-                        yield opts.stream().filter(s -> s.startsWith(args[1].toLowerCase()))
+                        yield List.of("register", "leave").stream()
+                                .filter(s -> s.startsWith(args[1].toLowerCase()))
                                 .collect(Collectors.toList());
                     }
                     yield List.of();
                 }
                 case "role" -> {
                     if (args.length == 2) {
-                        yield plugin.getClanManager().getClanByPlayer(((Player) sender).getUniqueId()) != null
-                                ? List.of("set") : List.of();
+                        yield List.of("set").stream()
+                                .filter(s -> s.startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
                     }
                     if (args.length == 4) {
                         yield plugin.getRolesConfigManager().getRoleNames().stream()
@@ -174,23 +181,5 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         }
 
         return List.of();
-    }
-
-    private void sendHelp(Player player) {
-        plugin.sendRaw(player, "<gold>━━━━━━ <yellow>QuantumClan Commands <gold>━━━━━━");
-        plugin.sendRaw(player, "<yellow>/qclan create <gray>- Buat clan baru");
-        plugin.sendRaw(player, "<yellow>/qclan invite <player> <gray>- Undang player");
-        plugin.sendRaw(player, "<yellow>/qclan kick <player> <gray>- Keluarkan member");
-        plugin.sendRaw(player, "<yellow>/qclan leave <gray>- Keluar dari clan");
-        plugin.sendRaw(player, "<yellow>/qclan info [clan] <gray>- Info clan");
-        plugin.sendRaw(player, "<yellow>/qclan home [nama] <gray>- Teleport ke home");
-        plugin.sendRaw(player, "<yellow>/qclan sethome <nama> <gray>- Set home");
-        plugin.sendRaw(player, "<yellow>/qclan shop <gray>- Buka clan shop");
-        plugin.sendRaw(player, "<yellow>/qclan bounty <place|board|submit> <gray>- Sistem bounty");
-        plugin.sendRaw(player, "<yellow>/qclan war <register|leave> <gray>- Registrasi war");
-        plugin.sendRaw(player, "<yellow>/qclan upgrade <gray>- Upgrade level clan");
-        plugin.sendRaw(player, "<yellow>/qclan top <gray>- Leaderboard clan");
-        plugin.sendRaw(player, "<yellow>/qclan contribution <gray>- Contribution shop");
-        plugin.sendRaw(player, "<gold>━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     }
 }

@@ -1,0 +1,373 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║           QuantumClan - gui.yml                      ║
+# ║   Configure all GUI titles and items here.           ║
+# ║   Colors use MiniMessage format.                     ║
+# ╚══════════════════════════════════════════════════════╝
+
+# ── Main Menu GUI ─────────────────────────────────────────────
+main-menu:
+  title: "<dark_gray>[ <aqua>Clan Menu <dark_gray>]"
+  size: 54
+  # Filler material for border/empty slots
+  filler: CYAN_STAINED_GLASS_PANE
+  items:
+    clan-info:
+      slot: 11
+      material: BOOK
+      name: "<aqua>Clan Info"
+      lore:
+        - "<gray>View your clan information."
+        - ""
+        - "<white>» Left click to open"
+    clan-shop:
+      slot: 12
+      material: GOLD_INGOT
+      name: "<gold>Clan Shop"
+      lore:
+        - "<gray>Spend clan treasury on buffs"
+        - "<gray>and consumables."
+        - ""
+        - "<white>» Left click to open"
+    clan-home:
+      slot: 13
+      material: COMPASS
+      name: "<green>Clan Homes"
+      lore:
+        - "<gray>Teleport to clan homes"
+        - "<gray>or manage home locations."
+        - ""
+        - "<white>» Left click to open"
+    clan-upgrade:
+      slot: 14
+      material: BEACON
+      name: "<aqua>Upgrade Clan"
+      lore:
+        - "<gray>Spend clan treasury to"
+        - "<gray>upgrade your clan level."
+        - ""
+        - "<white>» Left click to open"
+    clan-top:
+      slot: 15
+      material: NETHER_STAR
+      name: "<gold>Leaderboard"
+      lore:
+        - "<gray>View the top clans"
+        - "<gray>ranked by reputation."
+        - ""
+        - "<white>» Left click to open"
+    bounty-board:
+      slot: 20
+      material: SKELETON_SKULL
+      name: "<red>Bounty Board"
+      lore:
+        - "<gray>View and manage active"
+        - "<gray>bounties on players."
+        - ""
+        - "<white>» Left click to open"
+    war-menu:
+      slot: 21
+      material: IRON_SWORD
+      name: "<red>Clan War"
+      lore:
+        - "<gray>Register for clan war"
+        - "<gray>or view war status."
+        - ""
+        - "<white>» Left click to open"
+    contribution-shop:
+      slot: 22
+      material: EXPERIENCE_BOTTLE
+      name: "<aqua>Contribution Shop"
+      lore:
+        - "<gray>Spend your contribution"
+        - "<gray>points for personal rewards."
+        - ""
+        - "<white>» Left click to open"
+    coins-shop:
+      slot: 23
+      material: SUNFLOWER
+      name: "<yellow>Coins Shop"
+      lore:
+        - "<gray>Spend your coins on"
+        - "<gray>premium items and perks."
+        - ""
+        - "<white>» Left click to open"
+    disband:
+      slot: 29
+      material: BARRIER
+      name: "<red>Disband Clan"
+      lore:
+        - "<red>⚠ This will permanently"
+        - "<red>delete your clan!"
+        - "<gray>Only available to the Leader."
+        - ""
+        - "<white>» Left click to disband"
+
+# ── Clan Info GUI ─────────────────────────────────────────────
+clan-info:
+  title: "<dark_gray>[ <aqua>{clan} <dark_gray>]"
+  size: 54
+  filler: GRAY_STAINED_GLASS_PANE
+  items:
+    banner:
+      slot: 4
+      material: YELLOW_BANNER
+    stats:
+      slot: 10
+      material: BOOK
+      name: "<aqua>Clan Statistics"
+    leader:
+      slot: 12
+      material: PLAYER_HEAD
+    shield:
+      slot: 14
+      material: SHIELD
+      name: "<aqua>Shield Status"
+    online:
+      slot: 16
+      material: EMERALD
+      name: "<green>Members Online"
+    close:
+      slot: 49
+      material: BARRIER
+      name: "<red>Close"
+      lore: []
+    prev:
+      slot: 45
+      material: ARROW
+      name: "<white>« Previous"
+    next:
+      slot: 53
+      material: ARROW
+      name: "<white>Next »"
+
+# ── Clan Shop GUI ─────────────────────────────────────────────
+clan-shop:
+  title: "<dark_gray>[ <gold>Clan Shop <dark_gray>]"
+  size: 54
+  filler: GRAY_STAINED_GLASS_PANE
+  close:
+    slot: 49
+    material: BARRIER
+    name: "<red>Close"
+  prev:
+    slot: 45
+    material: ARROW
+    name: "<white>« Previous"
+  next:
+    slot: 53
+    material: ARROW
+    name: "<white>Next »"
+  treasury-display:
+    slot: 4
+    material: GOLD_INGOT
+    name: "<gold>Clan Treasury: <yellow>{money}"
+
+# ── Shop Confirm GUI ──────────────────────────────────────────
+shop-confirm:
+  title: "<dark_gray>[ <gold>Confirm Purchase <dark_gray>]"
+  size: 27
+  filler: GRAY_STAINED_GLASS_PANE
+  yes:
+    slot: 11
+    material: LIME_WOOL
+    name: "<green><bold>✔ CONFIRM"
+  preview:
+    slot: 13
+  no:
+    slot: 15
+    material: RED_WOOL
+    name: "<red><bold>✘ CANCEL"
+    lore:
+      - "<gray>Return to shop."
+
+# ── Clan Home GUI ─────────────────────────────────────────────
+clan-home:
+  title: "<dark_gray>[ <green>Clan Homes <dark_gray>]"
+  size: 54
+  filler: GRAY_STAINED_GLASS_PANE
+  home-material: LODESTONE
+  info:
+    slot: 4
+    material: COMPASS
+    name: "<green>Clan Homes"
+  close:
+    slot: 49
+    material: BARRIER
+    name: "<red>Close"
+  prev:
+    slot: 45
+    material: ARROW
+    name: "<white>« Previous"
+  next:
+    slot: 53
+    material: ARROW
+    name: "<white>Next »"
+
+# ── Bounty Board GUI ──────────────────────────────────────────
+bounty-board:
+  title: "<dark_gray>[ <red>☠ Bounty Board <dark_gray>]"
+  size: 54
+  filler: RED_STAINED_GLASS_PANE
+  info:
+    slot: 4
+    material: PLAYER_HEAD
+    name: "<red>☠ Bounty Board"
+  close:
+    slot: 49
+    material: BARRIER
+    name: "<red>Close"
+  prev:
+    slot: 45
+    material: ARROW
+    name: "<white>« Previous"
+  next:
+    slot: 53
+    material: ARROW
+    name: "<white>Next »"
+
+# ── Clan Top GUI ──────────────────────────────────────────────
+clan-top:
+  title: "<dark_gray>[ <gold>⭐ Top Clans <dark_gray>]"
+  size: 54
+  filler: YELLOW_STAINED_GLASS_PANE
+  info:
+    slot: 4
+    material: NETHER_STAR
+    name: "<gold>⭐ Clan Leaderboard"
+  close:
+    slot: 49
+    material: BARRIER
+    name: "<red>Close"
+  prev:
+    slot: 45
+    material: ARROW
+    name: "<white>« Previous"
+  next:
+    slot: 53
+    material: ARROW
+    name: "<white>Next »"
+  # Materials per rank position
+  rank-1-material: GOLD_BLOCK
+  rank-2-material: IRON_BLOCK
+  rank-3-material: COPPER_BLOCK
+  default-material: STONE
+
+# ── Upgrade GUI ───────────────────────────────────────────────
+upgrade:
+  title: "<dark_gray>[ <aqua>Upgrade Clan <dark_gray>]"
+  size: 27
+  filler: GRAY_STAINED_GLASS_PANE
+  current:
+    slot: 11
+    material: EXPERIENCE_BOTTLE
+    name: "<aqua>Current Level: <yellow>{level}"
+  upgrade-can:
+    slot: 13
+    material: LIME_WOOL
+    name: "<green>✔ UPGRADE"
+  upgrade-cannot:
+    slot: 13
+    material: RED_WOOL
+    name: "<red>✘ INSUFFICIENT TREASURY"
+  upgrade-max:
+    slot: 13
+    material: BARRIER
+    name: "<red>Maximum Level Reached"
+  next-level:
+    slot: 15
+    material: BEACON
+    name: "<gold>Level {level} Preview"
+  close:
+    slot: 22
+    material: BARRIER
+    name: "<red>Close"
+
+# ── War GUI ───────────────────────────────────────────────────
+war:
+  title: "<dark_gray>[ <red>⚔ Clan War <dark_gray>]"
+  size: 27
+  filler: GRAY_STAINED_GLASS_PANE
+  status:
+    slot: 11
+    material-no-war: CLOCK
+    material-active: IRON_SWORD
+    name-no-war: "<gray>No Active War"
+    name-active: "<red>⚔ War Status"
+  action:
+    slot: 13
+    material-open: GREEN_WOOL
+    material-closed: BARRIER
+    name-open: "<green>⚔ Register / Leave War"
+    name-closed: "<gray>Registration Closed"
+  clans:
+    slot: 15
+    material: PAPER
+    name: "<white>Registered Clans ({count})"
+    name-empty: "<gray>No Clans Registered"
+  close:
+    slot: 22
+    material: BARRIER
+    name: "<red>Close"
+
+# ── Contribution Shop GUI ─────────────────────────────────────
+contribution-shop:
+  title: "<dark_gray>[ <aqua>Contribution Shop <dark_gray>]"
+  size: 54
+  filler: CYAN_STAINED_GLASS_PANE
+  points-display:
+    slot: 4
+    material: NETHER_STAR
+    name: "<aqua>Your Contribution Points"
+  close:
+    slot: 49
+    material: BARRIER
+    name: "<red>Close"
+  prev:
+    slot: 45
+    material: ARROW
+    name: "<white>« Previous"
+  next:
+    slot: 53
+    material: ARROW
+    name: "<white>Next »"
+
+# ── Coins Shop GUI ────────────────────────────────────────────
+coins-shop:
+  title: "<dark_gray>[ <yellow>Coins Shop <dark_gray>]"
+  size: 54
+  filler: YELLOW_STAINED_GLASS_PANE
+  balance-display:
+    slot: 4
+    material: SUNFLOWER
+    name: "<yellow>Your {coins-name}: <gold>{balance}"
+  close:
+    slot: 49
+    material: BARRIER
+    name: "<red>Close"
+  prev:
+    slot: 45
+    material: ARROW
+    name: "<white>« Previous"
+  next:
+    slot: 53
+    material: ARROW
+    name: "<white>Next »"
+
+# ── Disband Confirm GUI ───────────────────────────────────────
+disband-confirm:
+  title: "<dark_gray>[ <red>⚠ Disband Clan <dark_gray>]"
+  size: 27
+  filler: RED_STAINED_GLASS_PANE
+  confirm:
+    slot: 11
+    material: LIME_WOOL
+    name: "<green><bold>✔ CONFIRM DISBAND"
+    lore:
+      - "<gray>This will permanently delete"
+      - "<gray>your clan and all its data."
+  cancel:
+    slot: 15
+    material: RED_WOOL
+    name: "<red><bold>✘ CANCEL"
+    lore:
+      - "<gray>Keep your clan."
