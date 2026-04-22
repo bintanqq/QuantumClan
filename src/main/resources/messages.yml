@@ -46,6 +46,7 @@ clan:
   invite-declined-broadcast: "<aqua>{player}</aqua> <white>declined the clan invite."
   invite-already-sent: "<white>An invite has already been sent to <aqua>{player}</aqua>."
   invite-clan-full: "<white>The clan is full! Upgrade the clan level to add more member slots."
+  invite-self: "<white>You cannot invite yourself."
 
   kick-success: "<aqua>Player <white>{player}</white> has been removed from the clan."
   kick-broadcast: "<aqua>{player}</aqua> <white>was removed from the clan by <aqua>{target}</aqua>."
@@ -78,9 +79,7 @@ clan:
   upgrade-max: "<white>Your clan is already at the maximum level."
   upgrade-insufficient: "<white>Insufficient clan treasury. You need <aqua>{value}</aqua> more."
 
-  # Announcement broadcast — uses chat line breaks for visual gap
-  # {newline} will be replaced with an actual line in the broadcast
-  announce-broadcast: "<newline><dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<newline><aqua> 📢 Clan Announcement — <white>[{tag}]<newline><white> {message}<newline><dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<newline>"
+  announce-broadcast: "{newline}<dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{newline}<aqua> 📢 Clan Announcement — <white>{tag}{newline}<white> {message}{newline}<dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{newline}"
   announce-cooldown: "<white>Announcement is on cooldown. <aqua>{value}</aqua> seconds remaining."
 
 # ── Home ──────────────────────────────────────────────────────
@@ -102,7 +101,7 @@ shop:
   purchase-failed: "<white>Purchase failed. Clan treasury has been refunded."
   purchase-cooldown: "<white>This item is on cooldown. Wait <aqua>{value}</aqua> seconds."
   buff-applied: "<aqua>Clan buff <white>{value}</white> applied to all online members!"
-  buff-received: "<aqua>Your clan purchased <white>{value}</white>! Effect active for <white>{duration}</white>."
+  buff-received: "<aqua>Your clan purchased <white>{value}</white>! Effect active for <white>{duration}</white> minutes."
   death-protection-used: "<aqua>Death Protection activated! Keep inventory preserved."
   inventory-full-drop: "<white>Inventory full! <aqua>{value}</aqua> was dropped at your location."
   treasury-insufficient: "<white>The clan treasury does not have enough funds."
@@ -112,6 +111,14 @@ shop:
   type-label: "<dark_gray>Type: <gray>{type}"
   confirm-prompt: "<aqua>Confirm purchase of <white>{name}</white>"
   confirm-price: "<white>Price: <aqua>{price} Clan Money"
+  spy-scroll-name: "<dark_aqua>Spy Scroll"
+  spy-scroll-lore1: "<white>Right-click a player to track them."
+  spy-scroll-lore2: "<white>Duration: <aqua>{duration} minutes"
+  banner-name: "<gold>Clan Banner {tag}"
+  banner-lore: "<white>Official banner of clan <aqua>{clan}</white>."
+  xp-boost-label: "<aqua>XP Boost x{multiplier}"
+  shield-label: "<aqua>Clan Shield"
+  announcement-prompt: "<aqua>Enter your announcement message. Type <white>cancel</white> to abort."
 
 # ── Bounty ────────────────────────────────────────────────────
 bounty:
@@ -129,6 +136,7 @@ bounty:
   submit-already-claimed: "<white>This bounty has already been claimed."
   submit-no-item: "<white>Hold a bounty head in your hand to submit."
   board-empty: "<white>There are no active bounties."
+  expired: "<white>Expired"
   board-info-lore1: "<white>Active bounties: <aqua>{count}"
   board-info-lore2: "<white>Submit head: <aqua>/qclan bounty submit"
   board-info-lore3: "<white>Place bounty: <aqua>/qclan bounty place <player>"
@@ -137,7 +145,6 @@ bounty:
   entry-posted-by: "<white>Posted by: {clan}"
   entry-expires: "<white>Expires: <aqua>{time}"
   entry-hint: "<dark_gray>Kill target and submit head to claim."
-  expired: "<white>The bounty on <aqua>{player}</aqua> has expired."
 
 # ── War ───────────────────────────────────────────────────────
 war:
@@ -206,7 +213,8 @@ admin:
   war-started: "<aqua>War started manually!"
   war-ended: "<aqua>War ended successfully."
   war-no-active: "<white>There is no active war."
-  war-already-running: "<white>A war is already running."
+  war-already-running: "<white>A war session is already running."
+  coins-grant-failed: "<white>Failed to grant {coins-name}. Please try again."
   coins-granted: "<aqua>Successfully granted <white>{value} {coins-name}</white> to <aqua>{player}</aqua>."
 
 # ── Hook Status (console only) ────────────────────────────────
@@ -260,3 +268,7 @@ gui:
   bounty-head-name: "<red>Head of <white>{player}</white> <gray>[Bounty]"
   bounty-head-lore1: "<white>Submit with: <aqua>/qclan bounty submit"
   bounty-head-lore2: "<gray>Head ID: <dark_gray>{id}"
+  main-menu-not-in-clan-create-name: "<aqua>Create a Clan"
+  main-menu-not-in-clan-lore1: "<white>You are not in a clan."
+  main-menu-not-in-clan-lore2: "<white>Use <aqua>/qclan create</aqua> to start one."
+  main-menu-not-in-clan-lore3: "<white>» Left click to create"

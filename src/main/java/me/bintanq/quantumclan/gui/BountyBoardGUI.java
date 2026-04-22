@@ -17,8 +17,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,23 +25,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Bounty Board GUI — shows all active bounties from BountyManager cache.
- *
- * Layout (54 slots):
- *  Slots 10-16, 19-25, 28-34 — bounty entries (up to 21 per page)
- *  Slot  4 — info (total active bounties)
- *  Slot 49 — Close
- *  Slot 45 — Prev page
- *  Slot 53 — Next page
- *
- * Each bounty shows:
- *  - Target player skull
- *  - Amount
- *  - Posted clan (not poster player — hidden)
- *  - Time remaining
- *
- * Clicking a bounty entry does nothing (board is informational only).
- * Submit is done via /qclan bounty submit command.
+ * Bounty Board GUI — all messages from messages.yml and gui.yml.
+ * No hardcoded strings.
  */
 public class BountyBoardGUI implements InventoryHolder {
 
@@ -53,9 +36,6 @@ public class BountyBoardGUI implements InventoryHolder {
             19, 20, 21, 22, 23, 24, 25,
             28, 29, 30, 31, 32, 33, 34
     };
-
-    private static final DateTimeFormatter TIME_FMT =
-            DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZoneId.systemDefault());
 
     private static final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
@@ -69,41 +49,43 @@ public class BountyBoardGUI implements InventoryHolder {
         this.plugin   = plugin;
         this.mm       = plugin.getMiniMessage();
         this.page     = Math.max(0, page);
-        // Pull from BountyManager cache — no DB query on open
         this.bounties = plugin.getBountyManager().getActiveBountiesSnapshot();
     }
 
-    // ── Build ─────────────────────────────────────────────────
-
     public Inventory build() {
-        inventory = Bukkit.createInventory(this, SIZE,
-                mm.deserialize("<dark_gray>[ <dark_red>☠ Bounty Board <dark_gray>]"));
+        var gc = plugin.getGuiConfigManager();
+        inventory = Bukkit.createInventory(this, gc.getBountyBoardSize(),
+                mm.deserialize(gc.getBountyBoardTitle()));
 
-        fillBorder();
+        fillBorder(gc.getBountyBoardFiller());
+        setInfoItem(gc);
         placeEntries();
-        setNavigation();
-        setInfoItem();
+        setNavigation(gc);
 
         return inventory;
     }
 
-    private void fillBorder() {
-        ItemStack glass = makeItem(Material.RED_STAINED_GLASS_PANE, " ", Collections.emptyList());
+    private void fillBorder(Material filler) {
+        ItemStack glass = makeItem(filler, " ", Collections.emptyList());
         for (int i = 0; i < SIZE; i++) {
-            if (!isEntrySlot(i) && i != 4 && i != 45 && i != 49 && i != 53) {
+            if (!isEntrySlot(i) && i != gc().getBountyBoardInfoSlot()
+                    && i != gc().getBountyBoardCloseSlot()
+                    && i != gc().getBountyBoardPrevSlot()
+                    && i != gc().getBountyBoardNextSlot()) {
                 inventory.setItem(i, glass);
             }
         }
     }
 
-    private void setInfoItem() {
-        inventory.setItem(4, makeItem(Material.PLAYER_HEAD,
-                "<dark_red>☠ Bounty Board",
-                List.of(
-                        mm.deserialize("<gray>Bounty aktif: <red>" + bounties.size()),
-                        mm.deserialize("<gray>Submit kepala: <yellow>/qclan bounty submit"),
-                        mm.deserialize("<gray>Pasang bounty: <yellow>/qclan bounty place <player>")
-                )));
+    private void setInfoItem(me.bintanq.quantumclan.config.GuiConfigManager gc) {
+        String infoName = gc.getBountyBoardInfoName();
+        List<Component> lore = new ArrayList<>();
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.board-info-lore1",
+                "{count}", String.valueOf(bounties.size()))));
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.board-info-lore2")));
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.board-info-lore3")));
+        inventory.setItem(gc.getBountyBoardInfoSlot(),
+                makeItem(Material.PLAYER_HEAD, infoName, lore));
     }
 
     private void placeEntries() {
@@ -111,8 +93,8 @@ public class BountyBoardGUI implements InventoryHolder {
         int end   = Math.min(start + ENTRY_SLOTS.length, bounties.size());
 
         for (int i = start; i < end; i++) {
-            BountyEntry entry  = bounties.get(i);
-            int slotIndex      = i - start;
+            BountyEntry entry = bounties.get(i);
+            int slotIndex     = i - start;
             inventory.setItem(ENTRY_SLOTS[slotIndex], buildEntryItem(entry));
         }
     }
@@ -121,23 +103,24 @@ public class BountyBoardGUI implements InventoryHolder {
         OfflinePlayer target = Bukkit.getOfflinePlayer(entry.getTargetUuid());
         String targetName    = target.getName() != null ? target.getName() : "Unknown";
 
-        // Poster clan name (not player name — hidden by design)
         Clan posterClan = plugin.getClanManager().getClanById(entry.getClanIdPoster());
-        String posterClanName = posterClan != null ? posterClan.getColoredTag() : "<gray>Unknown";
+        String posterClanTag = posterClan != null ? posterClan.getColoredTag()
+                : plugin.getMessagesManager().get("error.unknown-subcommand");
 
-        // Time remaining
         long secondsLeft = entry.getExpiresAt().getEpochSecond() - Instant.now().getEpochSecond();
         String timeLeft  = formatTimeLeft(secondsLeft);
 
-        List<Component> lore = List.of(
-                mm.deserialize("<gray>Target: <red><bold>" + targetName),
-                mm.deserialize("<gray>Hadiah: <gold>" +
-                        plugin.getEconomyProvider().format(entry.getAmount())),
-                mm.deserialize("<gray>Dipasang oleh: " + posterClanName),
-                mm.deserialize("<gray>Berakhir: <yellow>" + timeLeft),
-                Component.empty(),
-                mm.deserialize("<dark_gray>Bunuh target & submit kepala untuk klaim.")
-        );
+        List<Component> lore = new ArrayList<>();
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.entry-target",
+                "{name}", targetName)));
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.entry-reward",
+                "{amount}", plugin.getEconomyProvider().format(entry.getAmount()))));
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.entry-posted-by",
+                "{clan}", posterClanTag)));
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.entry-expires",
+                "{time}", timeLeft)));
+        lore.add(Component.empty());
+        lore.add(mm.deserialize(plugin.getMessagesManager().get("bounty.entry-hint")));
 
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta  = (SkullMeta) skull.getItemMeta();
@@ -150,33 +133,44 @@ public class BountyBoardGUI implements InventoryHolder {
         return skull;
     }
 
-    private void setNavigation() {
+    private void setNavigation(me.bintanq.quantumclan.config.GuiConfigManager gc) {
         int totalPages = getTotalPages();
 
-        inventory.setItem(49, makeItem(Material.BARRIER, "<red>Tutup", Collections.emptyList()));
+        inventory.setItem(gc.getBountyBoardCloseSlot(),
+                makeItem(Material.BARRIER,
+                        plugin.getMessagesManager().get("gui.close"),
+                        Collections.emptyList()));
 
         if (page > 0) {
-            inventory.setItem(45, makeItem(Material.ARROW,
-                    "<yellow>« Sebelumnya",
-                    List.of(mm.deserialize("<gray>Halaman " + page + " / " + totalPages))));
+            inventory.setItem(gc.getBountyBoardPrevSlot(),
+                    makeItem(Material.ARROW,
+                            plugin.getMessagesManager().get("gui.prev"),
+                            List.of(mm.deserialize(plugin.getMessagesManager().get("gui.page-info",
+                                    "{current}", String.valueOf(page),
+                                    "{total}", String.valueOf(totalPages))))));
         }
         if (page < totalPages - 1) {
-            inventory.setItem(53, makeItem(Material.ARROW,
-                    "<yellow>Berikutnya »",
-                    List.of(mm.deserialize("<gray>Halaman " + (page + 2) + " / " + totalPages))));
+            inventory.setItem(gc.getBountyBoardNextSlot(),
+                    makeItem(Material.ARROW,
+                            plugin.getMessagesManager().get("gui.next"),
+                            List.of(mm.deserialize(plugin.getMessagesManager().get("gui.page-info",
+                                    "{current}", String.valueOf(page + 2),
+                                    "{total}", String.valueOf(totalPages))))));
         }
     }
-
-    // ── Click handler ─────────────────────────────────────────
 
     public void handleClick(Player player, int slot, ClickType click) {
         UUID uuid = player.getUniqueId();
         if (!processing.add(uuid)) return;
         try {
-            if (slot == 49) { player.closeInventory(); return; }
-            if (slot == 45 && page > 0) { openPage(player, page - 1); return; }
-            if (slot == 53 && page < getTotalPages() - 1) { openPage(player, page + 1); return; }
-            // Entry clicks — no action, board is info-only
+            var gc = gc();
+            if (slot == gc.getBountyBoardCloseSlot()) { player.closeInventory(); return; }
+            if (slot == gc.getBountyBoardPrevSlot() && page > 0) {
+                openPage(player, page - 1); return;
+            }
+            if (slot == gc.getBountyBoardNextSlot() && page < getTotalPages() - 1) {
+                openPage(player, page + 1); return;
+            }
         } finally {
             processing.remove(uuid);
         }
@@ -184,18 +178,12 @@ public class BountyBoardGUI implements InventoryHolder {
 
     private void openPage(Player player, int newPage) {
         player.closeInventory();
-        BountyBoardGUI gui = new BountyBoardGUI(plugin, newPage);
-        player.openInventory(gui.build());
+        player.openInventory(new BountyBoardGUI(plugin, newPage).build());
     }
-
-    // ── Static open ───────────────────────────────────────────
 
     public static void open(QuantumClan plugin, Player player) {
-        BountyBoardGUI gui = new BountyBoardGUI(plugin, 0);
-        player.openInventory(gui.build());
+        player.openInventory(new BountyBoardGUI(plugin, 0).build());
     }
-
-    // ── Helpers ───────────────────────────────────────────────
 
     private int getTotalPages() {
         return Math.max(1, (int) Math.ceil(bounties.size() / (double) ENTRY_SLOTS.length));
@@ -207,11 +195,16 @@ public class BountyBoardGUI implements InventoryHolder {
     }
 
     private String formatTimeLeft(long seconds) {
-        if (seconds <= 0) return "Expired";
+        if (seconds <= 0) return plugin.getMessagesManager().get("bounty.expired",
+                "{player}", "");
         long hours = seconds / 3600;
         long mins  = (seconds % 3600) / 60;
-        if (hours > 0) return hours + "j " + mins + "m";
-        return mins + "m " + (seconds % 60) + "d";
+        if (hours > 0) return hours + "h " + mins + "m";
+        return mins + "m " + (seconds % 60) + "s";
+    }
+
+    private me.bintanq.quantumclan.config.GuiConfigManager gc() {
+        return plugin.getGuiConfigManager();
     }
 
     @Override

@@ -23,8 +23,13 @@ import java.util.stream.Collectors;
 
 /**
  * Main Menu GUI — opened when a player types /qclan with no arguments.
- * Shows shortcuts to all major features.
- * If the player is not in a clan, shows limited options (create clan, top, etc.)
+ *
+ * BUG FIX #2: Separated in-clan and not-in-clan menus completely.
+ * The click handler uses a flag (isInClan) to route clicks correctly,
+ * so glass filler slots in the not-in-clan view never trigger in-clan actions.
+ *
+ * All slot assignments come from gui.yml via GuiConfigManager.
+ * All messages come from messages.yml — no hardcoded strings.
  */
 public class MainMenuGUI implements InventoryHolder {
 
@@ -33,26 +38,44 @@ public class MainMenuGUI implements InventoryHolder {
     private final QuantumClan plugin;
     private final MiniMessage mm;
     private final Player viewer;
-    private final Clan clan;
+
+    /**
+     * Snapshot of clan membership at GUI open time.
+     * Used to decide which layout to render AND which click actions to allow.
+     * BUG FIX #2: store this as a final field so handleClick uses the same state as build().
+     */
+    private final boolean isInClan;
+    private final String clanId; // null if not in clan
+
     private Inventory inventory;
 
+    // ── Slot constants for NOT-IN-CLAN layout ─────────────────
+    // These must NOT overlap with any slot used in the IN-CLAN layout
+    // that comes from gui.yml. We use hardcoded center slot 13 for
+    // the "Create Clan" button only when NOT in a clan.
+    private static final int SLOT_CREATE_CLAN = 13;
+
     public MainMenuGUI(QuantumClan plugin, Player viewer) {
-        this.plugin  = plugin;
-        this.mm      = plugin.getMiniMessage();
-        this.viewer  = viewer;
-        this.clan    = plugin.getClanManager().getClanByPlayer(viewer.getUniqueId());
+        this.plugin    = plugin;
+        this.mm        = plugin.getMiniMessage();
+        this.viewer    = viewer;
+        Clan clan = plugin.getClanManager().getClanByPlayer(viewer.getUniqueId());
+        this.isInClan  = (clan != null);
+        this.clanId    = (clan != null) ? clan.getId() : null;
     }
 
     public Inventory build() {
-        String title = plugin.getGuiConfigManager().getMainMenuTitle();
-        int size     = plugin.getGuiConfigManager().getMainMenuSize();
+        var gc = plugin.getGuiConfigManager();
+        String title = gc.getMainMenuTitle();
+        int size     = gc.getMainMenuSize();
         inventory    = Bukkit.createInventory(this, size, mm.deserialize(title));
 
-        Material filler = plugin.getGuiConfigManager().getMainMenuFiller();
+        // Fill all slots with filler first
+        Material filler = gc.getMainMenuFiller();
         ItemStack glass = makeItem(filler, " ", Collections.emptyList());
         for (int i = 0; i < size; i++) inventory.setItem(i, glass);
 
-        if (clan != null) {
+        if (isInClan) {
             buildInClanMenu();
         } else {
             buildNotInClanMenu();
@@ -63,28 +86,20 @@ public class MainMenuGUI implements InventoryHolder {
 
     private void buildInClanMenu() {
         var gc = plugin.getGuiConfigManager();
+        Clan clan = clanId != null ? plugin.getClanManager().getClanById(clanId) : null;
 
-        // Clan Info
         placeConfigItem("clan-info");
-        // Clan Shop
         placeConfigItem("clan-shop");
-        // Clan Home
         placeConfigItem("clan-home");
-        // Clan Upgrade
         placeConfigItem("clan-upgrade");
-        // Clan Top
         placeConfigItem("clan-top");
-        // Bounty Board
         placeConfigItem("bounty-board");
-        // War Menu
         placeConfigItem("war-menu");
-        // Contribution Shop
         placeConfigItem("contribution-shop");
-        // Coins Shop
         placeConfigItem("coins-shop");
 
         // Disband — only show if leader
-        if (clan.getLeaderUuid().equals(viewer.getUniqueId())) {
+        if (clan != null && clan.getLeaderUuid().equals(viewer.getUniqueId())) {
             placeConfigItem("disband");
         }
     }
@@ -92,23 +107,30 @@ public class MainMenuGUI implements InventoryHolder {
     private void buildNotInClanMenu() {
         var gc = plugin.getGuiConfigManager();
 
-        // Create Clan button
-        int slot = gc.getMainMenuSlot("clan-info");
-        Material mat = Material.PLAYER_HEAD;
-        inventory.setItem(13, makeItem(mat,
-                "<aqua>Create a Clan",
-                List.of(
-                        mm.deserialize("<white>You are not in a clan."),
-                        mm.deserialize("<white>Use <aqua>/qclan create</aqua> to start one."),
-                        Component.empty(),
-                        mm.deserialize("<white>» Left click to create")
-                )));
+        // Create Clan button at center
+        // Name and lore from messages.yml
+        String createName = plugin.getMessagesManager().get("gui.main-menu-not-in-clan-create-name");
+        String lore1 = plugin.getMessagesManager().get("gui.main-menu-not-in-clan-lore1");
+        String lore2 = plugin.getMessagesManager().get("gui.main-menu-not-in-clan-lore2");
+        String lore3 = plugin.getMessagesManager().get("gui.main-menu-not-in-clan-lore3");
 
-        // Top clans still accessible
+        List<Component> loreCpts = new ArrayList<>();
+        if (lore1 != null && !lore1.startsWith("<red>[Missing")) loreCpts.add(mm.deserialize(lore1));
+        if (lore2 != null && !lore2.startsWith("<red>[Missing")) loreCpts.add(mm.deserialize(lore2));
+        if (lore3 != null && !lore3.startsWith("<red>[Missing")) {
+            loreCpts.add(Component.empty());
+            loreCpts.add(mm.deserialize(lore3));
+        }
+
+        inventory.setItem(SLOT_CREATE_CLAN,
+                makeItem(Material.PLAYER_HEAD,
+                        createName != null && !createName.startsWith("<red>[Missing")
+                                ? createName : "<aqua>Create a Clan",
+                        loreCpts));
+
+        // These features are accessible even without a clan
         placeConfigItem("clan-top");
-        // Bounty board still accessible
         placeConfigItem("bounty-board");
-        // Coins shop still accessible
         placeConfigItem("coins-shop");
     }
 
@@ -129,84 +151,119 @@ public class MainMenuGUI implements InventoryHolder {
         UUID uuid = player.getUniqueId();
         if (!processing.add(uuid)) return;
         try {
-            var gc = plugin.getGuiConfigManager();
-            Clan latestClan = plugin.getClanManager().getClanByPlayer(uuid);
-
-            if (slot == gc.getMainMenuSlot("clan-info")) {
-                player.closeInventory();
-                if (latestClan != null) {
-                    ClanInfoGUI.open(plugin, player, latestClan);
-                } else {
-                    plugin.sendMessage(player, "clan.not-in-clan");
-                }
-            } else if (slot == gc.getMainMenuSlot("clan-shop")) {
-                player.closeInventory();
-                if (latestClan != null && plugin.getClanManager().hasRolePermission(uuid, "can-access-shop")) {
-                    ClanShopGUI.open(plugin, player, latestClan);
-                } else if (latestClan == null) {
-                    plugin.sendMessage(player, "clan.not-in-clan");
-                } else {
-                    plugin.sendMessage(player, "error.role-no-permission",
-                            "{role}", plugin.getClanManager().getMember(uuid).getRole());
-                }
-            } else if (slot == gc.getMainMenuSlot("clan-home")) {
-                player.closeInventory();
-                if (latestClan != null) {
-                    if (latestClan.getHomes().isEmpty()) {
-                        plugin.sendMessage(player, "home.no-homes");
-                    } else {
-                        ClanHomeGUI.open(plugin, player, latestClan);
-                    }
-                } else {
-                    plugin.sendMessage(player, "clan.not-in-clan");
-                }
-            } else if (slot == gc.getMainMenuSlot("clan-upgrade")) {
-                player.closeInventory();
-                if (latestClan != null && plugin.getClanManager().hasRolePermission(uuid, "can-upgrade")) {
-                    UpgradeGUI.open(plugin, player, latestClan);
-                } else if (latestClan == null) {
-                    plugin.sendMessage(player, "clan.not-in-clan");
-                } else {
-                    plugin.sendMessage(player, "error.role-no-permission",
-                            "{role}", plugin.getClanManager().getMember(uuid).getRole());
-                }
-            } else if (slot == gc.getMainMenuSlot("clan-top")) {
-                player.closeInventory();
-                ClanTopGUI.open(plugin, player);
-            } else if (slot == gc.getMainMenuSlot("bounty-board")) {
-                player.closeInventory();
-                BountyBoardGUI.open(plugin, player);
-            } else if (slot == gc.getMainMenuSlot("war-menu")) {
-                player.closeInventory();
-                WarGUI.open(plugin, player);
-            } else if (slot == gc.getMainMenuSlot("contribution-shop")) {
-                player.closeInventory();
-                if (latestClan != null) {
-                    ContributionShopGUI.open(plugin, player);
-                } else {
-                    plugin.sendMessage(player, "clan.not-in-clan");
-                }
-            } else if (slot == gc.getMainMenuSlot("coins-shop")) {
-                player.closeInventory();
-                CoinsShopGUI.open(plugin, player);
-            } else if (slot == gc.getMainMenuSlot("disband")) {
-                player.closeInventory();
-                if (latestClan != null && latestClan.getLeaderUuid().equals(uuid)) {
-                    DisbandConfirmGUI.open(plugin, player, latestClan);
-                } else if (latestClan == null) {
-                    plugin.sendMessage(player, "clan.not-in-clan");
-                } else {
-                    plugin.sendMessage(player, "gui.disband-leader-only");
-                }
-            } else if (slot == 13 && latestClan == null) {
-                // Create clan button when not in clan
-                player.closeInventory();
-                plugin.getCommand("qclan").execute(player, "qclan",
-                        new String[]{"create"});
+            // BUG FIX #2: Route clicks based on isInClan flag captured at build time.
+            // This completely separates in-clan and not-in-clan click handling.
+            if (isInClan) {
+                handleInClanClick(player, slot);
+            } else {
+                handleNotInClanClick(player, slot);
             }
         } finally {
             processing.remove(uuid);
         }
+    }
+
+    private void handleInClanClick(Player player, int slot) {
+        var gc = plugin.getGuiConfigManager();
+        UUID uuid = player.getUniqueId();
+
+        // Re-fetch clan to get latest state
+        Clan latestClan = clanId != null ? plugin.getClanManager().getClanById(clanId) : null;
+
+        if (slot == gc.getMainMenuSlot("clan-info")) {
+            player.closeInventory();
+            if (latestClan != null) {
+                ClanInfoGUI.open(plugin, player, latestClan);
+            } else {
+                plugin.sendMessage(player, "clan.not-in-clan");
+            }
+        } else if (slot == gc.getMainMenuSlot("clan-shop")) {
+            player.closeInventory();
+            if (latestClan != null && plugin.getClanManager().hasRolePermission(uuid, "can-access-shop")) {
+                ClanShopGUI.open(plugin, player, latestClan);
+            } else if (latestClan == null) {
+                plugin.sendMessage(player, "clan.not-in-clan");
+            } else {
+                plugin.sendMessage(player, "error.role-no-permission",
+                        "{role}", plugin.getClanManager().getMember(uuid).getRole());
+            }
+        } else if (slot == gc.getMainMenuSlot("clan-home")) {
+            player.closeInventory();
+            if (latestClan != null) {
+                if (latestClan.getHomes().isEmpty()) {
+                    plugin.sendMessage(player, "home.no-homes");
+                } else {
+                    ClanHomeGUI.open(plugin, player, latestClan);
+                }
+            } else {
+                plugin.sendMessage(player, "clan.not-in-clan");
+            }
+        } else if (slot == gc.getMainMenuSlot("clan-upgrade")) {
+            player.closeInventory();
+            if (latestClan != null && plugin.getClanManager().hasRolePermission(uuid, "can-upgrade")) {
+                UpgradeGUI.open(plugin, player, latestClan);
+            } else if (latestClan == null) {
+                plugin.sendMessage(player, "clan.not-in-clan");
+            } else {
+                plugin.sendMessage(player, "error.role-no-permission",
+                        "{role}", plugin.getClanManager().getMember(uuid).getRole());
+            }
+        } else if (slot == gc.getMainMenuSlot("clan-top")) {
+            player.closeInventory();
+            ClanTopGUI.open(plugin, player);
+        } else if (slot == gc.getMainMenuSlot("bounty-board")) {
+            player.closeInventory();
+            BountyBoardGUI.open(plugin, player);
+        } else if (slot == gc.getMainMenuSlot("war-menu")) {
+            player.closeInventory();
+            WarGUI.open(plugin, player);
+        } else if (slot == gc.getMainMenuSlot("contribution-shop")) {
+            player.closeInventory();
+            if (latestClan != null) {
+                ContributionShopGUI.open(plugin, player);
+            } else {
+                plugin.sendMessage(player, "clan.not-in-clan");
+            }
+        } else if (slot == gc.getMainMenuSlot("coins-shop")) {
+            player.closeInventory();
+            CoinsShopGUI.open(plugin, player);
+        } else if (slot == gc.getMainMenuSlot("disband")) {
+            player.closeInventory();
+            if (latestClan != null && latestClan.getLeaderUuid().equals(uuid)) {
+                DisbandConfirmGUI.open(plugin, player, latestClan);
+            } else if (latestClan == null) {
+                plugin.sendMessage(player, "clan.not-in-clan");
+            } else {
+                plugin.sendMessage(player, "gui.disband-leader-only");
+            }
+        }
+        // Any other slot (filler glass) — do nothing
+    }
+
+    private void handleNotInClanClick(Player player, int slot) {
+        var gc = plugin.getGuiConfigManager();
+
+        // BUG FIX #2: Only react to the specific slots we placed items on.
+        // All other slots (filler glass) are intentionally ignored.
+
+        if (slot == SLOT_CREATE_CLAN) {
+            // Create clan
+            player.closeInventory();
+            plugin.getCommand("qclan").execute(player, "qclan", new String[]{"create"});
+
+        } else if (slot == gc.getMainMenuSlot("clan-top")) {
+            player.closeInventory();
+            ClanTopGUI.open(plugin, player);
+
+        } else if (slot == gc.getMainMenuSlot("bounty-board")) {
+            player.closeInventory();
+            BountyBoardGUI.open(plugin, player);
+
+        } else if (slot == gc.getMainMenuSlot("coins-shop")) {
+            player.closeInventory();
+            CoinsShopGUI.open(plugin, player);
+        }
+        // All other slots (including in-clan feature slots) → do nothing
     }
 
     public static void open(QuantumClan plugin, Player player) {

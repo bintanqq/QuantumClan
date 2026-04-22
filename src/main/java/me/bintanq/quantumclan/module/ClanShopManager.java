@@ -19,46 +19,31 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Handles all clan shop purchase logic:
- *  - Atomic balance check → deduct → reward
- *  - Rollback on reward failure
- *  - BUFF: apply to online members + store pending for offline
- *  - CONSUMABLE: give item or activate consumable feature
- *  - UTILITY: permanent upgrades (XP boost, Shield)
- *
- * Anti-dupe: per-player processing flag prevents double-click concurrent purchases.
+ * Handles all clan shop purchase logic.
+ * BUG FIX: All hardcoded messages replaced with messages.yml lookups.
  */
 public class ClanShopManager {
 
     private final QuantumClan plugin;
-
-    /** Players currently processing a transaction. */
     private final Set<UUID> processing = ConcurrentHashMap.newKeySet();
 
-    // PDC keys for special items
     private final NamespacedKey keySpyTarget;
     private final NamespacedKey keyClanTag;
-    private final NamespacedKey keyDeathProtection;
 
     public ClanShopManager(QuantumClan plugin) {
-        this.plugin = plugin;
-        keySpyTarget      = new NamespacedKey(plugin, "qc_spy_target");
-        keyClanTag        = new NamespacedKey(plugin, "qc_clan_tag");
-        keyDeathProtection = new NamespacedKey(plugin, "qc_death_protection");
+        this.plugin       = plugin;
+        keySpyTarget = new NamespacedKey(plugin, "qc_spy_target");
+        keyClanTag   = new NamespacedKey(plugin, "qc_clan_tag");
     }
-
-    // ── Main purchase entry point ──────────────────────────────
 
     public void purchase(Player player, Clan clan, ShopItem item) {
         UUID uuid = player.getUniqueId();
 
-        // Anti-dupe: one purchase at a time
         if (!processing.add(uuid)) {
             plugin.sendMessage(player, "error.transaction-processing");
             return;
         }
 
-        // Re-fetch clan for latest money
         Clan latest = plugin.getClanManager().getClanById(clan.getId());
         if (latest == null) {
             processing.remove(uuid);
@@ -66,7 +51,6 @@ public class ClanShopManager {
             return;
         }
 
-        // Check role permission
         if (!plugin.getClanManager().hasRolePermission(uuid, "can-access-shop")) {
             processing.remove(uuid);
             plugin.sendMessage(player, "error.role-no-permission",
@@ -76,7 +60,6 @@ public class ClanShopManager {
 
         long cost = item.getPrice();
 
-        // Atomic: check + deduct Clan Money
         plugin.getClanManager().spendClanMoney(latest.getId(), cost)
                 .thenAccept(spent -> {
                     if (!spent) {
@@ -88,16 +71,16 @@ public class ClanShopManager {
                         return;
                     }
 
-                    // Deliver reward on main thread
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         try {
                             deliverReward(player, latest, item);
-                            plugin.sendMessage(player, "shop.purchase-success", "{value}", item.getName());
+                            plugin.sendMessage(player, "shop.purchase-success",
+                                    "{value}", item.getName());
                         } catch (Exception e) {
-                            // Rollback
                             plugin.getClanManager().depositMoney(uuid, cost);
                             plugin.sendMessage(player, "shop.purchase-failed");
-                            plugin.getLogger().warning("[ClanShopManager] Reward delivery failed, rolled back: " + e.getMessage());
+                            plugin.getLogger().warning("[ClanShopManager] Reward delivery failed, rolled back: "
+                                    + e.getMessage());
                         } finally {
                             processing.remove(uuid);
                         }
@@ -105,13 +88,11 @@ public class ClanShopManager {
                 });
     }
 
-    // ── Reward delivery ───────────────────────────────────────
-
     private void deliverReward(Player player, Clan clan, ShopItem item) {
         switch (item.getType()) {
-            case BUFF      -> deliverBuff(player, clan, item);
+            case BUFF       -> deliverBuff(player, clan, item);
             case CONSUMABLE -> deliverConsumable(player, clan, item);
-            case UTILITY   -> deliverUtility(player, clan, item);
+            case UTILITY    -> deliverUtility(player, clan, item);
         }
     }
 
@@ -125,61 +106,63 @@ public class ClanShopManager {
         int durationSec = item.getDuration();
         int amplifier   = item.getAmplifier();
 
-        // Apply to all online members immediately
         plugin.getBuffTracker().applyClanBuff(clan.getId(), effectType, amplifier, durationSec);
 
-        // Store pending buff for all offline members
         Instant expiresAt = Instant.now().plusSeconds(durationSec);
         for (UUID memberUuid : clan.getMemberUuids()) {
-            if (Bukkit.getPlayer(memberUuid) != null) continue; // already applied
+            if (Bukkit.getPlayer(memberUuid) != null) continue;
             String buffId = UUID.randomUUID().toString();
             plugin.getMemberDAO().insertPendingBuff(
                     buffId, memberUuid, item.getEffect().toUpperCase(),
                     amplifier, durationSec, expiresAt);
         }
 
-        // Broadcast to online members
+        // FIX: was hardcoded "menit" — use messages.yml
         plugin.getClanManager().getOnlineMembers(clan.getId()).forEach(m ->
                 plugin.sendMessage(m, "shop.buff-received",
                         "{value}", item.getName(),
-                        "{duration}", String.valueOf(durationSec / 60) + " menit"));
+                        "{duration}", String.valueOf(durationSec / 60)));
     }
 
     private void deliverConsumable(Player player, Clan clan, ShopItem item) {
         switch (item.getId()) {
             case "spy_scroll" -> {
-                // Give Spy Scroll item with PDC
                 ItemStack scroll = makeSpyScrollItem(player);
                 giveOrDrop(player, scroll, item.getName());
             }
             case "clan_banner" -> {
-                // Give clan banner item with clan tag PDC
                 ItemStack banner = makeClanBannerItem(clan);
                 giveOrDrop(player, banner, item.getName());
             }
             case "clan_announcement" -> {
-                // Check cooldown
                 if (plugin.getBuffTracker().isOnAnnounceCooldown(clan.getId())) {
-                    long remaining = plugin.getBuffTracker().getAnnounceRemainingCooldown(clan.getId());
-                    // Rollback handled by caller — throw to trigger rollback
+                    long remaining = plugin.getBuffTracker()
+                            .getAnnounceRemainingCooldown(clan.getId());
                     plugin.getClanManager().depositMoney(player.getUniqueId(), item.getPrice());
-                    plugin.sendMessage(player, "clan.announce-cooldown", "{value}", remaining + "");
+                    plugin.sendMessage(player, "clan.announce-cooldown",
+                            "{value}", String.valueOf(remaining));
                     return;
                 }
-                // Prompt for message via chat input
+                // FIX: was hardcoded "Masukkan pesan announcement"
                 plugin.getChatInputManager().prompt(player,
-                        plugin.getMessagesManager().get("clan.create-prompt-name")
-                                .replace("Masukkan nama clan", "Masukkan pesan announcement"),
+                        plugin.getMessagesManager().get("shop.announcement-prompt"),
                         msg -> {
                             plugin.getBuffTracker().setAnnounceCooldown(clan.getId());
                             String broadcast = plugin.getMessagesManager()
                                     .get("clan.announce-broadcast",
-                                            "{tag}", clan.getColoredTag(),
+                                            "{tag}", clan.getFormattedTag(),
                                             "{message}", msg);
-                            plugin.broadcast(broadcast);
+                            String[] lines = broadcast.split("\\{newline\\}");
+                            net.kyori.adventure.text.Component bc = net.kyori.adventure.text.Component.empty();
+                            for (int i = 0; i < lines.length; i++) {
+                                String line = lines[i];
+                                if (!line.isBlank()) bc = bc.append(plugin.getMiniMessage().deserialize(line));
+                                if (i < lines.length - 1) bc = bc.append(net.kyori.adventure.text.Component.newline());
+                            }
+                            final net.kyori.adventure.text.Component finalBc = bc;
+                            Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(finalBc));
                         },
                         () -> {
-                            // Refund if cancelled
                             plugin.getClanManager().depositMoney(player.getUniqueId(), item.getPrice());
                             plugin.sendMessage(player, "clan.create-cancelled");
                         });
@@ -189,13 +172,13 @@ public class ClanShopManager {
                     long remaining = plugin.getBuffTracker()
                             .getDeathProtectionRemainingCooldown(player.getUniqueId());
                     plugin.getClanManager().depositMoney(player.getUniqueId(), item.getPrice());
-                    plugin.sendMessage(player, "shop.purchase-cooldown", "{value}", remaining + "");
+                    plugin.sendMessage(player, "shop.purchase-cooldown",
+                            "{value}", String.valueOf(remaining));
                     return;
                 }
                 plugin.getBuffTracker().grantDeathProtection(player.getUniqueId());
             }
             default -> {
-                // Generic consumable — give item
                 ItemStack generic = new ItemStack(item.getMaterial());
                 giveOrDrop(player, generic, item.getName());
             }
@@ -206,35 +189,40 @@ public class ClanShopManager {
         switch (item.getId()) {
             case "xp_boost" -> {
                 plugin.getBuffTracker().activateXpBoost(clan.getId(), item.getDuration());
-                // Notify all online members
+                // FIX: was hardcoded "XP Boost x..."
                 plugin.getClanManager().getOnlineMembers(clan.getId()).forEach(m ->
-                        plugin.sendMessage(m, "shop.buff-received",
-                                "{value}", "XP Boost x" + plugin.getConfigManager().getXpBoostMultiplier(),
-                                "{duration}", String.valueOf(item.getDuration() / 60) + " menit"));
+                        plugin.sendMessage(m, "shop.buff-applied", "{value}",
+                                plugin.getMessagesManager().get("shop.xp-boost-label",
+                                        "{multiplier}",
+                                        String.valueOf(plugin.getConfigManager().getXpBoostMultiplier()))));
             }
             case "clan_shield" -> {
                 clan.applyShield(item.getDuration());
                 plugin.getClanDAO().updateShield(clan.getId(), clan.getShieldUntil());
+                // FIX: was hardcoded "Clan Shield"
                 plugin.getClanManager().getOnlineMembers(clan.getId()).forEach(m ->
-                        plugin.sendMessage(m, "shop.buff-applied", "{value}", "Clan Shield"));
+                        plugin.sendMessage(m, "shop.buff-applied",
+                                "{value}", plugin.getMessagesManager().get("shop.shield-label")));
             }
-            default -> {
-                plugin.getLogger().warning("[ClanShopManager] Unknown UTILITY id: " + item.getId());
-            }
+            default -> plugin.getLogger().warning("[ClanShopManager] Unknown UTILITY id: "
+                    + item.getId());
         }
     }
-
-    // ── Item factories ────────────────────────────────────────
 
     private ItemStack makeSpyScrollItem(Player buyer) {
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta  = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(plugin.getMiniMessage().deserialize("<!italic><dark_aqua>Spy Scroll"));
+            // FIX: use messages.yml for name and lore
+            meta.displayName(plugin.getMiniMessage().deserialize(
+                    "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-name")));
             meta.lore(List.of(
-                    plugin.getMiniMessage().deserialize("<gray>Klik kanan target untuk melacak."),
-                    plugin.getMiniMessage().deserialize("<gray>Durasi: <yellow>" +
-                            plugin.getConfigManager().getSpyScrollDuration() / 60 + " menit")
+                    plugin.getMiniMessage().deserialize(
+                            "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-lore1")),
+                    plugin.getMiniMessage().deserialize(
+                            "<!italic>" + plugin.getMessagesManager().get("shop.spy-scroll-lore2",
+                                    "{duration}",
+                                    String.valueOf(plugin.getConfigManager().getSpyScrollDuration() / 60)))
             ));
             meta.getPersistentDataContainer().set(keySpyTarget,
                     PersistentDataType.STRING, buyer.getUniqueId().toString());
@@ -247,10 +235,14 @@ public class ClanShopManager {
         ItemStack item = new ItemStack(Material.WHITE_BANNER);
         ItemMeta meta  = item.getItemMeta();
         if (meta != null) {
+            // FIX: use messages.yml
             meta.displayName(plugin.getMiniMessage().deserialize(
-                    "<!italic><gold>Clan Banner " + clan.getColoredTag()));
+                    "<!italic>" + plugin.getMessagesManager().get("shop.banner-name",
+                            "{tag}", clan.getColoredTag())));
             meta.lore(List.of(
-                    plugin.getMiniMessage().deserialize("<gray>Banner resmi clan " + clan.getName())
+                    plugin.getMiniMessage().deserialize(
+                            "<!italic>" + plugin.getMessagesManager().get("shop.banner-lore",
+                                    "{clan}", clan.getName()))
             ));
             meta.getPersistentDataContainer().set(keyClanTag,
                     PersistentDataType.STRING, clan.getId());
@@ -258,8 +250,6 @@ public class ClanShopManager {
         }
         return item;
     }
-
-    // ── Inventory helper ──────────────────────────────────────
 
     private void giveOrDrop(Player player, ItemStack item, String itemName) {
         if (player.getInventory().firstEmpty() == -1) {

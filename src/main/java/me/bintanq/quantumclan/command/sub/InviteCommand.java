@@ -1,3 +1,7 @@
+// ════════════════════════════════════════════════════════════════════════════
+// FILE: InviteCommand.java
+// FIX: hardcoded "Kamu tidak bisa mengundang dirimu sendiri."
+// ════════════════════════════════════════════════════════════════════════════
 package me.bintanq.quantumclan.command.sub;
 
 import me.bintanq.quantumclan.QuantumClan;
@@ -20,7 +24,7 @@ public class InviteCommand {
         }
 
         if (args.length == 0) {
-            plugin.sendRaw(player, "<red>/qclan invite <player>");
+            plugin.sendMessage(player, "error.unknown-subcommand");
             return;
         }
 
@@ -36,7 +40,6 @@ public class InviteCommand {
             return;
         }
 
-        // Check if clan is full
         int maxMembers = plugin.getConfigManager().getMaxMembers(clan.getLevel());
         if (clan.getMemberCount() >= maxMembers) {
             plugin.sendMessage(player, "clan.invite-clan-full");
@@ -50,7 +53,8 @@ public class InviteCommand {
         }
 
         if (target.equals(player)) {
-            plugin.sendRaw(player, "<red>Kamu tidak bisa mengundang dirimu sendiri.");
+            // FIX: was hardcoded Indonesian — now uses messages.yml key
+            plugin.sendMessage(player, "clan.invite-self");
             return;
         }
 
@@ -64,19 +68,12 @@ public class InviteCommand {
             return;
         }
 
-        // Register the invite
         plugin.getClanManager().addInvite(target.getUniqueId(), clan.getId());
-
-        // Notify inviter
         plugin.sendMessage(player, "clan.invite-sent", "{player}", target.getName());
-
-        // Notify invitee
         plugin.sendMessage(target, "clan.invite-received", "{clan}", clan.getName());
 
-        // Auto-expire invite after chat-input-timeout seconds
         int timeoutSeconds = plugin.getConfigManager().getChatInputTimeout();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            // Remove invite only if it's still the same clan (player might have received a new one)
             String pending = plugin.getClanManager().getInvite(target.getUniqueId());
             if (clan.getId().equals(pending)) {
                 plugin.getClanManager().removeInvite(target.getUniqueId());

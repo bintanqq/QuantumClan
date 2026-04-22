@@ -15,11 +15,8 @@ REQUIRED:
 
 OPTIONAL HOOKS:
 - PlayerPoints (secondary point currency alternatif)
-- GemsEconomy (multi-currency support)
 - PlaceholderAPI (expose placeholder clan untuk hologram/chat)
 - LuckPerms (baca rank player untuk keperluan permission internal jika dibutuhkan)
-- DecentHolograms (tampil leaderboard reputasi clan via hologram)
-- HolographicDisplays (fallback jika DecentHolograms tidak ada)
 - WorldGuard (proteksi arena war — no-build, no-break, no-pvp-outside-war)
 - FAWE (Fast Async WorldEdit) — untuk Clan Hall schematic engine alternatif
 
@@ -48,7 +45,6 @@ Semua hook dibungkus dalam class HookManager.java yang diinisialisasi di onEnabl
 ### 3. ECONOMY
 - Vault sebagai primary balance (REQUIRED)
 - PlayerPoints sebagai opsional alternatif jika dikonfigurasi
-- GemsEconomy sebagai opsional multi-currency
 - Built-in Coins sebagai secondary premium currency (tersimpan di SQLite)
 - Coins bisa di-grant via command admin (integrasi donation store)
 - Clan Money = kas bersama clan, diisi via deposit anggota
@@ -335,7 +331,6 @@ CACHING:
 SCHEDULER & TICK:
 - Jangan gunakan repeating task per tick (period: 1) kecuali benar-benar perlu
 - Spy scroll update: period 60 ticks (3 detik)
-- Hologram leaderboard update: period configurable, default 6000 ticks (5 menit)
 - War kill count broadcast: period 200 ticks (10 detik)
 - Buff pending check saat player login saja, bukan scheduler terus-menerus
 - Bounty expiry check: period 1200 ticks (1 menit), bukan per tick

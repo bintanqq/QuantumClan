@@ -21,8 +21,12 @@ import java.util.UUID;
  *    Cancel keyword: "cancel" (case-insensitive, English).
  *
  * 2. Clan tag injection — if chat.tag-enabled = true in config,
- *    adds the clan tag as PREFIX or SUFFIX to the player's display name
- *    for that chat event only.
+ *    adds the clan tag as PREFIX or SUFFIX to the player's display name component
+ *    WITHOUT overriding the full chat renderer (so other plugins like EssentialsChat
+ *    still control the full format).
+ *
+ *    We only mutate event.getPlayer().displayName() temporarily for this event.
+ *    The renderer itself is NOT replaced — we let Paper/other plugins handle it.
  */
 public class ChatListener implements Listener {
 
@@ -34,7 +38,7 @@ public class ChatListener implements Listener {
         this.mm     = plugin.getMiniMessage();
     }
 
-    // ── 1. Input interception (LOWEST) ───────────────────────
+    // ── 1. Input interception (LOWEST priority — runs first) ─
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onChatInput(AsyncChatEvent event) {
@@ -46,14 +50,19 @@ public class ChatListener implements Listener {
         String rawText = PlainTextComponentSerializer.plainText()
                 .serialize(event.originalMessage());
 
-        // Cancel — consumed as input, not sent to chat
+        // Consume the message — don't let it reach chat
         event.setCancelled(true);
 
         // Forward to ChatInputManager (dispatches callback to main thread)
         plugin.getChatInputManager().handleInput(uuid, rawText);
     }
 
-    // ── 2. Clan tag injection (HIGH) ─────────────────────────
+    // ── 2. Clan tag injection (HIGH priority) ────────────────
+    //
+    // BUG FIX: We do NOT set a custom renderer. Instead we only modify
+    // the player's display name component for this event cycle.
+    // This way other chat plugins (EssentialsChat, etc.) keep full control
+    // of the chat format — we only contribute the prefix/suffix to the name.
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onClanChat(AsyncChatEvent event) {
@@ -69,23 +78,30 @@ public class ChatListener implements Listener {
         String position   = plugin.getConfigManager().getChatTagPosition(); // PREFIX | SUFFIX
         String coloredTag = clan.getColoredTag();
 
+        // Resolve the tag component from config format
         String resolvedTag = tagFormat.replace("{tag}", coloredTag);
         Component tagComponent = mm.deserialize(resolvedTag);
 
-        Component originalName = event.getPlayer().displayName();
+        // Get current display name (may have been set by another plugin already)
+        Component originalName = player.displayName();
 
-        Component newName;
+        // Build new display name: only PREFIX or SUFFIX — NOT the full message format
+        Component newDisplayName;
         if ("SUFFIX".equals(position)) {
-            newName = originalName.append(tagComponent);
+            newDisplayName = originalName.append(tagComponent);
         } else {
             // PREFIX (default)
-            newName = tagComponent.append(originalName);
+            newDisplayName = tagComponent.append(originalName);
         }
 
-        event.renderer((source, sourceDisplayName, message, viewer) ->
-                newName
-                        .append(Component.text(": "))
-                        .append(message)
-        );
+        // Apply only to display name — the renderer is untouched
+        // Paper's default renderer uses event.getPlayer().displayName() automatically
+        event.getPlayer().displayName(newDisplayName);
+
+        // IMPORTANT: Reset the display name after event processing so it doesn't
+        // permanently change the player's display name for scoreboards etc.
+        // We schedule this on the main thread after the async event finishes.
+        org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
+                player.displayName(originalName));
     }
 }
