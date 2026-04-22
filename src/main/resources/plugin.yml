@@ -2,7 +2,7 @@ name: QuantumClan
 version: '${project.version}'
 main: me.bintanq.quantumclan.QuantumClan
 api-version: '1.21'
-description: Advanced Clan Plugin for Paper 1.21.1
+description: Advanced Clan Plugin for Paper 1.21.11
 author: bintanq
 website: https://github.com/bintanq/QuantumClan
 
@@ -11,7 +11,6 @@ softdepend:
   - PlayerPoints
   - PlaceholderAPI
   - LuckPerms
-  - DecentHolograms
   - WorldGuard
   - FastAsyncWorldEdit
 

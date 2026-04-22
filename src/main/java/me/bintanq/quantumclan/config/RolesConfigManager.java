@@ -44,7 +44,8 @@ public class RolesConfigManager {
 
         int index = 0;
         for (Object obj : list) {
-            if (!(obj instanceof Map<?, ?> map)) continue;
+            if (!(obj instanceof Map<?, ?> tempMap)) continue;
+            Map<String, Object> map = (Map<String, Object>) tempMap;
 
             String name        = String.valueOf(map.getOrDefault("name", "member"));
             String displayName = String.valueOf(map.getOrDefault("display-name", name));

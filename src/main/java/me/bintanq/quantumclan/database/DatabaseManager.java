@@ -63,7 +63,7 @@ public class DatabaseManager {
 
         try {
             HikariConfig config = new HikariConfig();
-            config.setDriverClassName("org.sqlite.JDBC");
+            config.setDriverClassName(org.sqlite.JDBC.class.getName());
             config.setJdbcUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
             config.setMaximumPoolSize(POOL_SIZE);
             config.setMinimumIdle(1);

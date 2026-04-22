@@ -97,7 +97,8 @@ public class WarConfigManager {
         List<?> list = cfg.getList("rewards.items");
         if (list == null) return items;
         for (Object obj : list) {
-            if (!(obj instanceof Map<?, ?> m)) continue;
+            if (!(obj instanceof Map<?, ?> tempMap)) continue;
+            Map<String, Object> m = (Map<String, Object>) tempMap;
             String matName = String.valueOf(m.getOrDefault("material", "DIAMOND")).toUpperCase();
             int amount     = parseIntObj(m.get("amount"), 1);
             try {

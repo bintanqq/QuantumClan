@@ -74,13 +74,28 @@ public class ConfigManager {
     /** Supported values: VAULT, PLAYERPOINTS, COINS */
     public String getEconomyProvider() { return cfg.getString("economy-provider", "VAULT"); }
 
-    // ── Chat ──────────────────────────────────────────────────
+    // ── Chat tag (prefix/suffix) ──────────────────────────────
 
-    public boolean isClanChatEnabled()  { return cfg.getBoolean("chat.enabled", true); }
-    public String  getChatTagPosition() { return cfg.getString("chat.position", "PREFIX"); }
-    public String  getChatFormat() {
-        return cfg.getString("chat.format",
-                "<gray>[{tag}<gray>] <white>{player}<dark_gray>: <gray>{message}");
+    /**
+     * Apakah tag clan ditampilkan di chat.
+     */
+    public boolean isClanChatTagEnabled() {
+        return cfg.getBoolean("chat.tag-enabled", true);
+    }
+
+    /**
+     * Posisi tag: PREFIX (di depan nama) atau SUFFIX (di belakang nama).
+     */
+    public String getChatTagPosition() {
+        return cfg.getString("chat.tag-position", "PREFIX").toUpperCase();
+    }
+
+    /**
+     * Format tag yang ditampilkan. Placeholder: {tag}
+     * Contoh default: "<gray>[{tag}<gray>]"
+     */
+    public String getChatTagFormat() {
+        return cfg.getString("chat.tag-format", "<gray>[{tag}<gray>] ");
     }
 
     // ── Cooldowns ─────────────────────────────────────────────

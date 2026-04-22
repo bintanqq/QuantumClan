@@ -68,7 +68,7 @@ public class WarManager {
         int online    = plugin.getClanManager().getOnlineCount(clan.getId());
         boolean bypass = player.hasPermission("quantumclan.bypass.war.minclan");
         if (!bypass && online < minOnline) {
-            plugin.sendMessage(player, "war.register-insufficient-members", "{value}", minOnline);
+            plugin.sendMessage(player, "war.register-insufficient-members", "{value}", minOnline + "");
             return;
         }
 

@@ -3,7 +3,6 @@ package me.bintanq.quantumclan.listener;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.model.Clan;
-import me.bintanq.quantumclan.model.ClanMember;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -15,16 +14,19 @@ import org.bukkit.event.Listener;
 import java.util.UUID;
 
 /**
- * Handles two responsibilities:
+ * Handles dua hal:
  *
- * 1. Chat input interception — if a player has a pending ChatInputManager session,
- *    cancel the event and forward the text to the manager.
+ * 1. Chat input interception — jika player punya pending ChatInputManager session,
+ *    cancel event dan forward teks ke manager.
  *
- * 2. Clan tag injection — if clan chat is enabled in config, prepend or append
- *    the player's clan tag to their chat message using MiniMessage formatting.
+ * 2. Clan tag injection — jika chat.tag-enabled = true di config,
+ *    tambahkan tag clan sebagai PREFIX (di depan display name) atau
+ *    SUFFIX (di belakang display name).
+ *    Chat format asli dari plugin lain (EssentialsChat, dll) tidak disentuh —
+ *    kita hanya memodifikasi displayName player di event ini.
  *
- * Priority: LOWEST for input interception (catch it first, before other plugins).
- * Priority: HIGH for tag injection (after chat plugins format the message).
+ * Priority LOWEST untuk intercept input (tangkap sebelum plugin lain).
+ * Priority HIGH untuk tag injection (setelah plugin chat lain format pesannya).
  */
 public class ChatListener implements Listener {
 
@@ -36,7 +38,7 @@ public class ChatListener implements Listener {
         this.mm     = plugin.getMiniMessage();
     }
 
-    // ── Input interception (LOWEST — catch before other plugins) ──
+    // ── 1. Input interception (LOWEST) ───────────────────────
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onChatInput(AsyncChatEvent event) {
@@ -45,53 +47,56 @@ public class ChatListener implements Listener {
 
         if (!plugin.getChatInputManager().hasPendingInput(uuid)) return;
 
-        // Extract plain text from the Adventure Component
+        // Extract plain text
         String rawText = PlainTextComponentSerializer.plainText()
                 .serialize(event.originalMessage());
 
-        // Cancel the chat event — this message is consumed as input
+        // Cancel — pesan ini dikonsumsi sebagai input, bukan dikirim ke chat
         event.setCancelled(true);
 
-        // Forward to ChatInputManager (it dispatches callbacks to main thread)
+        // Forward ke ChatInputManager (callback dispatch ke main thread)
         plugin.getChatInputManager().handleInput(uuid, rawText);
     }
 
-    // ── Clan tag injection (HIGH — after chat format plugins) ─────
+    // ── 2. Clan tag injection (HIGH) ─────────────────────────
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onClanChat(AsyncChatEvent event) {
-        if (!plugin.getConfigManager().isClanChatEnabled()) return;
+        if (!plugin.getConfigManager().isClanChatTagEnabled()) return;
 
         Player player = event.getPlayer();
         UUID uuid     = player.getUniqueId();
 
         Clan clan = plugin.getClanManager().getClanByPlayer(uuid);
-        if (clan == null) return; // Not in a clan — no tag
+        if (clan == null) return; // tidak di clan — skip
 
-        ClanMember member = plugin.getClanManager().getMember(uuid);
-        if (member == null) return;
-
-        String position   = plugin.getConfigManager().getChatTagPosition(); // PREFIX or SUFFIX
-        String formatStr  = plugin.getConfigManager().getChatFormat();
+        String tagFormat  = plugin.getConfigManager().getChatTagFormat();
+        String position   = plugin.getConfigManager().getChatTagPosition(); // PREFIX | SUFFIX
         String coloredTag = clan.getColoredTag();
 
-        // Build the final renderer
-        event.renderer((source, sourceDisplayName, message, viewer) -> {
-            String playerName = source.getName();
+        // Resolve tag component dari config format
+        // tagFormat contoh: "<gray>[{tag}<gray>] " → ganti {tag} dengan colored tag
+        String resolvedTag = tagFormat.replace("{tag}", coloredTag);
+        Component tagComponent = mm.deserialize(resolvedTag);
 
-            // Serialize original message to plain then re-wrap in MiniMessage-safe form
-            String plainMessage = PlainTextComponentSerializer.plainText()
-                    .serialize(message);
+        // Ambil display name saat ini
+        Component originalName = event.getPlayer().displayName();
 
-            // Escape any MiniMessage tags in the player's message for safety
-            String escapedMessage = mm.escapeTags(plainMessage);
+        // Inject tag ke display name untuk event ini saja
+        Component newName;
+        if ("SUFFIX".equals(position)) {
+            newName = originalName.append(tagComponent);
+        } else {
+            // PREFIX (default)
+            newName = tagComponent.append(originalName);
+        }
 
-            String formatted = formatStr
-                    .replace("{tag}",     coloredTag)
-                    .replace("{player}",  playerName)
-                    .replace("{message}", escapedMessage);
-
-            return mm.deserialize(formatted);
-        });
+        // Override display name hanya untuk event ini via renderer
+        // Ini lebih aman daripada setDisplayName() permanen
+        event.renderer((source, sourceDisplayName, message, viewer) ->
+                newName
+                        .append(Component.text(": "))
+                        .append(message)
+        );
     }
 }

@@ -1,6 +1,7 @@
 # ╔══════════════════════════════════════════════════════╗
 # ║           QuantumClan - config.yml                   ║
-# ║   Edit sesuai kebutuhan server. Reload: /qclanadmin reload ║
+# ║   Edit sesuai kebutuhan server.                      ║
+# ║   Reload: /qclanadmin reload                         ║
 # ╚══════════════════════════════════════════════════════╝
 
 # ── Clan Creation ─────────────────────────────────────────────
@@ -11,21 +12,29 @@ max-tag-length: 8
 chat-input-timeout: 60
 
 # ── Economy Provider ──────────────────────────────────────────
-# Pilihan: VAULT | PLAYERPOINTS | GEMSECONOMY | COINS
+# Pilihan: VAULT | PLAYERPOINTS | COINS
 economy-provider: VAULT
 
-# ── Chat Format ───────────────────────────────────────────────
+# ── Chat Tag ──────────────────────────────────────────────────
+# Plugin ini TIDAK mengubah format chat secara keseluruhan.
+# Hanya menambahkan tag clan sebagai prefix atau suffix
+# di depan/belakang nama player di chat.
+# Kompatibel dengan EssentialsChat, LuckPerms prefix, dll.
 chat:
-  # Apakah tag clan tampil di chat
-  enabled: true
-  # PREFIX = tag di depan nama, SUFFIX = tag di belakang nama
-  position: PREFIX
-  # Format MiniMessage. Placeholder: {tag} {player} {message}
-  format: "<gray>[{tag}<gray>] <white>{player}<dark_gray>: <gray>{message}"
+  # Aktifkan/nonaktifkan tampilan tag clan di chat
+  tag-enabled: true
+
+  # PREFIX = tag tampil DI DEPAN nama player
+  # SUFFIX = tag tampil DI BELAKANG nama player
+  tag-position: PREFIX
+
+  # Format tag yang ditampilkan. {tag} = colored tag clan
+  # Contoh PREFIX: "<gray>[{tag}<gray>] "  → [NWF] Steve: halo
+  # Contoh SUFFIX: " <gray>[{tag}<gray>]"  → Steve [NWF]: halo
+  tag-format: "<gray>[{tag}<gray>] "
 
 # ── Teleport & Cooldown ───────────────────────────────────────
 teleport-cooldown: 3
-# Cooldown teleport clan home (detik)
 home-teleport-cooldown: 30
 
 # ── Bounty ────────────────────────────────────────────────────
@@ -39,9 +48,7 @@ clan-hall:
   engine: AUTO
 
 # ── Leaderboard Cache ─────────────────────────────────────────
-# Interval refresh cache leaderboard (ticks, 6000 = 5 menit)
 leaderboard-cache-interval: 6000
-# Jumlah clan di leaderboard
 leaderboard-size: 50
 
 # ── Reputation Weights ────────────────────────────────────────
@@ -51,16 +58,13 @@ reputation-weights:
 
 # ── Contribution Weights ──────────────────────────────────────
 contribution-weights:
-  # Poin per 1000 nominal deposit
   deposit-per-thousand: 1
   bounty-complete: 10
   war-win: 25
 
 # ── Hologram ──────────────────────────────────────────────────
 hologram:
-  # Interval update hologram leaderboard (ticks, 6000 = 5 menit)
   update-interval: 6000
-  # Lokasi hologram leaderboard (set via /qclanadmin)
   location:
     world: "world"
     x: 0.0
@@ -71,22 +75,16 @@ hologram:
 xp-boost-multiplier: 2.0
 
 # ── Death Protection ──────────────────────────────────────────
-# Cooldown death protection per player (detik)
 death-protection-cooldown: 3600
 
 # ── Spy Scroll ────────────────────────────────────────────────
-# Durasi spy scroll aktif (detik)
 spy-scroll-duration: 300
-# Interval update lokasi target (ticks, 60 = 3 detik)
 spy-scroll-update-interval: 60
 
 # ── Clan Announcement ─────────────────────────────────────────
-# Cooldown clan announcement (detik)
 announce-cooldown: 3600
 
 # ── Level Requirements ────────────────────────────────────────
-# Level naik dengan spend Clan Money
-# cost = jumlah Clan Money yang di-spend untuk naik ke level ini
 level-requirements:
   - level: 1
     cost: 0
@@ -129,5 +127,4 @@ level-requirements:
     max-members: 150
     max-homes: 15
 
-# Max level clan (harus sesuai jumlah entry level-requirements)
 max-level: 10

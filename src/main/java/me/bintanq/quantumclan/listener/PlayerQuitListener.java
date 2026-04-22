@@ -2,6 +2,7 @@ package me.bintanq.quantumclan.listener;
 
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.model.WarSession;
+import me.bintanq.quantumclan.module.WarManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

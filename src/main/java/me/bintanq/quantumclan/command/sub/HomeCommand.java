@@ -23,8 +23,7 @@ public class HomeCommand {
         Clan.ClanHome home = clan.getHome(args[0]);
         if (home == null) { plugin.sendMessage(player, "home.teleport-not-found", "{value}", args[0]); return; }
         if (!player.hasPermission("quantumclan.bypass.cooldown") && plugin.getBuffTracker().isOnHomeCooldown(player.getUniqueId())) {
-            plugin.sendMessage(player, "home.teleport-cooldown", "{value}", plugin.getBuffTracker().getHomeRemainingCooldown(player.getUniqueId()));
-            return;
+            plugin.sendMessage(player, "home.teleport-cooldown", "{value}", String.valueOf(plugin.getBuffTracker().getHomeRemainingCooldown(player.getUniqueId())));            return;
         }
         Location loc = home.toBukkitLocation();
         if (loc == null) { plugin.sendMessage(player, "home.teleport-not-found", "{value}", home.getName()); return; }

@@ -1,7 +1,7 @@
-Buatkan plugin Minecraft Paper 1.21.1 bernama QuantumClan dengan package me.bintanq.quantumclan menggunakan Maven.
+Buatkan plugin Minecraft Paper 1.21.11 bernama QuantumClan dengan package me.bintanq.quantumclan menggunakan Maven.
 
 ## TECH STACK
-- Paper 1.21.1
+- Paper 1.21.11
 - Java 21
 - Maven (dengan shading + relocation)
 - HikariCP + SQLite
@@ -384,3 +384,26 @@ Generate file per file dengan urutan berikut, tunggu konfirmasi "lanjut" sebelum
 17. Module classes: BountyManager, WarManager, WarScheduler, ClanShopManager, BuffTracker, ContributionManager, SpyScrollManager, QuantumClanPlaceholder
 
 Jangan skip file apapun. Setiap file harus production-ready, fully implemented, tidak ada placeholder comment seperti "// TODO" atau "// implement this". Kalau file terlalu panjang split dengan bilang "lanjut?".
+
+
+BUG:
+
+1. TAG [] DOUBLE
+2. ANNOUNCEMENT COOLDOWN TIDAK BEKERJA/BISA SPAM
+3. MAIN GUI HARUS ADA KETIKA /clan atau /qclan
+4. Apabila Clan name ber spasi, tidak bisa didelete via command atau dicari via info dll pokonya gabisa di search via command
+
+Revision:
+1. deposit-per-thousand itu ada ubahan nya jadi ga perlu thousand bisa di set per 100 atau per 50 atau berapa gitu
+2. Hapus semua yang berkaitan di hologram
+3. Ada gui untuk memakai coins 
+4. Nama coins bisa diubah via config biar customizable
+5. YAML untuk mengubah semua GUI jadi semua GUI Configurable
+6. Jangan sama sekali ada hardcoded message apapun itu
+7. Ubah semua color message jadi tema nya cyan putih gitu
+8. Opsi untuk delete clan (hanya leader) dan kas itu dikembalikan atau gmn ntar terserah lu
+9. Semua Text/Message atau apapun itu harus berbahasa inggris agar lebih global pluginnya
+
+Question:
+1. Registrasi war itu kapan? h-1 atau gmn kalo bisa diubah via config lebih bagus
+2. Dan kalo war itu weekly apakah tiap restart bakal kereset jadi minggu depan lagi apa tersimpan di database pertama kali nya itu kapan?

@@ -103,7 +103,7 @@ public class QuantumClan extends JavaPlugin {
         // 4. Initialize DAOs
         initDAOs();
 
-        // 5. Initialize hooks (logs status of each)
+        // 5. Initialize hooks
         hookManager = new HookManager(this);
         hookManager.init();
 
@@ -114,7 +114,7 @@ public class QuantumClan extends JavaPlugin {
             return;
         }
 
-        // 7. Init coins provider (always available — built-in)
+        // 7. Init coins provider (built-in)
         coinsProvider = new CoinsProvider(this, coinsDAO);
 
         // 8. Init schematic provider (if clan-hall enabled)
@@ -123,7 +123,7 @@ public class QuantumClan extends JavaPlugin {
         // 9. Init ClanManager and load cache
         clanManager = new ClanManager(this, clanDAO, memberDAO, configManager, rolesConfigManager);
         try {
-            clanManager.loadAll().get(); // block until loaded (startup only)
+            clanManager.loadAll().get();
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "[QuantumClan] Failed to load clan cache!", e);
             Bukkit.getPluginManager().disablePlugin(this);
@@ -214,11 +214,6 @@ public class QuantumClan extends JavaPlugin {
         contributionDAO = new ContributionDAO(databaseManager, getLogger());
     }
 
-    /**
-     * Selects the economy provider based on config.
-     * Always falls back to Vault (which is required).
-     * GemsEconomy has been removed — only VAULT, PLAYERPOINTS, and COINS are supported.
-     */
     private boolean initEconomyProvider() {
         String providerName = configManager.getEconomyProvider().toUpperCase();
 
@@ -232,12 +227,10 @@ public class QuantumClan extends JavaPlugin {
                 getLogger().warning("[Economy] PlayerPoints not available, falling back to Vault.");
             }
             case "COINS" -> {
-                // CoinsProvider will be initialised after DAOs; handled below as fallback
                 getLogger().info("[Economy] Provider: Built-in Coins (using Vault as fallback)");
             }
         }
 
-        // Default / fallback: Vault
         if (!hookManager.isVaultEnabled()) {
             return false;
         }
@@ -268,7 +261,8 @@ public class QuantumClan extends JavaPlugin {
                 }
             }
             case "NBT" -> schematicProvider = nbt;
-            default -> { // AUTO
+            default -> {
+                // AUTO
                 schematicProvider = (hookManager.isFaweEnabled() && fawe.isAvailable()) ? fawe : nbt;
             }
         }
@@ -288,10 +282,7 @@ public class QuantumClan extends JavaPlugin {
         bountyManager.startExpiryScheduler();
         warScheduler.schedule();
 
-        // Hologram updater — only DecentHolograms now
-        if (hookManager.isAnyHologramEnabled()) {
-            warManager.startHologramUpdater();
-        }
+        // Hologram updater DIHAPUS — leaderboard via PlaceholderAPI saja.
     }
 
     private void registerListeners() {

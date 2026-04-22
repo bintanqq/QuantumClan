@@ -163,7 +163,7 @@ public class ClanShopManager {
                     long remaining = plugin.getBuffTracker().getAnnounceRemainingCooldown(clan.getId());
                     // Rollback handled by caller — throw to trigger rollback
                     plugin.getClanManager().depositMoney(player.getUniqueId(), item.getPrice());
-                    plugin.sendMessage(player, "clan.announce-cooldown", "{value}", remaining);
+                    plugin.sendMessage(player, "clan.announce-cooldown", "{value}", remaining + "");
                     return;
                 }
                 // Prompt for message via chat input
@@ -189,7 +189,7 @@ public class ClanShopManager {
                     long remaining = plugin.getBuffTracker()
                             .getDeathProtectionRemainingCooldown(player.getUniqueId());
                     plugin.getClanManager().depositMoney(player.getUniqueId(), item.getPrice());
-                    plugin.sendMessage(player, "shop.purchase-cooldown", "{value}", remaining);
+                    plugin.sendMessage(player, "shop.purchase-cooldown", "{value}", remaining + "");
                     return;
                 }
                 plugin.getBuffTracker().grantDeathProtection(player.getUniqueId());

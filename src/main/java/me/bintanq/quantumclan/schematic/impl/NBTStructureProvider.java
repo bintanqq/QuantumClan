@@ -91,7 +91,7 @@ public class NBTStructureProvider implements SchematicProvider {
                 // Place must happen on main thread
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     try {
-                        finalStructure.place(location, ignoreAir, new Random());
+                        finalStructure.place(location, !ignoreAir, org.bukkit.block.structure.StructureRotation.NONE, org.bukkit.block.structure.Mirror.NONE, 0, 1.0F, new Random());
                         future.complete(true);
                     } catch (Exception e) {
                         plugin.getLogger().log(Level.WARNING,
@@ -158,7 +158,7 @@ public class NBTStructureProvider implements SchematicProvider {
                 // Write file on async thread
                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                     try (FileOutputStream fos = new FileOutputStream(file)) {
-                        structureManager.saveStructure(finalStructure, fos);
+                        structureManager.saveStructure(file, finalStructure);
                         future.complete(true);
                     } catch (IOException e) {
                         plugin.getLogger().log(Level.WARNING,

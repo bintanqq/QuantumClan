@@ -44,22 +44,32 @@ public class MessagesManager {
      * @param replacements Alternating placeholder-value pairs: "{clan}", "MyName", "{tag}", "TAG"
      * @return Formatted MiniMessage string, or empty string if key not found
      */
+    // 1. Ganti method ini
     public String get(String key, String... replacements) {
         String msg = cfg.getString(key);
         if (msg == null) return "<red>[Missing message: " + key + "]";
-        if (replacements.length % 2 != 0) return msg;
+
+        // Jika tidak ada pengganti, langsung balikin
+        if (replacements == null || replacements.length < 2) return msg;
+
         for (int i = 0; i < replacements.length; i += 2) {
-            if (replacements[i] == null || replacements[i + 1] == null) continue;
-            msg = msg.replace(replacements[i], replacements[i + 1]);
+            if (i + 1 >= replacements.length) break; // Safety check
+            String placeholder = replacements[i];
+            String value = replacements[i + 1];
+            if (placeholder != null && value != null) {
+                msg = msg.replace(placeholder, value);
+            }
         }
         return msg;
     }
 
-    /**
-     * Retrieves a message with a single Object value substituted for {value}.
-     */
+    // 2. Ganti method ini (Baris 62) jadi lebih "To the Point"
     public String get(String key, String placeholder, Object value) {
-        return get(key, placeholder, String.valueOf(value));
+        String msg = cfg.getString(key);
+        if (msg == null) return "<red>[Missing message: " + key + "]";
+        if (placeholder == null || value == null) return msg;
+
+        return msg.replace(placeholder, String.valueOf(value));
     }
 
     public FileConfiguration getConfig() { return cfg; }

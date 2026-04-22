@@ -186,8 +186,7 @@ public class FAWEStructureProvider implements SchematicProvider {
                 }
 
                 try (FileOutputStream fos = new FileOutputStream(file);
-                     ClipboardWriter writer =
-                             BuiltInClipboardFormat.FAST.getWriter(fos)) {
+                     ClipboardWriter writer = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(fos)) {
                     writer.write(clipboard);
                 }
 

@@ -15,8 +15,7 @@ public class AnnounceCommand {
             plugin.sendMessage(player, "error.role-no-permission", "{role}", plugin.getClanManager().getMember(player.getUniqueId()).getRole()); return;
         }
         if (plugin.getBuffTracker().isOnAnnounceCooldown(clan.getId())) {
-            plugin.sendMessage(player, "clan.announce-cooldown", "{value}", plugin.getBuffTracker().getAnnounceRemainingCooldown(clan.getId())); return;
-        }
+            plugin.sendMessage(player, "clan.announce-cooldown", "{value}", String.valueOf(plugin.getBuffTracker().getAnnounceRemainingCooldown(clan.getId())));        }
         if (args.length == 0) { plugin.sendRaw(player, "<red>/qclan announce <pesan>"); return; }
         String msg = String.join(" ", args);
         plugin.getBuffTracker().setAnnounceCooldown(clan.getId());
