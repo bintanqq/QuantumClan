@@ -2,6 +2,7 @@ package me.bintanq.quantumclan;
 
 import me.bintanq.quantumclan.config.*;
 import me.bintanq.quantumclan.database.DatabaseManager;
+import me.bintanq.quantumclan.database.DatabaseType;
 import me.bintanq.quantumclan.database.dao.*;
 import me.bintanq.quantumclan.economy.EconomyProvider;
 import me.bintanq.quantumclan.economy.impl.*;
@@ -24,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.logging.Level;
 
 public class QuantumClan extends JavaPlugin {
@@ -113,7 +115,7 @@ public class QuantumClan extends JavaPlugin {
         }
 
         // 3a. Add clan_hall_access table
-        addHallTable();
+        databaseManager.createExtraTables();
 
         // 4. Initialize DAOs
         initDAOs();
@@ -266,36 +268,6 @@ public class QuantumClan extends JavaPlugin {
             getLogger().log(Level.SEVERE, "[QuantumClan] Config load error", e);
             return false;
         }
-    }
-
-    /** Adds clan_hall_access table using addColumnIfNotExists pattern. */
-    private void addHallTable() {
-        databaseManager.runAsync(() -> {
-            try (var conn = databaseManager.getConnection();
-                 var stmt = conn.createStatement()) {
-                stmt.execute("""
-                    CREATE TABLE IF NOT EXISTS clan_hall_access (
-                        clan_id      VARCHAR(36) PRIMARY KEY,
-                        purchased_at TIMESTAMP   NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
-                        expires_at   TIMESTAMP   NULL,
-                        active       INTEGER     NOT NULL DEFAULT 1
-                    )
-                    """);
-                stmt.execute("CREATE INDEX IF NOT EXISTS idx_hall_access_active " +
-                        "ON clan_hall_access(active)");
-                stmt.execute("""
-                   CREATE TABLE IF NOT EXISTS clan_vault (
-                   clan_id    VARCHAR(36) PRIMARY KEY,
-                   contents   TEXT        NOT NULL DEFAULT '',
-                   updated_at TIMESTAMP   NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
-                   )
-                   """);
-
-                getLogger().info("[Database] clan_hall_access table verified.");
-            } catch (Exception e) {
-                getLogger().log(Level.WARNING, "[Database] Failed to create clan_hall_access table", e);
-            }
-        });
     }
 
     private void initDAOs() {

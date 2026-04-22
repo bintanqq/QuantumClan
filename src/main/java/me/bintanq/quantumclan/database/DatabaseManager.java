@@ -274,13 +274,13 @@ public class DatabaseManager {
             // ── coins_ledger ───────────────────────────────────
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS coins_ledger (
-                    id        BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    id        INTEGER PRIMARY KEY %s,
                     uuid      VARCHAR(36)  NOT NULL,
                     amount    BIGINT       NOT NULL,
                     reason    VARCHAR(128) NOT NULL DEFAULT '',
                     timestamp VARCHAR(32)  NOT NULL DEFAULT %s
                 )%s
-                """.replace("AUTO_INCREMENT", ai).formatted(now, opts));
+                """.formatted(ai, now, opts));
 
             // ── coins_balance ──────────────────────────────────
             stmt.execute("""
@@ -293,14 +293,14 @@ public class DatabaseManager {
             // ── contribution_log ───────────────────────────────
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS contribution_log (
-                    id        BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    id        INTEGER PRIMARY KEY %s,
                     uuid      VARCHAR(36)  NOT NULL,
                     clan_id   VARCHAR(36)  NOT NULL,
                     points    INTEGER      NOT NULL,
                     reason    VARCHAR(128) NOT NULL DEFAULT '',
                     timestamp VARCHAR(32)  NOT NULL DEFAULT %s
                 )%s
-                """.replace("AUTO_INCREMENT", ai).formatted(now, opts));
+                """.formatted(ai, now, opts));
 
             // ── clan_hall_access ───────────────────────────────
             stmt.execute("""
@@ -323,6 +323,47 @@ public class DatabaseManager {
 
             plugin.getLogger().info("[Database] All tables created/verified.");
         }
+    }
+
+    public void createExtraTables() {
+        // Kita jalankan secara async agar tidak memberatkan startup server
+        runAsync(() -> {
+            try (Connection conn = getConnection();
+                 Statement stmt = conn.createStatement()) {
+
+                String now  = dialect.currentTimestamp();
+                String opts = dialect.tableOptions();
+                String textType = (dbType == DatabaseType.MYSQL) ? "MEDIUMTEXT" : "TEXT";
+
+                // Tabel Hall Access
+                stmt.execute("""
+                CREATE TABLE IF NOT EXISTS clan_hall_access (
+                    clan_id      VARCHAR(36) PRIMARY KEY,
+                    purchased_at VARCHAR(32) NOT NULL DEFAULT %s,
+                    expires_at   VARCHAR(32) NULL,
+                    active       INTEGER     NOT NULL DEFAULT 1
+                )%s
+                """.formatted(now, opts));
+
+                // Tabel Vault
+                stmt.execute("""
+                CREATE TABLE IF NOT EXISTS clan_vault (
+                    clan_id    VARCHAR(36) PRIMARY KEY,
+                    contents   %s          NOT NULL DEFAULT '',
+                    updated_at VARCHAR(32) NOT NULL DEFAULT %s
+                )%s
+                """.formatted(textType, now, opts));
+
+                // Index khusus SQLite (MySQL biasanya otomatis handle primary key index)
+                if (dbType == DatabaseType.SQLITE) {
+                    stmt.execute("CREATE INDEX IF NOT EXISTS idx_hall_access_active ON clan_hall_access(active)");
+                }
+
+                plugin.getLogger().info("[Database] Extra tables (Hall & Vault) verified.");
+            } catch (SQLException e) {
+                plugin.getLogger().log(Level.WARNING, "[Database] Failed to create extra tables", e);
+            }
+        });
     }
 
     // ── Index Creation ────────────────────────────────────────

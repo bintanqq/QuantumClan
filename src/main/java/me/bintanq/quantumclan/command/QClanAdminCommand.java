@@ -3,6 +3,7 @@ package me.bintanq.quantumclan.command;
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.command.admin.*;
 import me.bintanq.quantumclan.command.sub.VaultCommand;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -28,7 +29,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
     private final AdminClanCommand     clan;
     private final AdminWarCommand      war;
     private final AdminSetArenaCommand setArena;
-    private final AdminHallCommand     hall;      // NEW
+    private AdminHallCommand     hall;
     private final AdminVaultCommand    vault;
 
     public QClanAdminCommand(QuantumClan plugin) {
@@ -38,8 +39,16 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         clan     = new AdminClanCommand(plugin);
         war      = new AdminWarCommand(plugin);
         setArena = new AdminSetArenaCommand(plugin);
-        hall     = new AdminHallCommand(plugin);  // NEW
         vault    = new AdminVaultCommand(plugin);
+    }
+
+    private AdminHallCommand getHallCommand() {
+        if (hall == null) {
+            if (Bukkit.getPluginManager().getPlugin("WorldGuard") != null) {
+                hall = new AdminHallCommand(plugin);
+            }
+        }
+        return hall;
     }
 
     @Override
@@ -76,7 +85,14 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             case "setarena" -> setArena.execute(player, subArgs);
             case "war"      -> war.execute(player, subArgs);
             case "clan"     -> clan.execute(player, subArgs);
-            case "hall"     -> hall.execute(player, subArgs);   // NEW
+            case "hall" -> {
+                AdminHallCommand cmd = getHallCommand();
+                if (cmd != null) {
+                    cmd.execute(player, subArgs);
+                } else {
+                    plugin.sendRaw(player, "<red>WorldGuard needed!");
+                }
+            }
             case "vault" -> vault.execute(player, subArgs);
             default         -> sendAdminHelp(player);
         }

@@ -11,7 +11,7 @@ public class SqliteDialect implements SqlDialect {
 
     @Override
     public String autoIncrement() {
-        return "AUTOINCREMENT";
+        return "";
     }
 
     @Override

@@ -73,22 +73,14 @@ public class AdminHallCommand {
 
             if (plugin.getHookManager().isWorldGuardEnabled()) {
                 try {
-                    com.sk89q.worldguard.WorldGuard wg = com.sk89q.worldguard.WorldGuard.getInstance();
-                    com.sk89q.worldguard.protection.managers.RegionManager rm =
-                            wg.getPlatform().getRegionContainer().get(
-                                    com.sk89q.worldedit.bukkit.BukkitAdapter.adapt(min.getWorld()));
-                    if (rm != null) {
-                        String regionName = plugin.getHallConfigManager().getWorldGuardRegionName();
-                        com.sk89q.worldedit.math.BlockVector3 bv1 = com.sk89q.worldedit.math.BlockVector3.at(min.getX(), min.getY(), min.getZ());
-                        com.sk89q.worldedit.math.BlockVector3 bv2 = com.sk89q.worldedit.math.BlockVector3.at(max.getX(), max.getY(), max.getZ());
-                        com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion region =
-                                new com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion(regionName, bv1, bv2);
-                        rm.addRegion(region);
-                        rm.saveChanges();
-                        plugin.sendMessage(player, "hall.admin.worldguard-region-created", "{region}", regionName);
-                    }
-                } catch (Exception e) {
-                    plugin.getLogger().warning("[ClanHall] Failed to auto-create WorldGuard region: " + e.getMessage());
+                    // Panggil wrapper di sini
+                    me.bintanq.quantumclan.hook.WorldGuardWrapper.createRegion(
+                            plugin.getHallConfigManager().getWorldGuardRegionName(), min, max);
+
+                    String regionName = plugin.getHallConfigManager().getWorldGuardRegionName();
+                    plugin.sendMessage(player, "hall.admin.worldguard-region-created", "{region}", regionName);
+                } catch (NoClassDefFoundError | Exception e) {
+                    plugin.getLogger().warning("[ClanHall] WorldGuard not found or failed: " + e.getMessage());
                 }
             }
 
