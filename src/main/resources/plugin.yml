@@ -169,6 +169,15 @@ permissions:
     description: Bypass war minimum member requirement
     default: op
 
+  quantumclan.vault.use:
+    description: Allow using /qclan vault
+    default: true
+
+  quantumclan.admin.vault:
+    description: Allow /qclanadmin vault clear/inspect
+    default: op
+
+
   quantumclan.*:
     description: Grants all QuantumClan permissions
     default: false

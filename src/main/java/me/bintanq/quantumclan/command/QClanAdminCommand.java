@@ -2,6 +2,7 @@ package me.bintanq.quantumclan.command;
 
 import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.command.admin.*;
+import me.bintanq.quantumclan.command.sub.VaultCommand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -28,6 +29,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
     private final AdminWarCommand      war;
     private final AdminSetArenaCommand setArena;
     private final AdminHallCommand     hall;      // NEW
+    private final AdminVaultCommand    vault;
 
     public QClanAdminCommand(QuantumClan plugin) {
         this.plugin  = plugin;
@@ -37,6 +39,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         war      = new AdminWarCommand(plugin);
         setArena = new AdminSetArenaCommand(plugin);
         hall     = new AdminHallCommand(plugin);  // NEW
+        vault    = new AdminVaultCommand(plugin);
     }
 
     @Override
@@ -74,6 +77,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             case "war"      -> war.execute(player, subArgs);
             case "clan"     -> clan.execute(player, subArgs);
             case "hall"     -> hall.execute(player, subArgs);   // NEW
+            case "vault" -> vault.execute(player, subArgs);
             default         -> sendAdminHelp(player);
         }
         return true;
@@ -119,7 +123,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player p) || !p.hasPermission("quantumclan.admin")) return List.of();
 
         if (args.length == 1) {
-            return List.of("reload", "give", "setarena", "war", "clan", "hall", "help").stream()
+            return List.of("reload", "give", "setarena", "war", "clan", "hall", "help", "vault").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -130,6 +134,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                 case "clan"   -> List.of("info", "delete", "setlevel", "setreputation");
                 case "hall"   -> List.of("setregion", "setschematic", "paste", "addnpc",
                         "removenpc", "listnpc", "setcost", "grant", "revoke", "info", "reload");
+                case "vault"  -> List.of("clear", "inspect");
                 default       -> List.of();
             };
         }

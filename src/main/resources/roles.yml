@@ -36,6 +36,9 @@ roles:
       can-set-role: true
       can-transfer: true
       can-disband: true
+      can-open-vault: true
+      can-deposit-vault: true
+      can-withdraw-vault: true
 
   - name: officer
     display-name: "<aqua>Officer"
@@ -54,6 +57,9 @@ roles:
       can-set-role: false
       can-transfer: false
       can-disband: false
+      can-open-vault: true
+      can-deposit-vault: true
+      can-withdraw-vault: true
 
   - name: member
     display-name: "<gray>Member"
@@ -72,3 +78,6 @@ roles:
       can-set-role: false
       can-transfer: false
       can-disband: false
+      can-open-vault: true
+      can-deposit-vault: true
+      can-withdraw-vault: false

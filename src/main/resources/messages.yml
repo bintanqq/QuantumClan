@@ -403,6 +403,22 @@ hall:
   discount-active: "<green>✦ Hall Discount: -{pct}%"
   discount-cost-original: "<dark_gray><st>{original}</st>"
 
+vault:
+  in-use: "<white>Vault is currently being used by <aqua>{player}</aqua>. Try again in a moment."
+  opener-unknown: "<white>another member"
+  no-permission-open: "<white>Your role is not allowed to open the vault."
+  no-permission-deposit: "<white>Your role is not allowed to deposit items into the vault."
+  no-permission-withdraw: "<white>Your role is not allowed to withdraw items from the vault."
+  admin-clear-success: "<aqua>Clan vault <white>{clan}</white> has been successfully cleared."
+  admin-clear-failed: "<white>Failed to clear vault for clan <aqua>{clan}</aqua>."
+  admin-inspect-opened: "<aqua>Opening clan vault <white>{clan}</white> in read-only mode."
+  info-level: "<gray>Clan Level: <white>{level}"
+  info-slots: "<gray>Slots Used: <white>{used}<dark_gray>/<white>{total}"
+  info-read-only: "<red>Admin Mode (Read-only)"
+  info-name: "<gold>Vault Info"
+  info-name-admin: "<red>Vault — Admin Inspect"
+  close-name: "<red>Close Vault"
+
 # ── Help ──────────────────────────────────────────────────────
 help:
   header: "<dark_gray>━━━━━ <aqua>QuantumClan Help <dark_gray>━━━━━"

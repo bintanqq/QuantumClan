@@ -48,7 +48,8 @@ public class QuantumClan extends JavaPlugin {
     private WarDAO           warDAO;
     private CoinsDAO         coinsDAO;
     private ContributionDAO  contributionDAO;
-    private HallDAO          hallDAO;               // NEW
+    private HallDAO          hallDAO;
+    private VaultDAO         vaultDAO;
 
     // ── Hooks ─────────────────────────────────────────────────
     private HookManager hookManager;
@@ -75,6 +76,7 @@ public class QuantumClan extends JavaPlugin {
     private CoinsShopManager    coinsShopManager;
     private ClanHallManager     clanHallManager;    // NEW
     private HallNPCManager      hallNPCManager;     // NEW
+    private ClanVaultManager clanVaultManager;
 
     // ── MiniMessage ───────────────────────────────────────────
     private final MiniMessage mm = MiniMessage.miniMessage();
@@ -207,6 +209,8 @@ public class QuantumClan extends JavaPlugin {
             databaseManager.shutdown();
         }
 
+        if (clanVaultManager != null) clanVaultManager.shutdown();
+
         QuantumClanProvider.unregister();
 
         getLogger().info("[QuantumClan] Disabled successfully.");
@@ -279,6 +283,14 @@ public class QuantumClan extends JavaPlugin {
                     """);
                 stmt.execute("CREATE INDEX IF NOT EXISTS idx_hall_access_active " +
                         "ON clan_hall_access(active)");
+                stmt.execute("""
+                   CREATE TABLE IF NOT EXISTS clan_vault (
+                   clan_id    VARCHAR(36) PRIMARY KEY,
+                   contents   TEXT        NOT NULL DEFAULT '',
+                   updated_at TIMESTAMP   NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+                   )
+                   """);
+
                 getLogger().info("[Database] clan_hall_access table verified.");
             } catch (Exception e) {
                 getLogger().log(Level.WARNING, "[Database] Failed to create clan_hall_access table", e);
@@ -293,7 +305,8 @@ public class QuantumClan extends JavaPlugin {
         warDAO          = new WarDAO(databaseManager, getLogger());
         coinsDAO        = new CoinsDAO(databaseManager, getLogger());
         contributionDAO = new ContributionDAO(databaseManager, getLogger());
-        hallDAO         = new HallDAO(databaseManager, getLogger());    // NEW
+        hallDAO         = new HallDAO(databaseManager, getLogger());
+        vaultDAO = new VaultDAO(databaseManager, getLogger());
     }
 
     private boolean initEconomyProvider() {
@@ -366,6 +379,7 @@ public class QuantumClan extends JavaPlugin {
 
         bountyManager.startExpiryScheduler();
         warScheduler.schedule();
+        clanVaultManager = new ClanVaultManager(this, vaultDAO);
     }
 
     private void registerListeners() {
@@ -466,5 +480,7 @@ public class QuantumClan extends JavaPlugin {
     public SpyScrollManager   getSpyScrollManager()     { return spyScrollManager; }
     public ClanHallManager    getClanHallManager()       { return clanHallManager; }    // NEW
     public HallNPCManager     getHallNPCManager()        { return hallNPCManager; }      // NEW
+    public VaultDAO         getVaultDAO()         { return vaultDAO; }
+    public ClanVaultManager getClanVaultManager() { return clanVaultManager; }
     public MiniMessage        getMiniMessage()           { return mm; }
 }

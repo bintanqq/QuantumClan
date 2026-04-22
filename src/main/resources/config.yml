@@ -52,6 +52,8 @@ features:
   clan-shield: true
   # Reputation system (tracks clan ranking)
   reputation: true
+  # Clan Vault Storage System
+  vault: true
 
 # ── Chat Tag ──────────────────────────────────────────────────
 chat:
@@ -120,41 +122,51 @@ level-requirements:
     cost: 0
     max-members: 10
     max-homes: 1
+    vault-rows: 1
   - level: 2
     cost: 10000
     max-members: 15
     max-homes: 2
+    vault-rows: 1
   - level: 3
     cost: 25000
     max-members: 20
     max-homes: 3
+    vault-rows: 2
   - level: 4
     cost: 50000
     max-members: 25
     max-homes: 4
+    vault-rows: 2
   - level: 5
     cost: 100000
     max-members: 35
     max-homes: 5
+    vault-rows: 3
   - level: 6
     cost: 200000
     max-members: 45
     max-homes: 6
+    vault-rows: 3
   - level: 7
     cost: 350000
     max-members: 60
     max-homes: 8
+    vault-rows: 4
   - level: 8
     cost: 500000
     max-members: 80
     max-homes: 10
+    vault-rows: 5
   - level: 9
     cost: 750000
     max-members: 100
     max-homes: 12
+    vault-rows: 5
   - level: 10
     cost: 1000000
     max-members: 150
     max-homes: 15
+    vault-rows: 6
 
 max-level: 10

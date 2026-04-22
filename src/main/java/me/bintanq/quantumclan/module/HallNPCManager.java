@@ -24,11 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages NPC interaction points for the Clan Hall.
  *
- * NPC Backend priority (auto-detected):
- *  1. Citizens (if present)
- *  2. ZNPCSPlus (if present)
- *  3. FancyNpcs (if present)
- *  4. Fallback: Invisible Armor Stand with interaction detection
+ * NPC Backend priority (auto-detected via HookManager):
+ *  1. Citizens (if present) — spawned via pure reflection, no compile dependency
+ *  2. Fallback: Invisible Armor Stand with interaction detection
  *
  * Each NPC point has a TYPE that determines which GUI opens on right-click.
  * Types: CLAN_SHOP, CONTRIBUTION_SHOP, COINS_SHOP, WAR_REGISTER,
@@ -48,19 +46,12 @@ public class HallNPCManager implements Listener {
     /** Loaded NPC point configs */
     private final List<NpcPointConfig> npcPoints = new ArrayList<>();
 
-    // NPC backend availability flags
     private final boolean citizensAvailable;
-    private final boolean znpcsPlusAvailable;
-    private final boolean fancyNpcsAvailable;
 
     public HallNPCManager(QuantumClan plugin) {
         this.plugin = plugin;
         this.npcTypeKey = new NamespacedKey(plugin, PDC_NPC_TYPE_KEY);
-
-        citizensAvailable  = plugin.getHookManager().isCitizensEnabled();
-        znpcsPlusAvailable = plugin.getHookManager().isZNPCsPlusEnabled();
-        fancyNpcsAvailable = plugin.getHookManager().isFancyNpcsEnabled();
-
+        this.citizensAvailable = plugin.getHookManager().isCitizensEnabled();
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -69,7 +60,6 @@ public class HallNPCManager implements Listener {
     public void spawnAll() {
         npcPoints.clear();
         npcPoints.addAll(plugin.getHallConfigManager().loadNpcPoints());
-
         for (NpcPointConfig cfg : npcPoints) {
             spawnNpc(cfg);
         }
@@ -80,18 +70,7 @@ public class HallNPCManager implements Listener {
         if (citizensAvailable) {
             despawnCitizensNpcs();
         } else {
-            // Despawn fallback armor stands
-            for (UUID entityUuid : armorStandNpcs.keySet()) {
-                for (var world : Bukkit.getWorlds()) {
-                    for (Entity e : world.getEntities()) {
-                        if (e.getUniqueId().equals(entityUuid)) {
-                            e.remove();
-                            break;
-                        }
-                    }
-                }
-            }
-            armorStandNpcs.clear();
+            despawnArmorStands();
         }
         npcPoints.clear();
     }
@@ -107,62 +86,76 @@ public class HallNPCManager implements Listener {
         }
 
         if (citizensAvailable) {
-            spawnCitizensNpc(cfg, loc);
+            boolean spawnedByCitizens = spawnCitizensNpc(cfg, loc);
+            if (!spawnedByCitizens) {
+                spawnArmorStandNpc(cfg, loc);
+            }
         } else {
-            // Fallback: armor stand
             spawnArmorStandNpc(cfg, loc);
         }
     }
 
-    // ── Citizens backend ──────────────────────────────────────
+    // ── Citizens backend (pure reflection — no compile dep) ───
 
-    private void spawnCitizensNpc(NpcPointConfig cfg, Location loc) {
+    /**
+     * Attempts to spawn a Citizens NPC via reflection.
+     * @return true if successful, false if Citizens unavailable or error
+     */
+    private boolean spawnCitizensNpc(NpcPointConfig cfg, Location loc) {
         try {
-            net.citizensnpcs.api.CitizensAPI api = net.citizensnpcs.api.CitizensAPI.getNPCRegistry() != null
-                    ? null : null; // just class-check done in HookManager
-            // Use reflection to avoid hard compile dependency
+            // Get Citizens NPC registry via reflection
             Class<?> citizensApiClass = Class.forName("net.citizensnpcs.api.CitizensAPI");
             Object registry = citizensApiClass.getMethod("getNPCRegistry").invoke(null);
-            Class<?> registryClass = registry.getClass();
-            Class<?> entityTypeClass = Class.forName("org.bukkit.entity.EntityType");
+            if (registry == null) return false;
 
-            Object npc = registryClass.getMethod("createNPC", entityTypeClass, String.class)
+            // createNPC(EntityType, String)
+            Object npc = registry.getClass()
+                    .getMethod("createNPC", EntityType.class, String.class)
                     .invoke(registry, EntityType.PLAYER, cfg.name);
 
-            Class<?> npcClass = npc.getClass();
-            // Spawn at location
-            npcClass.getMethod("spawn", Location.class).invoke(npc, loc);
+            // spawn(Location)
+            npc.getClass().getMethod("spawn", Location.class).invoke(npc, loc);
 
-            // Store NPC ID in config for later removal
-            Object npcId = npcClass.getMethod("getId").invoke(npc);
+            // Get NPC ID and persist it
+            Object npcId = npc.getClass().getMethod("getId").invoke(npc);
+
             plugin.getHallConfigManager().saveNpcPoint(
                     cfg.key, cfg.type, cfg.name,
                     cfg.world, cfg.x, cfg.y, cfg.z,
                     cfg.yaw, cfg.pitch,
                     "citizens:" + npcId);
 
-            plugin.getLogger().info("[ClanHall] Spawned Citizens NPC '" + cfg.name + "' id=" + npcId);
+            plugin.getLogger().info("[ClanHall] Spawned Citizens NPC '"
+                    + cfg.name + "' id=" + npcId);
+            return true;
+
+        } catch (ClassNotFoundException e) {
+            // Citizens not on classpath at all — silent fallback
+            return false;
         } catch (Exception e) {
-            plugin.getLogger().warning("[ClanHall] Citizens NPC spawn failed, using armor stand fallback: "
-                    + e.getMessage());
-            spawnArmorStandNpc(cfg, loc);
+            plugin.getLogger().warning("[ClanHall] Citizens NPC spawn failed ("
+                    + e.getMessage() + "), using armor stand fallback.");
+            return false;
         }
     }
 
     private void despawnCitizensNpcs() {
         for (NpcPointConfig cfg : npcPoints) {
-            if (cfg.entityId != null && cfg.entityId.startsWith("citizens:")) {
-                try {
-                    int npcId = Integer.parseInt(cfg.entityId.substring(9));
-                    Class<?> citizensApiClass = Class.forName("net.citizensnpcs.api.CitizensAPI");
-                    Object registry = citizensApiClass.getMethod("getNPCRegistry").invoke(null);
-                    Object npc = registry.getClass().getMethod("getById", int.class).invoke(registry, npcId);
-                    if (npc != null) {
-                        npc.getClass().getMethod("destroy").invoke(npc);
-                    }
-                } catch (Exception e) {
-                    plugin.getLogger().warning("[ClanHall] Failed to despawn Citizens NPC: " + e.getMessage());
+            if (cfg.entityId == null || !cfg.entityId.startsWith("citizens:")) continue;
+            try {
+                int npcId = Integer.parseInt(cfg.entityId.substring(9));
+                Class<?> citizensApiClass = Class.forName("net.citizensnpcs.api.CitizensAPI");
+                Object registry = citizensApiClass.getMethod("getNPCRegistry").invoke(null);
+                if (registry == null) continue;
+                Object npc = registry.getClass()
+                        .getMethod("getById", int.class)
+                        .invoke(registry, npcId);
+                if (npc != null) {
+                    npc.getClass().getMethod("destroy").invoke(npc);
                 }
+            } catch (Exception e) {
+                plugin.getLogger().warning("[ClanHall] Failed to despawn Citizens NPC: "
+                        + e.getMessage());
             }
         }
     }
@@ -180,13 +173,26 @@ public class HallNPCManager implements Listener {
             stand.setSmall(false);
             stand.setArms(false);
             stand.setBasePlate(false);
-            // Tag with NPC type
             stand.getPersistentDataContainer().set(npcTypeKey, PersistentDataType.STRING, cfg.type);
             armorStandNpcs.put(stand.getUniqueId(), cfg.type);
 
-            plugin.getLogger().info("[ClanHall] Spawned fallback armor stand NPC '"
+            plugin.getLogger().info("[ClanHall] Spawned armor stand NPC '"
                     + cfg.name + "' type=" + cfg.type);
         });
+    }
+
+    private void despawnArmorStands() {
+        for (UUID entityUuid : armorStandNpcs.keySet()) {
+            for (var world : Bukkit.getWorlds()) {
+                for (Entity e : world.getEntities()) {
+                    if (e.getUniqueId().equals(entityUuid)) {
+                        e.remove();
+                        break;
+                    }
+                }
+            }
+        }
+        armorStandNpcs.clear();
     }
 
     // ── Interaction handling ──────────────────────────────────
@@ -197,15 +203,15 @@ public class HallNPCManager implements Listener {
 
         String npcType = armorStandNpcs.get(stand.getUniqueId());
         if (npcType == null) {
-            // Double-check PDC in case of server restart cache miss
-            npcType = stand.getPersistentDataContainer().get(npcTypeKey, PersistentDataType.STRING);
+            // Check PDC as fallback (e.g. after server restart)
+            npcType = stand.getPersistentDataContainer()
+                    .get(npcTypeKey, PersistentDataType.STRING);
             if (npcType == null) return;
             armorStandNpcs.put(stand.getUniqueId(), npcType);
         }
 
         event.setCancelled(true);
-        Player player = event.getPlayer();
-        openNpcGui(player, npcType);
+        openNpcGui(event.getPlayer(), npcType);
     }
 
     // ── GUI routing ───────────────────────────────────────────
@@ -213,8 +219,7 @@ public class HallNPCManager implements Listener {
     public void openNpcGui(Player player, String npcType) {
         switch (npcType.toUpperCase()) {
             case "CLAN_SHOP" -> {
-                me.bintanq.quantumclan.model.Clan clan =
-                        plugin.getClanManager().getClanByPlayer(player.getUniqueId());
+                var clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
                 if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
                 me.bintanq.quantumclan.gui.ClanShopGUI.open(plugin, player, clan);
             }
@@ -227,14 +232,12 @@ public class HallNPCManager implements Listener {
             case "COINS_SHOP" -> me.bintanq.quantumclan.gui.CoinsShopGUI.open(plugin, player);
             case "WAR_REGISTER" -> me.bintanq.quantumclan.gui.WarGUI.open(plugin, player);
             case "CLAN_INFO" -> {
-                me.bintanq.quantumclan.model.Clan clan =
-                        plugin.getClanManager().getClanByPlayer(player.getUniqueId());
+                var clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
                 if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
                 me.bintanq.quantumclan.gui.ClanInfoGUI.open(plugin, player, clan);
             }
             case "UPGRADE" -> {
-                me.bintanq.quantumclan.model.Clan clan =
-                        plugin.getClanManager().getClanByPlayer(player.getUniqueId());
+                var clan = plugin.getClanManager().getClanByPlayer(player.getUniqueId());
                 if (clan == null) { plugin.sendMessage(player, "clan.not-in-clan"); return; }
                 me.bintanq.quantumclan.gui.UpgradeGUI.open(plugin, player, clan);
             }
@@ -243,7 +246,7 @@ public class HallNPCManager implements Listener {
         }
     }
 
-    // ── Admin commands: add/remove NPC ────────────────────────
+    // ── Admin: add/remove NPC points ──────────────────────────
 
     public void addNpcPoint(Player admin, String type, String name) {
         String key = type.toLowerCase() + "_" + System.currentTimeMillis();
@@ -253,8 +256,7 @@ public class HallNPCManager implements Listener {
                 key, type.toUpperCase(), name,
                 loc.getWorld().getName(),
                 loc.getX(), loc.getY(), loc.getZ(),
-                loc.getYaw(), loc.getPitch(),
-                null);
+                loc.getYaw(), loc.getPitch(), null);
 
         NpcPointConfig cfg = new NpcPointConfig(key, type.toUpperCase(), name,
                 loc.getWorld().getName(),
@@ -269,21 +271,21 @@ public class HallNPCManager implements Listener {
     public void removeNpcPoint(Player admin, String type) {
         npcPoints.removeIf(cfg -> cfg.type.equalsIgnoreCase(type));
         plugin.getHallConfigManager().removeNpcPoint(type.toLowerCase());
+
         // Despawn matching armor stands
         armorStandNpcs.entrySet().removeIf(entry -> {
-            if (entry.getValue().equalsIgnoreCase(type)) {
-                for (var world : Bukkit.getWorlds()) {
-                    for (Entity e : world.getEntities()) {
-                        if (e.getUniqueId().equals(entry.getKey())) {
-                            e.remove();
-                            break;
-                        }
+            if (!entry.getValue().equalsIgnoreCase(type)) return false;
+            for (var world : Bukkit.getWorlds()) {
+                for (Entity e : world.getEntities()) {
+                    if (e.getUniqueId().equals(entry.getKey())) {
+                        e.remove();
+                        break;
                     }
                 }
-                return true;
             }
-            return false;
+            return true;
         });
+
         plugin.sendMessage(admin, "hall.npc-removed", "{type}", type);
     }
 

@@ -47,6 +47,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
     private final DeclineCommand      decline;
     private final CoinsCommand        coins;
     private final HallCommand         hall;       // NEW
+    private final VaultCommand        vault;
 
     public QClanCommand(QuantumClan plugin) {
         this.plugin       = plugin;
@@ -73,6 +74,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         decline      = new DeclineCommand(plugin);
         coins        = new CoinsCommand(plugin);
         hall         = new HallCommand(plugin);    // NEW
+        vault = new VaultCommand(plugin);
     }
 
     @Override
@@ -124,6 +126,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             case "coins"        -> coins.execute(player, subArgs);
             case "hall"         -> hall.execute(player, subArgs);    // NEW
             case "menu"         -> MainMenuGUI.open(plugin, player);
+            case "vault" -> vault.execute(player, subArgs);
             default             -> plugin.sendMessage(player, "error.unknown-subcommand");
         }
 
@@ -191,7 +194,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                     "create", "invite", "accept", "decline", "kick", "leave", "info",
                     "home", "sethome", "delhome", "deposit", "shop", "bounty",
                     "war", "upgrade", "top", "role", "transfer", "disband",
-                    "announce", "contribution", "coins", "hall", "menu", "help"
+                    "announce", "contribution", "coins", "hall", "menu", "help", "vault"
             );
             String partial = args[0].toLowerCase();
             return subs.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());

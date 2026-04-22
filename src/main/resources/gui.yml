@@ -353,6 +353,12 @@ coins-shop:
     material: ARROW
     name: "<white>Next »"
 
+vault:
+   title: "<dark_gray>[ <gold>Clan Vault — <white>{clan} <dark_gray>]"
+   close-material: BARRIER
+   close-name: "<red>Close"
+
+
 # ── Disband Confirm GUI ───────────────────────────────────────
 disband-confirm:
   title: "<dark_gray>[ <red>⚠ Disband Clan <dark_gray>]"

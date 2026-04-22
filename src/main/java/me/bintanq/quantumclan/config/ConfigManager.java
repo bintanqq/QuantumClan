@@ -1,3 +1,41 @@
+// ═══════════════════════════════════════════════════════════════════════
+// PATCH for ConfigManager.java
+// Tambahkan field vaultRowsMap dan method getVaultRows() ke class yang ada.
+// ═══════════════════════════════════════════════════════════════════════
+//
+// 1. Tambahkan ke field declarations di atas levelDataMap:
+//
+//    private final Map<Integer, Integer> vaultRowsMap = new HashMap<>();
+//
+// 2. Di dalam loadLevelRequirements(), di dalam loop setelah int maxHomes:
+//
+//    int vaultRows = toInt(map.get("vault-rows"), 1);
+//    vaultRowsMap.put(level, vaultRows);
+//
+// 3. Tambahkan method baru setelah getMaxHomes():
+//
+//    /**
+//     * Returns the number of vault rows for the given clan level.
+//     * Defaults to 1 if not configured for that level.
+//     * Clamped to 1-6 (9-54 slots).
+//     */
+//    public int getVaultRows(int level) {
+//        Integer rows = vaultRowsMap.get(level);
+//        if (rows == null) {
+//            // Find highest level entry <= requested level
+//            int best = 1;
+//            for (Map.Entry<Integer, Integer> e : vaultRowsMap.entrySet()) {
+//                if (e.getKey() <= level) best = Math.max(best, e.getValue());
+//            }
+//            return Math.max(1, Math.min(6, best));
+//        }
+//        return Math.max(1, Math.min(6, rows));
+//    }
+//
+// ═══════════════════════════════════════════════════════════════════════
+// FULL REPLACEMENT FILE (complete ConfigManager with vault rows added):
+// ═══════════════════════════════════════════════════════════════════════
+
 package me.bintanq.quantumclan.config;
 
 import me.bintanq.quantumclan.QuantumClan;
@@ -17,6 +55,8 @@ public class ConfigManager {
     private final FileConfiguration cfg;
 
     private final Map<Integer, LevelData> levelDataMap = new HashMap<>();
+    /** level → vault-rows (1-6) */
+    private final Map<Integer, Integer> vaultRowsMap = new HashMap<>();
     private int maxLevel = 10;
 
     public ConfigManager(QuantumClan plugin) {
@@ -37,7 +77,9 @@ public class ConfigManager {
             long cost      = toLong(map.get("cost"), 0L);
             int maxMembers = toInt(map.get("max-members"), 10);
             int maxHomes   = toInt(map.get("max-homes"), 1);
+            int vaultRows  = toInt(map.get("vault-rows"), 1); // NEW
             levelDataMap.put(level, new LevelData(level, cost, maxMembers, maxHomes));
+            vaultRowsMap.put(level, Math.max(1, Math.min(6, vaultRows)));
         }
         maxLevel = cfg.getInt("max-level", levelDataMap.size());
     }
@@ -46,6 +88,22 @@ public class ConfigManager {
     public int  getMaxMembers(int level)   { LevelData d = levelDataMap.get(level); return d != null ? d.maxMembers : 10; }
     public int  getMaxHomes(int level)     { LevelData d = levelDataMap.get(level); return d != null ? d.maxHomes : 1; }
     public int  getMaxLevel()              { return maxLevel; }
+
+    /**
+     * Returns the number of vault rows (1-6) for the given clan level.
+     * Falls back to the highest configured level <= requested level,
+     * or 1 if nothing is configured.
+     */
+    public int getVaultRows(int level) {
+        Integer rows = vaultRowsMap.get(level);
+        if (rows != null) return rows;
+        // Find highest configured level that is <= requested level
+        int best = 1;
+        for (Map.Entry<Integer, Integer> e : vaultRowsMap.entrySet()) {
+            if (e.getKey() <= level) best = Math.max(best, e.getValue());
+        }
+        return Math.max(1, Math.min(6, best));
+    }
 
     // ── Feature Toggles ───────────────────────────────────────
 
@@ -66,6 +124,7 @@ public class ConfigManager {
     public boolean isSpyScrollEnabled()      { return isFeatureEnabled("spy-scroll"); }
     public boolean isDeathProtectionEnabled(){ return isFeatureEnabled("death-protection"); }
     public boolean isClanShieldEnabled()     { return isFeatureEnabled("clan-shield"); }
+    public boolean isVaultEnabled()          { return isFeatureEnabled("vault"); }
 
     // ── Clan creation ─────────────────────────────────────────
 
@@ -80,7 +139,6 @@ public class ConfigManager {
 
     // ── Coins ─────────────────────────────────────────────────
 
-    /** Configurable display name for the built-in coin currency. */
     public String getCoinsName() { return cfg.getString("coins-name", "Coins"); }
 
     // ── Chat tag ──────────────────────────────────────────────
