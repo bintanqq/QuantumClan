@@ -96,7 +96,7 @@ public class ClanHomeGUI implements InventoryHolder {
 
     private void placeHomes() {
         slotToHome.clear();
-        List<Clan.ClanHome> homes = new ArrayList<>(clan.getHomes());
+        List<Clan.ClanHome> homes = new ArrayList<>((List) clan.getHomes());
         int start = page * HOME_SLOTS.length;
         int end   = Math.min(start + HOME_SLOTS.length, homes.size());
 
@@ -122,7 +122,7 @@ public class ClanHomeGUI implements InventoryHolder {
     }
 
     private void setNavigation() {
-        List<Clan.ClanHome> homes = new ArrayList<>(clan.getHomes());
+        List<Clan.ClanHome> homes = new ArrayList<>((List) clan.getHomes());
         int totalPages = Math.max(1, (int) Math.ceil(homes.size() / (double) HOME_SLOTS.length));
 
         inventory.setItem(49, makeItem(Material.BARRIER, "<red>Tutup", Collections.emptyList()));
@@ -152,7 +152,7 @@ public class ClanHomeGUI implements InventoryHolder {
                 openPage(player, page - 1); return;
             }
             if (slot == 53) {
-                List<Clan.ClanHome> homes = new ArrayList<>(clan.getHomes());
+                List<Clan.ClanHome> homes = new ArrayList<>((List) clan.getHomes());
                 int totalPages = Math.max(1,
                         (int) Math.ceil(homes.size() / (double) HOME_SLOTS.length));
                 if (page < totalPages - 1) { openPage(player, page + 1); return; }
