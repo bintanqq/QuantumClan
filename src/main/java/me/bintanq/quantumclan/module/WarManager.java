@@ -5,6 +5,9 @@ import me.bintanq.quantumclan.config.WarConfigManager.RewardItem;
 import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.ClanMember;
 import me.bintanq.quantumclan.model.WarSession;
+import me.bintanq.quantumclan.api.QuantumClanProvider;
+import me.bintanq.quantumclan.api.event.WarStartEvent;
+import me.bintanq.quantumclan.api.event.WarEndEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -156,6 +159,9 @@ public class WarManager {
                 .replace("{format}", activeSession.getFormat().name())
                 .replace("{duration}", String.valueOf(durationMinutes));
         plugin.broadcast(msg);
+        
+        Bukkit.getPluginManager().callEvent(
+            new WarStartEvent(QuantumClanProvider.getAPI().getActiveWar()));
     }
 
     // ── Check war end (LAST_STANDING) ─────────────────────────
@@ -234,6 +240,13 @@ public class WarManager {
                 }
             }
         }
+
+        Bukkit.getPluginManager().callEvent(
+            new WarEndEvent(
+                QuantumClanProvider.getAPI().getActiveWar(),
+                winnerClan != null ? QuantumClanProvider.getAPI().getClanById(winnerClan.getId()) : null
+            )
+        );
 
         activeSession = null;
     }

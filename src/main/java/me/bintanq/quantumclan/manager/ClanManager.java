@@ -8,6 +8,13 @@ import me.bintanq.quantumclan.database.dao.MemberDAO;
 import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.ClanMember;
 import me.bintanq.quantumclan.model.ClanRole;
+import me.bintanq.quantumclan.api.QuantumClanProvider;
+import me.bintanq.quantumclan.api.event.ClanCreateEvent;
+import me.bintanq.quantumclan.api.event.ClanDisbandEvent;
+import me.bintanq.quantumclan.api.event.ClanJoinEvent;
+import me.bintanq.quantumclan.api.event.ClanLeaveEvent;
+import me.bintanq.quantumclan.api.event.ClanLevelUpEvent;
+import me.bintanq.quantumclan.api.event.ClanReputationChangeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -170,6 +177,11 @@ public class ClanManager {
                         return null;
                     }
                     refreshLeaderboard();
+                    Player p = Bukkit.getPlayer(leaderUuid);
+                    if (p != null) {
+                        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
+                            new ClanCreateEvent(QuantumClanProvider.getAPI().getClanById(clan.getId()), p)));
+                    }
                     return clan;
                 });
     }
@@ -190,7 +202,11 @@ public class ClanManager {
 
         // DB delete (cascade handles members and homes)
         return clanDAO.delete(clanId).thenApply(ok -> {
-            refreshLeaderboard();
+            if (ok) {
+                Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
+                    new ClanDisbandEvent(QuantumClanProvider.getAPI().getClanById(clanId), null))); // we don't have the actor
+                refreshLeaderboard();
+            }
             return ok;
         });
     }
@@ -217,6 +233,12 @@ public class ClanManager {
                 clan.removeMemberUuid(uuid);
                 memberByUuid.remove(uuid);
                 playerClanId.remove(uuid);
+            } else {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null) {
+                    Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
+                        new ClanJoinEvent(QuantumClanProvider.getAPI().getClanById(clan.getId()), p)));
+                }
             }
             return ok;
         });
@@ -235,7 +257,16 @@ public class ClanManager {
         memberByUuid.remove(uuid);
         playerClanId.remove(uuid);
 
-        return memberDAO.delete(uuid);
+        return memberDAO.delete(uuid).thenApply(ok -> {
+            if (ok && clan != null) {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p != null) {
+                    Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
+                        new ClanLeaveEvent(QuantumClanProvider.getAPI().getClanById(clan.getId()), p, ClanLeaveEvent.Reason.LEAVE)));
+                }
+            }
+            return ok;
+        });
     }
 
     /**
@@ -360,6 +391,9 @@ public class ClanManager {
                 // Rollback
                 clan.addMoney(cost);
                 clan.setLevel(currentLevel);
+            } else {
+                Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
+                    new ClanLevelUpEvent(QuantumClanProvider.getAPI().getClanById(clan.getId()), currentLevel, nextLevel)));
             }
             return ok;
         });
@@ -374,6 +408,11 @@ public class ClanManager {
         clan.addReputation(amount);
         return clanDAO.updateReputation(clanId, clan.getReputation())
                 .thenApply(ok -> {
+                    if (ok) {
+                        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
+                            new ClanReputationChangeEvent(QuantumClanProvider.getAPI().getClanById(clan.getId()),
+                                    clan.getReputation() - amount, clan.getReputation(), ClanReputationChangeEvent.Source.ADMIN)));
+                    }
                     refreshLeaderboard();
                     return ok;
                 });
@@ -386,7 +425,13 @@ public class ClanManager {
         int old = clan.getReputation();
         clan.setReputation(amount);
         return clanDAO.updateReputation(clanId, amount).thenApply(ok -> {
-            if (!ok) clan.setReputation(old);
+            if (!ok) {
+                clan.setReputation(old);
+            } else {
+                Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
+                    new ClanReputationChangeEvent(QuantumClanProvider.getAPI().getClanById(clan.getId()),
+                            old, amount, ClanReputationChangeEvent.Source.ADMIN)));
+            }
             refreshLeaderboard();
             return ok;
         });

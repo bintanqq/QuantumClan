@@ -16,6 +16,8 @@ import me.bintanq.quantumclan.schematic.impl.NBTStructureProvider;
 import me.bintanq.quantumclan.util.ChatInputManager;
 import me.bintanq.quantumclan.command.QClanCommand;
 import me.bintanq.quantumclan.command.QClanAdminCommand;
+import me.bintanq.quantumclan.api.QuantumClanProvider;
+import me.bintanq.quantumclan.api.QuantumClanAPIImpl;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -144,7 +146,12 @@ public class QuantumClan extends JavaPlugin {
         // 13. Register commands
         registerCommands();
 
-        // 14. Register PlaceholderAPI expansion
+        // 14. Register Core API
+        QuantumClanAPIImpl apiImpl = new QuantumClanAPIImpl(this);
+        QuantumClanProvider.register(apiImpl);
+        getLogger().info("[QuantumClan] API successfully registered.");
+
+        // 15. Register PlaceholderAPI expansion
         if (hookManager.isPlaceholderApiEnabled()) {
             new QuantumClanPlaceholder(this).register();
             getLogger().info("[QuantumClan] PlaceholderAPI expansion registered.");
@@ -177,6 +184,8 @@ public class QuantumClan extends JavaPlugin {
         if (databaseManager != null) {
             databaseManager.shutdown();
         }
+
+        QuantumClanProvider.unregister();
 
         getLogger().info("[QuantumClan] Disabled successfully.");
     }

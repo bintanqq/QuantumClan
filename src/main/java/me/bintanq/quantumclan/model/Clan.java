@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import me.bintanq.quantumclan.api.ClanAPI;
+
 /**
  * In-memory model representing a Clan.
  * Kept in ClanManager's cache — all fields are the authoritative in-memory state.
  */
-public class Clan {
+public class Clan implements ClanAPI {
 
     private final String id;
     private String name;
@@ -117,8 +119,8 @@ public class Clan {
                 .orElse(null);
     }
 
-    public List<ClanHome> getHomes() {
-        return Collections.unmodifiableList(homes);
+    public List<ClanHomeAPI> getHomes() {
+        return Collections.unmodifiableList((List) homes);
     }
 
     public int getHomeCount() {
@@ -170,7 +172,7 @@ public class Clan {
 
     // ── Nested: ClanHome ──────────────────────────────────────
 
-    public static class ClanHome {
+    public static class ClanHome implements ClanHomeAPI {
         private final String id;
         private final String clanId;
         private final String name;

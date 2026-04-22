@@ -4,6 +4,8 @@ import me.bintanq.quantumclan.QuantumClan;
 import me.bintanq.quantumclan.model.BountyEntry;
 import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.ClanMember;
+import me.bintanq.quantumclan.api.QuantumClanProvider;
+import me.bintanq.quantumclan.api.event.BountyCompletedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -164,6 +166,15 @@ public class BountyManager {
 
                                             plugin.sendMessage(hunter, "bounty.submit-success",
                                                     "{value}", plugin.getEconomyProvider().format(amount));
+
+                                            Bukkit.getPluginManager().callEvent(
+                                                new BountyCompletedEvent(
+                                                    hunter, 
+                                                    entry.getTargetUuid(),
+                                                    finalHunterClanId != null ? QuantumClanProvider.getAPI().getClanById(finalHunterClanId) : null,
+                                                    amount
+                                                )
+                                            );
                                         });
                                         return true;
                                     });
