@@ -14,11 +14,7 @@ import org.bukkit.inventory.InventoryHolder;
 
 /**
  * Central inventory click handler for all QuantumClan GUIs.
- *
- * Anti-dupe rules:
- *  - isCancelled(true) immediately for all events in QC GUIs.
- *  - Shift-click, double-click, drag all blocked.
- *  - Per-player processing flag in each GUI class.
+ * Now includes ClanHallGUI and ClanHallConfirmGUI.
  */
 public class InventoryClickListener implements Listener {
 
@@ -37,7 +33,6 @@ public class InventoryClickListener implements Listener {
 
         if (!isQCHolder(holder)) return;
 
-        // Cancel everything — prevent any item movement
         event.setCancelled(true);
 
         ClickType click = event.getClick();
@@ -73,18 +68,20 @@ public class InventoryClickListener implements Listener {
 
     private void routeClick(InventoryHolder holder, Player player, int slot, ClickType click) {
         switch (holder) {
-            case MainMenuGUI gui         -> gui.handleClick(player, slot, click);
-            case ClanInfoGUI gui         -> gui.handleClick(player, slot, click);
-            case ClanShopGUI gui         -> gui.handleClick(player, slot, click);
-            case ShopConfirmGUI gui      -> gui.handleClick(player, slot, click);
-            case ClanHomeGUI gui         -> gui.handleClick(player, slot, click);
-            case BountyBoardGUI gui      -> gui.handleClick(player, slot, click);
-            case ClanTopGUI gui          -> gui.handleClick(player, slot, click);
-            case UpgradeGUI gui          -> gui.handleClick(player, slot, click);
-            case WarGUI gui              -> gui.handleClick(player, slot, click);
-            case ContributionShopGUI gui -> gui.handleClick(player, slot, click);
-            case DisbandConfirmGUI gui   -> gui.handleClick(player, slot, click);
-            case CoinsShopGUI gui        -> gui.handleClick(player, slot, click);
+            case MainMenuGUI gui           -> gui.handleClick(player, slot, click);
+            case ClanInfoGUI gui           -> gui.handleClick(player, slot, click);
+            case ClanShopGUI gui           -> gui.handleClick(player, slot, click);
+            case ShopConfirmGUI gui        -> gui.handleClick(player, slot, click);
+            case ClanHomeGUI gui           -> gui.handleClick(player, slot, click);
+            case BountyBoardGUI gui        -> gui.handleClick(player, slot, click);
+            case ClanTopGUI gui            -> gui.handleClick(player, slot, click);
+            case UpgradeGUI gui            -> gui.handleClick(player, slot, click);
+            case WarGUI gui                -> gui.handleClick(player, slot, click);
+            case ContributionShopGUI gui   -> gui.handleClick(player, slot, click);
+            case DisbandConfirmGUI gui     -> gui.handleClick(player, slot, click);
+            case CoinsShopGUI gui          -> gui.handleClick(player, slot, click);
+            case ClanHallGUI gui           -> gui.handleClick(player, slot, click);       // NEW
+            case ClanHallConfirmGUI gui    -> gui.handleClick(player, slot, click);       // NEW
             default -> { /* Unrecognised QC GUI — already cancelled */ }
         }
     }
@@ -101,6 +98,8 @@ public class InventoryClickListener implements Listener {
                 || holder instanceof WarGUI
                 || holder instanceof ContributionShopGUI
                 || holder instanceof DisbandConfirmGUI
-                || holder instanceof CoinsShopGUI;
+                || holder instanceof CoinsShopGUI
+                || holder instanceof ClanHallGUI           // NEW
+                || holder instanceof ClanHallConfirmGUI;  // NEW
     }
 }

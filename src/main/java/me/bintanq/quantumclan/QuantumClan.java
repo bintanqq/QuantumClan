@@ -37,6 +37,7 @@ public class QuantumClan extends JavaPlugin {
     private WarConfigManager    warConfigManager;
     private RolesConfigManager  rolesConfigManager;
     private GuiConfigManager    guiConfigManager;
+    private HallConfigManager   hallConfigManager;   // NEW
     private ConfigMigrator migrator;
 
     // ── Database ──────────────────────────────────────────────
@@ -47,6 +48,7 @@ public class QuantumClan extends JavaPlugin {
     private WarDAO           warDAO;
     private CoinsDAO         coinsDAO;
     private ContributionDAO  contributionDAO;
+    private HallDAO          hallDAO;               // NEW
 
     // ── Hooks ─────────────────────────────────────────────────
     private HookManager hookManager;
@@ -71,6 +73,8 @@ public class QuantumClan extends JavaPlugin {
     private ContributionManager contributionManager;
     private SpyScrollManager    spyScrollManager;
     private CoinsShopManager    coinsShopManager;
+    private ClanHallManager     clanHallManager;    // NEW
+    private HallNPCManager      hallNPCManager;     // NEW
 
     // ── MiniMessage ───────────────────────────────────────────
     private final MiniMessage mm = MiniMessage.miniMessage();
@@ -106,6 +110,9 @@ public class QuantumClan extends JavaPlugin {
             return;
         }
 
+        // 3a. Add clan_hall_access table
+        addHallTable();
+
         // 4. Initialize DAOs
         initDAOs();
 
@@ -123,7 +130,7 @@ public class QuantumClan extends JavaPlugin {
         // 7. Init coins provider (built-in)
         coinsProvider = new CoinsProvider(this, coinsDAO);
 
-        // 8. Init schematic provider (if clan-hall enabled)
+        // 8. Init schematic provider
         initSchematicProvider();
 
         // 9. Init ClanManager and load cache
@@ -159,6 +166,13 @@ public class QuantumClan extends JavaPlugin {
             getLogger().info("[QuantumClan] PlaceholderAPI expansion registered.");
         }
 
+        // 16. Init hall system AFTER everything else is ready
+        if (hallConfigManager.isEnabled()) {
+            clanHallManager.init();
+            hallNPCManager.spawnAll();
+            getLogger().info("[ClanHall] Hall system initialised.");
+        }
+
         long elapsed = System.currentTimeMillis() - start;
         getLogger().info("╔══════════════════════════════════════╗");
         getLogger().info("║   QuantumClan enabled in " + elapsed + "ms       ║");
@@ -173,6 +187,12 @@ public class QuantumClan extends JavaPlugin {
     public void onDisable() {
         getLogger().info("[QuantumClan] Shutting down...");
 
+        if (hallNPCManager != null) {
+            hallNPCManager.despawnAll();
+        }
+        if (clanHallManager != null) {
+            clanHallManager.shutdown();
+        }
         if (warManager != null) {
             warManager.endWarGracefully();
         }
@@ -203,6 +223,10 @@ public class QuantumClan extends JavaPlugin {
         saveResourceIfAbsent("war.yml");
         saveResourceIfAbsent("roles.yml");
         saveResourceIfAbsent("gui.yml");
+        saveResourceIfAbsent("halls.yml");          // NEW
+
+        // Ensure schematics directory exists
+        new File(getDataFolder(), "halls/schematics").mkdirs();
 
         migrator = new ConfigMigrator(this);
         migrator.migrate("config.yml");
@@ -216,7 +240,11 @@ public class QuantumClan extends JavaPlugin {
     private void saveResourceIfAbsent(String resourceName) {
         File file = new File(getDataFolder(), resourceName);
         if (!file.exists()) {
-            saveResource(resourceName, false);
+            try {
+                saveResource(resourceName, false);
+            } catch (Exception e) {
+                getLogger().warning("Could not save default resource: " + resourceName);
+            }
         }
     }
 
@@ -228,11 +256,34 @@ public class QuantumClan extends JavaPlugin {
             warConfigManager   = new WarConfigManager(this);
             rolesConfigManager = new RolesConfigManager(this);
             guiConfigManager   = new GuiConfigManager(this);
+            hallConfigManager  = new HallConfigManager(this);  // NEW
             return true;
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "[QuantumClan] Config load error", e);
             return false;
         }
+    }
+
+    /** Adds clan_hall_access table using addColumnIfNotExists pattern. */
+    private void addHallTable() {
+        databaseManager.runAsync(() -> {
+            try (var conn = databaseManager.getConnection();
+                 var stmt = conn.createStatement()) {
+                stmt.execute("""
+                    CREATE TABLE IF NOT EXISTS clan_hall_access (
+                        clan_id      VARCHAR(36) PRIMARY KEY,
+                        purchased_at TIMESTAMP   NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+                        expires_at   TIMESTAMP   NULL,
+                        active       INTEGER     NOT NULL DEFAULT 1
+                    )
+                    """);
+                stmt.execute("CREATE INDEX IF NOT EXISTS idx_hall_access_active " +
+                        "ON clan_hall_access(active)");
+                getLogger().info("[Database] clan_hall_access table verified.");
+            } catch (Exception e) {
+                getLogger().log(Level.WARNING, "[Database] Failed to create clan_hall_access table", e);
+            }
+        });
     }
 
     private void initDAOs() {
@@ -242,6 +293,7 @@ public class QuantumClan extends JavaPlugin {
         warDAO          = new WarDAO(databaseManager, getLogger());
         coinsDAO        = new CoinsDAO(databaseManager, getLogger());
         contributionDAO = new ContributionDAO(databaseManager, getLogger());
+        hallDAO         = new HallDAO(databaseManager, getLogger());    // NEW
     }
 
     private boolean initEconomyProvider() {
@@ -297,7 +349,7 @@ public class QuantumClan extends JavaPlugin {
             }
         }
 
-        getLogger().info("[ClanHall] Engine: " + schematicProvider.getName());
+        getLogger().info("[ClanHall] Schematic engine: " + schematicProvider.getName());
     }
 
     private void initModules() {
@@ -309,6 +361,8 @@ public class QuantumClan extends JavaPlugin {
         coinsShopManager    = new CoinsShopManager(this);
         warManager          = new WarManager(this);
         warScheduler        = new WarScheduler(this);
+        clanHallManager     = new ClanHallManager(this);   // NEW
+        hallNPCManager      = new HallNPCManager(this);    // NEW
 
         bountyManager.startExpiryScheduler();
         warScheduler.schedule();
@@ -323,6 +377,7 @@ public class QuantumClan extends JavaPlugin {
         pm.registerEvents(new InventoryClickListener(this), this);
         pm.registerEvents(new WarListener(this),            this);
         pm.registerEvents(new PlayerMoveListener(this),     this);
+        pm.registerEvents(new HallListener(this),           this);  // NEW
     }
 
     private void registerCommands() {
@@ -386,6 +441,7 @@ public class QuantumClan extends JavaPlugin {
     public WarConfigManager   getWarConfigManager()      { return warConfigManager; }
     public RolesConfigManager getRolesConfigManager()    { return rolesConfigManager; }
     public GuiConfigManager   getGuiConfigManager()      { return guiConfigManager; }
+    public HallConfigManager  getHallConfigManager()     { return hallConfigManager; }  // NEW
     public DatabaseManager    getDatabaseManager()       { return databaseManager; }
     public ClanDAO            getClanDAO()               { return clanDAO; }
     public MemberDAO          getMemberDAO()             { return memberDAO; }
@@ -393,6 +449,7 @@ public class QuantumClan extends JavaPlugin {
     public WarDAO             getWarDAO()                { return warDAO; }
     public CoinsDAO           getCoinsDAO()              { return coinsDAO; }
     public ContributionDAO    getContributionDAO()       { return contributionDAO; }
+    public HallDAO            getHallDAO()               { return hallDAO; }             // NEW
     public HookManager        getHookManager()           { return hookManager; }
     public EconomyProvider    getEconomyProvider()       { return economyProvider; }
     public CoinsProvider      getCoinsProvider()         { return coinsProvider; }
@@ -407,5 +464,7 @@ public class QuantumClan extends JavaPlugin {
     public BuffTracker        getBuffTracker()           { return buffTracker; }
     public ContributionManager getContributionManager() { return contributionManager; }
     public SpyScrollManager   getSpyScrollManager()     { return spyScrollManager; }
+    public ClanHallManager    getClanHallManager()       { return clanHallManager; }    // NEW
+    public HallNPCManager     getHallNPCManager()        { return hallNPCManager; }      // NEW
     public MiniMessage        getMiniMessage()           { return mm; }
 }

@@ -18,12 +18,9 @@ import org.bukkit.plugin.RegisteredServiceProvider;
  *   - LuckPerms
  *   - WorldGuard
  *   - FastAsyncWorldEdit (FAWE)
- *
- * Hologram plugins (DecentHolograms, HolographicDisplays) DIHAPUS.
- * Leaderboard ditampilkan via PlaceholderAPI saja.
- *
- * Setiap hook null-check sebelum digunakan. Jika gagal load,
- * fitur terkait di-disable dengan log ke console.
+ *   - Citizens (NPC backend for Clan Hall)
+ *   - ZNPCSPlus (NPC backend for Clan Hall)
+ *   - FancyNpcs (NPC backend for Clan Hall)
  */
 public class HookManager {
 
@@ -41,19 +38,21 @@ public class HookManager {
     private boolean worldGuardEnabled     = false;
     private boolean faweEnabled           = false;
 
+    // ── NPC backends (for Clan Hall) ──────────────────────────
+    private boolean citizensEnabled  = false;
+    private boolean znpcsPlusEnabled = false;
+    private boolean fancyNpcsEnabled = false;
+
     // Raw instances
     private Object playerPointsApi  = null;
     private Object luckPermsApi     = null;
-    private Object worldGuardPlugin = null;
-    private Object fawePlugin       = null;
 
     public HookManager(QuantumClan plugin) {
         this.plugin = plugin;
     }
 
     /**
-     * Inisialisasi semua hook. Dipanggil sekali dari onEnable().
-     * Log status setiap hook ke console.
+     * Initialises all hooks. Called once from onEnable().
      */
     public void init() {
         hookVault();
@@ -62,6 +61,10 @@ public class HookManager {
         hookLuckPerms();
         hookWorldGuard();
         hookFawe();
+        // NPC backends for Clan Hall
+        hookCitizens();
+        hookZNPCSPlus();
+        hookFancyNpcs();
     }
 
     // ── Vault ─────────────────────────────────────────────────
@@ -141,7 +144,6 @@ public class HookManager {
         }
         try {
             Class.forName("com.sk89q.worldguard.WorldGuard");
-            worldGuardPlugin = Bukkit.getPluginManager().getPlugin("WorldGuard");
             worldGuardEnabled = true;
         } catch (Exception e) {
             plugin.getLogger().warning("[Hook] WorldGuard: Failed to load API — " + e.getMessage());
@@ -158,12 +160,57 @@ public class HookManager {
         }
         try {
             Class.forName("com.fastasyncworldedit.core.FaweAPI");
-            fawePlugin = Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit");
             faweEnabled = true;
         } catch (Exception e) {
             plugin.getLogger().warning("[Hook] FAWE: Failed to load API — " + e.getMessage());
         }
         logHook(faweEnabled ? "fawe-enabled" : "fawe-disabled");
+    }
+
+    // ── Citizens ──────────────────────────────────────────────
+
+    private void hookCitizens() {
+        if (!isPluginPresent("Citizens")) {
+            plugin.getLogger().info("[Hook] Citizens: Not found (NPC fallback will be used)");
+            return;
+        }
+        try {
+            Class.forName("net.citizensnpcs.api.CitizensAPI");
+            citizensEnabled = true;
+            plugin.getLogger().info("[Hook] Citizens: Connected ✓");
+        } catch (ClassNotFoundException e) {
+            plugin.getLogger().warning("[Hook] Citizens: Class not found — " + e.getMessage());
+        }
+    }
+
+    // ── ZNPCSPlus ─────────────────────────────────────────────
+
+    private void hookZNPCSPlus() {
+        if (!isPluginPresent("ZNPCsPlus")) {
+            return; // Silent — optional
+        }
+        try {
+            Class.forName("lol.pyr.znpcsplus.api.NpcApi");
+            znpcsPlusEnabled = true;
+            plugin.getLogger().info("[Hook] ZNPCSPlus: Connected ✓");
+        } catch (ClassNotFoundException e) {
+            plugin.getLogger().warning("[Hook] ZNPCSPlus: Class not found — " + e.getMessage());
+        }
+    }
+
+    // ── FancyNpcs ─────────────────────────────────────────────
+
+    private void hookFancyNpcs() {
+        if (!isPluginPresent("FancyNpcs")) {
+            return; // Silent — optional
+        }
+        try {
+            Class.forName("de.oliver.fancynpcs.api.FancyNpcsPlugin");
+            fancyNpcsEnabled = true;
+            plugin.getLogger().info("[Hook] FancyNpcs: Connected ✓");
+        } catch (ClassNotFoundException e) {
+            plugin.getLogger().warning("[Hook] FancyNpcs: Class not found — " + e.getMessage());
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────
@@ -188,11 +235,11 @@ public class HookManager {
     public boolean isLuckPermsEnabled()      { return luckPermsEnabled; }
     public boolean isWorldGuardEnabled()     { return worldGuardEnabled; }
     public boolean isFaweEnabled()           { return faweEnabled; }
+    public boolean isCitizensEnabled()       { return citizensEnabled; }
+    public boolean isZNPCsPlusEnabled()      { return znpcsPlusEnabled; }
+    public boolean isFancyNpcsEnabled()      { return fancyNpcsEnabled; }
 
     public boolean isAnyHologramEnabled()   { return false; }
-
-    public Object  getWorldGuardPlugin()     { return worldGuardPlugin; }
-    public Object  getFawePlugin()          { return fawePlugin; }
 
     public net.luckperms.api.LuckPerms getLuckPerms() {
         if (!luckPermsEnabled || luckPermsApi == null) return null;

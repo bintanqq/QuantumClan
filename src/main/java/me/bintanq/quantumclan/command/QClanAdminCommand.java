@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 /**
  * Routes /qclanadmin <subcommand> to the appropriate admin handler.
- * No arguments → shows help from messages.yml (no more hardcoded strings).
+ * No arguments → shows help from messages.yml.
  */
 public class QClanAdminCommand implements CommandExecutor, TabCompleter {
 
@@ -27,6 +27,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
     private final AdminClanCommand     clan;
     private final AdminWarCommand      war;
     private final AdminSetArenaCommand setArena;
+    private final AdminHallCommand     hall;      // NEW
 
     public QClanAdminCommand(QuantumClan plugin) {
         this.plugin  = plugin;
@@ -35,6 +36,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         clan     = new AdminClanCommand(plugin);
         war      = new AdminWarCommand(plugin);
         setArena = new AdminSetArenaCommand(plugin);
+        hall     = new AdminHallCommand(plugin);  // NEW
     }
 
     @Override
@@ -50,7 +52,6 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // No args → show help from messages.yml
         if (args.length == 0) {
             sendAdminHelp(player);
             return true;
@@ -63,7 +64,6 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             case "help"     -> sendAdminHelp(player);
             case "reload"   -> reload.execute(player, subArgs);
             case "give"     -> {
-                // /qclanadmin give coins <player> <amount>
                 if (subArgs.length > 0 && subArgs[0].equalsIgnoreCase("coins")) {
                     coins.execute(player, Arrays.copyOfRange(subArgs, 1, subArgs.length));
                 } else {
@@ -73,6 +73,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             case "setarena" -> setArena.execute(player, subArgs);
             case "war"      -> war.execute(player, subArgs);
             case "clan"     -> clan.execute(player, subArgs);
+            case "hall"     -> hall.execute(player, subArgs);   // NEW
             default         -> sendAdminHelp(player);
         }
         return true;
@@ -93,6 +94,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                 { "setarena",                                    "quantumclan.admin.setarena", msg.get("help.admin-cmd-setarena") },
                 { "war <start|end>",                             "quantumclan.admin.war",      msg.get("help.admin-cmd-war") },
                 { "clan <info|delete|setlevel|setreputation>",   "quantumclan.admin.clan",     msg.get("help.admin-cmd-clan") },
+                { "hall <setregion|grant|revoke|...>",           "quantumclan.admin",          "Manage the Clan Hall" },
         };
 
         final String finalEntry = entry;
@@ -100,7 +102,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             if (player.hasPermission(triple[1])) {
                 plugin.sendRaw(player, finalEntry
                         .replace("{cmd}", triple[0])
-                        .replace("{desc}", triple[2]));
+                        .replace("{desc}", triple[2] != null ? triple[2] : ""));
             }
         }
 
@@ -117,7 +119,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player p) || !p.hasPermission("quantumclan.admin")) return List.of();
 
         if (args.length == 1) {
-            return List.of("reload", "give", "setarena", "war", "clan", "help").stream()
+            return List.of("reload", "give", "setarena", "war", "clan", "hall", "help").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -126,7 +128,18 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                 case "give"   -> List.of("coins");
                 case "war"    -> List.of("start", "end");
                 case "clan"   -> List.of("info", "delete", "setlevel", "setreputation");
+                case "hall"   -> List.of("setregion", "setschematic", "paste", "addnpc",
+                        "removenpc", "listnpc", "setcost", "grant", "revoke", "info", "reload");
                 default       -> List.of();
+            };
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("hall")) {
+            return switch (args[1].toLowerCase()) {
+                case "addnpc", "removenpc" -> List.of("CLAN_SHOP", "CONTRIBUTION_SHOP",
+                                "COINS_SHOP", "WAR_REGISTER", "CLAN_INFO", "UPGRADE", "HALL_INFO")
+                        .stream().filter(s -> s.startsWith(args[2].toUpperCase()))
+                        .collect(Collectors.toList());
+                default -> List.of();
             };
         }
         return List.of();

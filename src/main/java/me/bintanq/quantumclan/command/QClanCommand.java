@@ -46,6 +46,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
     private final AcceptCommand       accept;
     private final DeclineCommand      decline;
     private final CoinsCommand        coins;
+    private final HallCommand         hall;       // NEW
 
     public QClanCommand(QuantumClan plugin) {
         this.plugin       = plugin;
@@ -71,6 +72,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         accept       = new AcceptCommand(plugin);
         decline      = new DeclineCommand(plugin);
         coins        = new CoinsCommand(plugin);
+        hall         = new HallCommand(plugin);    // NEW
     }
 
     @Override
@@ -87,7 +89,6 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // No args → open Main Menu GUI
         if (args.length == 0) {
             MainMenuGUI.open(plugin, player);
             return true;
@@ -121,6 +122,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             case "contribution",
                  "contrib"      -> contribution.execute(player, subArgs);
             case "coins"        -> coins.execute(player, subArgs);
+            case "hall"         -> hall.execute(player, subArgs);    // NEW
             case "menu"         -> MainMenuGUI.open(plugin, player);
             default             -> plugin.sendMessage(player, "error.unknown-subcommand");
         }
@@ -160,6 +162,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                 { "announce",     "quantumclan.clan.announce",     msg.get("help.cmd-announce") },
                 { "contribution", "quantumclan.contribution.shop", msg.get("help.cmd-contribution") },
                 { "coins",        "quantumclan.coins.shop",        msg.get("help.cmd-coins") },
+                { "hall",         "quantumclan.use",               msg.get("help.cmd-hall", "{cmd}", "hall") },
         };
 
         final String finalEntry = entry;
@@ -167,7 +170,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
             if (player.hasPermission(triple[1])) {
                 plugin.sendRaw(player, finalEntry
                         .replace("{cmd}", triple[0])
-                        .replace("{desc}", triple[2]));
+                        .replace("{desc}", triple[2] != null ? triple[2] : triple[0]));
             }
         }
 
@@ -188,7 +191,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                     "create", "invite", "accept", "decline", "kick", "leave", "info",
                     "home", "sethome", "delhome", "deposit", "shop", "bounty",
                     "war", "upgrade", "top", "role", "transfer", "disband",
-                    "announce", "contribution", "coins", "menu", "help"
+                    "announce", "contribution", "coins", "hall", "menu", "help"
             );
             String partial = args[0].toLowerCase();
             return subs.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
@@ -197,6 +200,14 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         if (args.length >= 2) {
             String sub = args[0].toLowerCase();
             return switch (sub) {
+                case "hall" -> {
+                    if (args.length == 2) {
+                        yield List.of("buy", "tp").stream()
+                                .filter(s -> s.startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    yield List.of();
+                }
                 case "bounty" -> {
                     if (args.length == 2) {
                         yield List.of("place", "board", "submit").stream()

@@ -330,6 +330,79 @@ gui:
   top-clan-members: "<gray>Members: <white>{count} <dark_gray>(<green>{online} online<dark_gray>)"
   top-clan-treasury: "<gray>Treasury: <gold>{money}"
 
+# ── Clan Hall ─────────────────────────────────────────────────
+hall:
+  disabled: "<white>The Clan Hall system is currently disabled."
+  enter: "<aqua>Welcome to the Clan Hall! Passive buffs are now active."
+  exit: "<gray>You have left the Clan Hall."
+  no-access: "<white>Your clan does not have access to the Clan Hall. Purchase access with <aqua>/qclan hall buy</aqua>."
+  already-has-access: "<white>Your clan already has access to the Clan Hall."
+  war-blocked: "<white>You cannot access the Clan Hall during an active war!"
+  region-not-set: "<white>The Clan Hall region has not been configured yet. Contact an admin."
+  teleported: "<aqua>Teleported to the Clan Hall!"
+  insufficient-funds: "<white>Insufficient clan treasury. Cost: <aqua>{cost}</aqua> | Balance: <aqua>{balance}</aqua>"
+  purchase-success: "<aqua>Your clan has purchased Clan Hall access for <white>{cost}</white>!"
+  purchase-failed: "<white>Purchase failed. The clan treasury has been refunded."
+
+  # GUI
+  gui-title: "<dark_gray>[ <gold>✦ Clan Hall <dark_gray>]"
+  gui-info-name: "<gold>Clan Hall"
+  gui-info-access: "<gray>Access: {status}"
+  gui-access-yes: "<green>✔ Active"
+  gui-access-no: "<red>✘ No Access"
+  gui-info-cost: "<gray>Purchase Cost: <white>{cost}"
+  gui-info-mode: "<gray>Duration: <white>{mode}"
+  gui-info-treasury: "<gray>Clan Treasury: <white>{balance}"
+  gui-owned-name: "<green>✔ Access Active"
+  gui-owned-lore: "<gray>Your clan has hall access."
+  gui-buy-name: "<gold>Purchase Access"
+  gui-buy-cost: "<gray>Cost: <white>{cost}"
+  gui-buy-insufficient: "<red>✘ Insufficient clan treasury"
+  gui-buy-click: "<aqua>Click to purchase!"
+  gui-tp-name: "<aqua>Teleport to Hall"
+  gui-tp-lore: "<gray>Click to teleport to the Clan Hall."
+
+  # Purchase mode labels
+  mode-permanent: "<green>Permanent"
+  mode-duration: "<yellow>{days} days"
+
+  # Confirm GUI
+  confirm-title: "<dark_gray>[ <gold>Confirm Hall Purchase <dark_gray>]"
+  confirm-yes: "<green><bold>✔ CONFIRM"
+  confirm-no: "<red><bold>✘ CANCEL"
+  confirm-no-lore: "<gray>Return to hall menu."
+  confirm-info-name: "<gold>Hall Access"
+  confirm-info-lore: "<white>Purchasing for clan: <aqua>{clan}"
+  confirm-cost: "<gray>Cost: <white>{cost}"
+  confirm-treasury: "<gray>Current Treasury: <white>{balance}"
+  confirm-duration: "<gray>Duration: <white>{duration}"
+
+  # Admin messages
+  admin:
+    setregion-corner1: "<aqua>Corner 1 set at <white>{x}, {y}, {z}</white>. Now run /qclanadmin hall setregion again for corner 2."
+    setregion-done: "<aqua>Hall region set! Min: <white>{x1},{y1},{z1}</white> Max: <white>{x2},{y2},{z2}</white>."
+    schematic-not-found: "<white>Schematic file <aqua>{file}</aqua> not found in halls/schematics/."
+    schematic-set: "<aqua>Schematic set to <white>{file}</white>."
+    paste-started: "<aqua>Pasting schematic <white>{file}</white>... please wait."
+    paste-success: "<aqua>Schematic pasted successfully!"
+    paste-failed: "<white>Schematic paste failed. Check console for details."
+    paste-origin-not-set: "<white>Paste origin not configured. Check halls.yml."
+    no-schematic-provider: "<white>No schematic provider available (FAWE or NBT)."
+    grant-success: "<aqua>Granted Clan Hall access to <white>{clan}</white>."
+    grant-failed: "<white>Failed to grant hall access to <aqua>{clan}</aqua>."
+    revoke-success: "<aqua>Revoked Clan Hall access from <white>{clan}</white>."
+    revoke-failed: "<white>Failed to revoke hall access from <aqua>{clan}</aqua>."
+    cost-set: "<aqua>Hall purchase cost set to <white>{cost}</white>."
+    reload-success: "<aqua>halls.yml reloaded successfully!"
+    npc-added: "<aqua>NPC point added: <white>{type}</white> — {name}."
+    npc-removed: "<aqua>NPC point(s) of type <white>{type}</white> removed."
+    npc-list-header: "<dark_gray>━━ <gold>NPC Points <dark_gray>━━"
+    npc-list-empty: "<white>No NPC points configured."
+
+  # ── Discount hints (appended to shop/upgrade GUIs when in hall) ────────
+  discount-active: "<green>✦ Hall Discount: -{pct}%"
+  discount-cost-original: "<dark_gray><st>{original}</st>"
+
 # ── Help ──────────────────────────────────────────────────────
 help:
   header: "<dark_gray>━━━━━ <aqua>QuantumClan Help <dark_gray>━━━━━"

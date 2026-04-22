@@ -1,0 +1,69 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║           QuantumClan - halls.yml                    ║
+# ║   Clan Hall System Configuration                     ║
+# ║   Reload: /qclanadmin hall reload                    ║
+# ╚══════════════════════════════════════════════════════╝
+
+hall:
+  enabled: true
+
+  purchase:
+    cost: 500000
+    # PERMANENT = never expires | DURATION = expires after duration-days
+    mode: DURATION
+    duration-days: 30
+
+  region:
+    world: "world"
+    min:
+      x: 0
+      y: 64
+      z: 0
+    max:
+      x: 50
+      y: 100
+      z: 50
+    worldguard-region: "quantumclan_hall"
+
+  schematic:
+    file: "hall_default.nbt"
+    paste-origin:
+      world: "world"
+      x: 0
+      y: 64
+      z: 0
+
+  passive-buffs:
+    enabled: true
+    # Seconds between each buff refresh cycle (prevents expiry while inside)
+    refresh-interval-seconds: 10
+    buffs:
+      regeneration:
+        enabled: true
+        amplifier: 0
+        ambient: true
+      speed:
+        enabled: false
+        amplifier: 0
+        ambient: true
+      strength:
+        enabled: false
+        amplifier: 0
+        ambient: true
+      haste:
+        enabled: false
+        amplifier: 0
+        ambient: true
+
+  discounts:
+    enabled: true
+    # Percentage discount (0-100) applied when player is inside hall region
+    clan-shop: 20
+    contribution-shop: 15
+    coins-shop: 10
+    upgrade: 10
+
+  # Populated via /qclanadmin hall addnpc <type> [name]
+  # Types: CLAN_SHOP, CONTRIBUTION_SHOP, COINS_SHOP, WAR_REGISTER,
+  #        CLAN_INFO, UPGRADE, HALL_INFO
+  npc-points: {}
