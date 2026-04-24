@@ -1,19 +1,14 @@
 # ╔══════════════════════════════════════════════════════╗
-# ║           QuantumClan - config.yml                   ║
-# ║   Reload: /qclanadmin reload                         ║
+# ║ QuantumClan - config.yml                             ║
+# ║ Reload: /qclanadmin reload                           ║
 # ╚══════════════════════════════════════════════════════╝
-
-# DO NOT CHANGE IF YOU DONT UNDERSTAND
-config-version: 1
+config-version: 2
 
 # ── Database ──────────────────────────────────────────────────
 database:
-  # SQLITE (default, zero-config) or MYSQL (requires credentials below)
   type: SQLITE
-
   sqlite:
     file: quantumclan.db
-
   mysql:
     host: localhost
     port: 3306
@@ -31,17 +26,17 @@ database:
 clan-creation-cost: 5000.0
 max-name-length: 24
 max-tag-length: 8
-# Seconds before chat input auto-cancels
 chat-input-timeout: 60
 
 # ── Economy Provider ──────────────────────────────────────────
-# Options: VAULT | PLAYERPOINTS | COINS
 economy-provider: VAULT
 
-# ── Coins (Built-in secondary currency) ───────────────────────
+# ── Coins ─────────────────────────────────────────────────────
 coins-name: "Coins"
 
 # ── Feature Toggles ───────────────────────────────────────────
+# ⚠ Pastikan Java code check: config.getBoolean("features.xxx")
+# sebelum mengeksekusi setiap fitur. Tanpa check ini, toggle ga ngefek.
 features:
   announcements: true
   bounties: true
@@ -63,7 +58,7 @@ features:
 chat:
   tag-enabled: true
   tag-position: PREFIX
-  tag-format: "<gray>[{tag}<gray>] "
+  tag-format: "[{tag}] "
 
 # ── Cooldowns ─────────────────────────────────────────────────
 teleport-cooldown: 3
@@ -75,10 +70,7 @@ death-protection-cooldown: 3600
 bounty-expire-hours: 48
 bounty-min-amount: 100.0
 
-# ── Clan Hall ─────────────────────────────────────────────────
-clan-hall:
-  enabled: false
-  engine: AUTO
+# ── ⚠ REMOVED: clan-hall section (sudah ada lengkap di halls.yml)
 
 # ── Disband ───────────────────────────────────────────────────
 disband:
@@ -107,6 +99,9 @@ xp-boost-multiplier: 2.0
 # ── Spy Scroll ────────────────────────────────────────────────
 spy-scroll-duration: 300
 spy-scroll-update-interval: 60
+
+clan-hall:
+  engine: AUTO
 
 # ── Level Requirements ────────────────────────────────────────
 level-requirements:
@@ -160,28 +155,16 @@ level-requirements:
     max-members: 150
     max-homes: 15
     vault-rows: 6
-
 max-level: 10
 
-# ── Social (Alliances & Rivalries) ────────────────────────────
+# ── Social ────────────────────────────────────────────────────
 social:
-  # Friendly fire settings
   friendly-fire:
-    # Disable PvP damage between members of the same clan (outside of war)
     disabled: false
-    # Disable PvP damage between allied clan members
     ally-disabled: true
-
-  # Alliance settings
   alliances:
-    # Maximum number of alliances a clan can have
     max-per-clan: 3
-
-  # Rivalry settings
   rivalries:
-    # Maximum number of rivalries a clan can declare
     max-per-clan: 5
-    # XP multiplier when killing a member of a rival clan
     xp-multiplier: 1.5
-    # Reputation multiplier when winning war against a rival clan
     reputation-multiplier: 1.5

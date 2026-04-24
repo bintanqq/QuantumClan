@@ -39,7 +39,7 @@ public class HallConfigManager {
     // ── Top-level ─────────────────────────────────────────────
 
     public boolean isEnabled() {
-        return cfg.getBoolean("hall.enabled", true);
+        return plugin.getConfigManager().isClanHallEnabled();
     }
 
     // ── Purchase ──────────────────────────────────────────────

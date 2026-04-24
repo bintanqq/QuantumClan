@@ -2,7 +2,9 @@ package me.bintanq.quantumclan.config;
 
 import me.bintanq.quantumclan.QuantumClan;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,9 +135,22 @@ public class ConfigManager {
     public double getBountyMinAmount()   { return cfg.getDouble("bounty-min-amount", 100.0); }
 
     // ── Clan Hall ─────────────────────────────────────────────
+    // Ganti seluruh baris isClanHallEnabled() jadi gini:
+    public boolean isClanHallEnabled() {
+        return cfg.getBoolean("features.clan-hall", true);
+    }
 
-    public boolean isClanHallEnabled() { return cfg.getBoolean("features.clan-hall", false) || cfg.getBoolean("clan-hall.enabled", false); }
-    public String  getClanHallEngine() { return cfg.getString("clan-hall.engine", "AUTO"); }
+    public String getClanHallEngine() {
+        return cfg.getString("clan-hall.engine", "AUTO");
+    }
+
+    public String getClanHallSchematicFile() {
+        File hallFile = new File(plugin.getDataFolder(), "halls.yml");
+        if (hallFile.exists()) {
+            return YamlConfiguration.loadConfiguration(hallFile).getString("hall.schematic.file", "hall_default.nbt");
+        }
+        return "hall_default.nbt";
+    }
 
     // ── Disband ───────────────────────────────────────────────
 

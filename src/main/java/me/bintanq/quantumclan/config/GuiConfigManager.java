@@ -205,6 +205,16 @@ public class GuiConfigManager {
     public int     getCoinsShopPrevSlot()     { return getInt("coins-shop.prev.slot", 45); }
     public int     getCoinsShopNextSlot()     { return getInt("coins-shop.next.slot", 53); }
 
+    // ── No-Clan Menu ──────────────────────────────────────────────────
+    // Tambahin di class GuiConfigManager
+    public String getNoClanMenuTitle() { return getString("noclan-menu.title", "[ Join a Clan ]"); }
+    public int getNoClanMenuSize() { return getInt("noclan-menu.size", 27); }
+    public Material getNoClanMenuFiller() { return getMaterial("noclan-menu.filler", Material.GRAY_STAINED_GLASS_PANE); }
+    public int getNoClanMenuSlot(String item) { return getInt("noclan-menu.items." + item + ".slot", -1); }
+    public Material getNoClanMenuMaterial(String item) { return getMaterial("noclan-menu.items." + item + ".material", Material.PAPER); }
+    public String getNoClanMenuName(String item) { return getString("noclan-menu.items." + item + ".name", item); }
+    public List<String> getNoClanMenuLore(String item) { return getStringList("noclan-menu.items." + item + ".lore"); }
+
     // ── Disband Confirm ───────────────────────────────────────
 
     public String  getDisbandConfirmTitle()   { return getString("disband-confirm.title", "<dark_gray>[ <red>⚠ Disband Clan <dark_gray>]"); }

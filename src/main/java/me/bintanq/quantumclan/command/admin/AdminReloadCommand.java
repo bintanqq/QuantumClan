@@ -13,6 +13,8 @@ public class AdminReloadCommand implements SubCommand {
         plugin.getShopConfigManager().reload();
         plugin.getWarConfigManager().reload();
         plugin.getRolesConfigManager().reload();
+        plugin.getGuiConfigManager().reload();
+        plugin.getHallConfigManager().reload();
         plugin.sendMessage(sender, "admin.reload-success");
     }
 }

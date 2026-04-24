@@ -48,7 +48,7 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         register("disband",      new DisbandCommand(plugin));
         register("announce",     new AnnounceCommand(plugin));
         register("contribution", new ContributionCommand(plugin));
-        register("contrib",      new ContributionCommand(plugin)); // Alias
+        register("contrib",      new ContributionCommand(plugin));
         register("accept",       new AcceptCommand(plugin));
         register("decline",      new DeclineCommand(plugin));
         register("coins",        new CoinsCommand(plugin));

@@ -62,4 +62,6 @@ public abstract class AbstractClanGUI implements BaseGUI {
     public Inventory getInventory() {
         return inventory;
     }
+
+    public abstract Inventory build();
 }

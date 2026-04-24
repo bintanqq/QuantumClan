@@ -112,6 +112,36 @@ main-menu:
         - "<white>» Left click to open"
 
 
+# ── No-Clan Menu (for players without a clan) ──────────────────
+noclan-menu:
+  title: "[ Join or Create a Clan ]"
+  size: 27
+  filler: GRAY_STAINED_GLASS_PANE
+  items:
+    create-clan:
+      slot: 11
+      material: EMERALD
+      name: "Create Clan"
+      lore:
+        - "Start your own clan"
+        - "Cost: {cost}"
+        - ""
+        - "» Left click to create"
+    clan-top:
+      slot: 15
+      material: NETHER_STAR
+      name: "Leaderboard"
+      lore:
+        - "View the top clans"
+        - "ranked by reputation."
+        - ""
+        - "» Left click to open"
+    close:
+      slot: 13
+      material: BARRIER
+      name: "Close"
+      lore: []
+
 # ── Clan Info GUI ─────────────────────────────────────────────
 clan-info:
   title: "<dark_gray>[ <aqua>{clan} <dark_gray>]"
