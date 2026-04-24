@@ -80,13 +80,12 @@ public class MessagesManager {
      * Single-placeholder convenience overload.
      */
     public String get(String key, String placeholder, Object value) {
-        return get(key, placeholder, String.valueOf(value));
+        return get(key, new String[]{placeholder, String.valueOf(value)});
     }
 
     private String getCoinsName() {
         try {
-            String name = plugin.getConfigManager().getCoinsName();
-            return name != null ? name : "Coins";
+            return plugin.getConfigManager().getCoinsName();
         } catch (Exception e) {
             return "Coins";
         }
