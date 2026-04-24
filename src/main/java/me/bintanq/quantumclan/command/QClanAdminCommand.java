@@ -140,7 +140,7 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
             return switch (args[0].toLowerCase()) {
                 case "give"   -> List.of("coins");
                 case "war"    -> List.of("start", "end");
-                case "clan"   -> List.of("info", "delete", "setlevel", "setreputation");
+                case "clan"   -> List.of("info", "delete", "setlevel", "setreputation", "ally", "rival");
                 case "hall"   -> List.of("setregion", "setschematic", "paste", "addnpc",
                         "removenpc", "listnpc", "setcost", "grant", "revoke",
                         "info", "reload", "setvaultblock", "clearvaultblock");
@@ -156,6 +156,20 @@ public class QClanAdminCommand implements CommandExecutor, TabCompleter {
                         .collect(Collectors.toList());
                 default -> List.of();
             };
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("clan")) {
+            return switch (args[1].toLowerCase()) {
+                case "ally", "rival" -> List.of("list");
+                default -> List.of();
+            };
+        }
+        if (args.length == 4 && args[0].equalsIgnoreCase("clan")
+                && (args[1].equalsIgnoreCase("ally") || args[1].equalsIgnoreCase("rival"))
+                && args[2].equalsIgnoreCase("list")) {
+            return plugin.getClanManager().getAllClans().stream()
+                    .map(c -> c.getName())
+                    .filter(n -> n.toLowerCase().startsWith(args[3].toLowerCase()))
+                    .collect(Collectors.toList());
         }
         return List.of();
     }

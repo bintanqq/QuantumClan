@@ -10,7 +10,8 @@
 #   can-kick, can-invite, can-upgrade, can-access-shop,
 #   can-set-home, can-delete-home, can-deposit,
 #   can-declare-bounty, can-manage-war, can-announce,
-#   can-set-role, can-transfer, can-disband
+#   can-set-role, can-transfer, can-disband,
+#   can-ally, can-rival
 #
 # true  = this role is allowed to perform the action
 # false = this role is denied (will be rejected with an error message)
@@ -39,6 +40,8 @@ roles:
       can-open-vault: true
       can-deposit-vault: true
       can-withdraw-vault: true
+      can-ally: true
+      can-rival: true
 
   - name: officer
     display-name: "<aqua>Officer"
@@ -60,6 +63,8 @@ roles:
       can-open-vault: true
       can-deposit-vault: true
       can-withdraw-vault: true
+      can-ally: true
+      can-rival: true
 
   - name: member
     display-name: "<gray>Member"
@@ -81,3 +86,5 @@ roles:
       can-open-vault: true
       can-deposit-vault: true
       can-withdraw-vault: false
+      can-ally: false
+      can-rival: false

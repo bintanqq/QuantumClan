@@ -208,6 +208,8 @@ admin:
   clan-delete-usage: "<white>Usage: <aqua>/qclanadmin clan delete <clan>"
   clan-setlevel-usage: "<white>Usage: <aqua>/qclanadmin clan setlevel <clan> <level>"
   clan-setreputation-usage: "<white>Usage: <aqua>/qclanadmin clan setreputation <clan> <amount>"
+  clan-ally-usage: "<white>Usage: <aqua>/qclanadmin clan ally list <clan>"
+  clan-rival-usage: "<white>Usage: <aqua>/qclanadmin clan rival list <clan>"
 
 # ── Hook Status (console only) ────────────────────────────────
 hook:
@@ -512,3 +514,46 @@ help:
   admin-cmd-hall: "Manage the Clan Hall system"
   admin-cmd-vault: "Admin vault management (clear/inspect)"
   admin-cmd-vault-inspect: "View vault contents (read-only)"
+  cmd-ally: "Manage clan alliances"
+  cmd-rival: "Manage clan rivalries"
+
+# ── Social (Alliances & Rivalries) ────────────────────────────
+social:
+  # Friendly fire
+  friendly-fire-clan: "<white>Friendly fire is disabled for clan members!"
+  friendly-fire-ally: "<white>Friendly fire is disabled for allied clans!"
+
+  # Alliance messages
+  ally-usage: "<white>Usage: <aqua>/qclan ally <propose|accept|decline|break|list>"
+  ally-self: "<white>You cannot ally with your own clan."
+  ally-already: "<white>Your clan is already allied with <aqua>{clan}</aqua>."
+  ally-max-reached: "<white>Your clan has reached the maximum number of alliances."
+  ally-target-max: "<white>Clan <aqua>{clan}</aqua> has reached the maximum number of alliances."
+  ally-already-proposed: "<white>You have already sent an alliance proposal to <aqua>{clan}</aqua>."
+  ally-proposed: "<aqua>Alliance proposal sent to clan <white>{clan}</white>."
+  ally-proposal-received: "<aqua>Clan <white>{clan}</white> has proposed an alliance! Use <white>/qclan ally accept {clan}</white> or <white>/qclan ally decline {clan}</white>."
+  ally-no-proposal: "<white>No pending alliance proposal from <aqua>{clan}</aqua>."
+  ally-accepted: "<aqua>Alliance formed with clan <white>{clan}</white>!"
+  ally-declined: "<white>Alliance proposal from <aqua>{clan}</aqua> has been declined."
+  ally-formed-broadcast: "<aqua>Your clan is now allied with <white>{clan}</white>!"
+  ally-not-allied: "<white>Your clan is not allied with <aqua>{clan}</aqua>."
+  ally-broken: "<aqua>Alliance with clan <white>{clan}</white> has been broken."
+  ally-broken-notify: "<white>Clan <aqua>{clan}</aqua> has broken the alliance with your clan."
+  ally-list-empty: "<white>Your clan has no alliances."
+  ally-list-header: "<dark_gray>━━━ <aqua>Clan Alliances <dark_gray>━━━"
+  ally-list-entry: "<aqua>  ✦ <white>{clan} {tag}"
+  ally-pending-header: "<dark_gray>━━ <yellow>Pending Proposals <dark_gray>━━"
+  ally-pending-entry: "<yellow>  ⬆ <white>{clan}"
+
+  # Rivalry messages
+  rival-usage: "<white>Usage: <aqua>/qclan rival <declare|revoke|list>"
+  rival-self: "<white>You cannot declare a rivalry with your own clan."
+  rival-already: "<white>Your clan is already rivals with <aqua>{clan}</aqua>."
+  rival-max-reached: "<white>Your clan has reached the maximum number of rivalries."
+  rival-declared: "<red>⚔ <white>Your clan has declared <aqua>{clan}</aqua> as a rival!"
+  rival-declared-notify: "<red>⚔ <white>Clan <aqua>{clan}</aqua> has declared your clan as a rival!"
+  rival-not-rival: "<white>Your clan is not rivals with <aqua>{clan}</aqua>."
+  rival-revoked: "<aqua>Rivalry with clan <white>{clan}</white> has been revoked."
+  rival-list-empty: "<white>Your clan has no rivalries."
+  rival-list-header: "<dark_gray>━━━ <red>Clan Rivalries <dark_gray>━━━"
+  rival-list-entry: "<red>  ⚔ <white>{clan} {tag}"

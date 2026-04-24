@@ -203,6 +203,8 @@ public class ClanManager {
         // DB delete (cascade handles members and homes)
         return clanDAO.delete(clanId).thenApply(ok -> {
             if (ok) {
+                // Clean up social data (alliances + rivalries)
+                plugin.getSocialManager().cleanupClan(clanId);
                 Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(
                     new ClanDisbandEvent(QuantumClanProvider.getAPI().getClanById(clanId), null))); // we don't have the actor
                 refreshLeaderboard();

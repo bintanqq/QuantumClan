@@ -4,6 +4,7 @@ import me.bintanq.quantumclan.config.*;
 import me.bintanq.quantumclan.database.DatabaseManager;
 import me.bintanq.quantumclan.database.DatabaseType;
 import me.bintanq.quantumclan.database.dao.*;
+import me.bintanq.quantumclan.manager.SocialManager;
 import me.bintanq.quantumclan.economy.EconomyProvider;
 import me.bintanq.quantumclan.economy.impl.*;
 import me.bintanq.quantumclan.hook.HookManager;
@@ -54,6 +55,7 @@ public class QuantumClan extends JavaPlugin {
     private ContributionDAO  contributionDAO;
     private HallDAO          hallDAO;
     private VaultDAO         vaultDAO;
+    private SocialDAO        socialDAO;
 
     // ── Hooks ─────────────────────────────────────────────────
     private HookManager hookManager;
@@ -67,6 +69,7 @@ public class QuantumClan extends JavaPlugin {
 
     // ── Core manager ──────────────────────────────────────────
     private ClanManager clanManager;
+    private SocialManager socialManager;
 
     // ── Modules ───────────────────────────────────────────────
     private ChatInputManager    chatInputManager;
@@ -148,6 +151,16 @@ public class QuantumClan extends JavaPlugin {
             clanManager.loadAll().get();
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "[QuantumClan] Failed to load clan cache!", e);
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        // 9a. Init SocialManager and load alliance/rivalry cache
+        socialManager = new SocialManager(this, socialDAO);
+        try {
+            socialManager.loadAll().get();
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "[QuantumClan] Failed to load social cache!", e);
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
@@ -287,6 +300,7 @@ public class QuantumClan extends JavaPlugin {
         contributionDAO = new ContributionDAO(databaseManager, getLogger());
         hallDAO         = new HallDAO(databaseManager, getLogger());
         vaultDAO = new VaultDAO(databaseManager, getLogger());
+        socialDAO       = new SocialDAO(databaseManager, getLogger());
     }
 
     private boolean initEconomyProvider() {
@@ -511,5 +525,7 @@ public class QuantumClan extends JavaPlugin {
     public HallNPCManager     getHallNPCManager()        { return hallNPCManager; }      // NEW
     public VaultDAO         getVaultDAO()         { return vaultDAO; }
     public ClanVaultManager getClanVaultManager() { return clanVaultManager; }
+    public SocialDAO        getSocialDAO()         { return socialDAO; }
+    public SocialManager    getSocialManager()     { return socialManager; }
     public MiniMessage        getMiniMessage()           { return mm; }
 }

@@ -162,7 +162,3 @@ QuantumClan is licensed under the **MIT License**. See [LICENSE](LICENSE) for de
 
 Developed with ❤️ by **bintanqq**
 --
-
-## 📄 License
-
-MIT — see [LICENSE](LICENSE).

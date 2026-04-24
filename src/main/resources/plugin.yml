@@ -177,6 +177,14 @@ permissions:
     description: Allow /qclanadmin vault clear/inspect
     default: op
 
+  quantumclan.ally:
+    description: Allow using /qclan ally commands
+    default: true
+
+  quantumclan.rival:
+    description: Allow using /qclan rival commands
+    default: true
+
 
   quantumclan.*:
     description: Grants all QuantumClan permissions
@@ -216,3 +224,5 @@ permissions:
       quantumclan.bypass.cooldown: true
       quantumclan.bypass.cost: true
       quantumclan.bypass.war.minclan: true
+      quantumclan.ally: true
+      quantumclan.rival: true

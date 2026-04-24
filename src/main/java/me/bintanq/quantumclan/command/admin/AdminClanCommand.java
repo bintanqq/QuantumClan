@@ -79,6 +79,52 @@ public class AdminClanCommand implements SubCommand {
                                         "{clan}", clan.getName(),
                                         "{value}", String.valueOf(finalRep))));
             }
+            case "ally" -> {
+                // /qclanadmin clan ally list <clan>
+                if (args.length < 3 || !args[1].equalsIgnoreCase("list")) {
+                    plugin.sendMessage(sender, "admin.clan-ally-usage");
+                    return;
+                }
+                String clanQuery = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+                Clan clan = plugin.getClanManager().getClanByName(clanQuery);
+                if (clan == null) { plugin.sendMessage(sender, "clan.not-found", "{clan}", clanQuery); return; }
+                var allies = plugin.getSocialManager().getAllies(clan.getId());
+                if (allies.isEmpty()) {
+                    plugin.sendMessage(sender, "social.ally-list-empty");
+                    return;
+                }
+                plugin.sendRaw(sender, plugin.getMessagesManager().get("social.ally-list-header"));
+                for (String allyId : allies) {
+                    Clan allyClan = plugin.getClanManager().getClanById(allyId);
+                    if (allyClan != null) {
+                        plugin.sendRaw(sender, plugin.getMessagesManager().get("social.ally-list-entry",
+                                "{clan}", allyClan.getName(), "{tag}", allyClan.getFormattedTag()));
+                    }
+                }
+            }
+            case "rival" -> {
+                // /qclanadmin clan rival list <clan>
+                if (args.length < 3 || !args[1].equalsIgnoreCase("list")) {
+                    plugin.sendMessage(sender, "admin.clan-rival-usage");
+                    return;
+                }
+                String clanQuery = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+                Clan clan = plugin.getClanManager().getClanByName(clanQuery);
+                if (clan == null) { plugin.sendMessage(sender, "clan.not-found", "{clan}", clanQuery); return; }
+                var rivals = plugin.getSocialManager().getRivals(clan.getId());
+                if (rivals.isEmpty()) {
+                    plugin.sendMessage(sender, "social.rival-list-empty");
+                    return;
+                }
+                plugin.sendRaw(sender, plugin.getMessagesManager().get("social.rival-list-header"));
+                for (String rivalId : rivals) {
+                    Clan rivalClan = plugin.getClanManager().getClanById(rivalId);
+                    if (rivalClan != null) {
+                        plugin.sendRaw(sender, plugin.getMessagesManager().get("social.rival-list-entry",
+                                "{clan}", rivalClan.getName(), "{tag}", rivalClan.getFormattedTag()));
+                    }
+                }
+            }
             default -> plugin.sendMessage(sender, "admin.clan-usage");
         }
     }

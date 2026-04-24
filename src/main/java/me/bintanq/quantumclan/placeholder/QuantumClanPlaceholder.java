@@ -71,7 +71,20 @@ public class QuantumClanPlaceholder extends PlaceholderExpansion {
                 } catch (Exception ignored) {}
                 yield String.valueOf(coins);
             }
-            default -> null;
+            case "ally_count"           -> clan != null
+                    ? String.valueOf(plugin.getSocialManager().getAllianceCount(clan.getId())) : "0";
+            case "rival_count"          -> clan != null
+                    ? String.valueOf(plugin.getSocialManager().getRivalryCount(clan.getId())) : "0";
+            default -> {
+                // ── Dynamic alliance/rivalry placeholders ─────
+                if (clan != null && params.startsWith("ally_") && params.endsWith("_name")) {
+                    yield resolveAllyByIndex(clan, params);
+                }
+                if (clan != null && params.startsWith("rival_") && params.endsWith("_name")) {
+                    yield resolveRivalByIndex(clan, params);
+                }
+                yield null;
+            }
         };
     }
 
@@ -118,5 +131,49 @@ public class QuantumClanPlaceholder extends PlaceholderExpansion {
             }
             default -> "";
         };
+    }
+
+    /**
+     * Resolves %quantumclan_ally_N_name% — e.g. ally_1_name, ally_2_name
+     */
+    private String resolveAllyByIndex(Clan clan, String params) {
+        // params = "ally_N_name" → strip "ally_" and "_name"
+        String middle = params.substring(5, params.length() - 5); // N
+        int index;
+        try { index = Integer.parseInt(middle); } catch (NumberFormatException e) { return ""; }
+        if (index < 1) return "";
+        var allies = plugin.getSocialManager().getAllies(clan.getId());
+        if (index > allies.size()) return "";
+        int i = 1;
+        for (String allyId : allies) {
+            if (i == index) {
+                Clan allyClan = plugin.getClanManager().getClanById(allyId);
+                return allyClan != null ? allyClan.getName() : "";
+            }
+            i++;
+        }
+        return "";
+    }
+
+    /**
+     * Resolves %quantumclan_rival_N_name% — e.g. rival_1_name, rival_2_name
+     */
+    private String resolveRivalByIndex(Clan clan, String params) {
+        // params = "rival_N_name" → strip "rival_" and "_name"
+        String middle = params.substring(6, params.length() - 5); // N
+        int index;
+        try { index = Integer.parseInt(middle); } catch (NumberFormatException e) { return ""; }
+        if (index < 1) return "";
+        var rivals = plugin.getSocialManager().getRivals(clan.getId());
+        if (index > rivals.size()) return "";
+        int i = 1;
+        for (String rivalId : rivals) {
+            if (i == index) {
+                Clan rivalClan = plugin.getClanManager().getClanById(rivalId);
+                return rivalClan != null ? rivalClan.getName() : "";
+            }
+            i++;
+        }
+        return "";
     }
 }

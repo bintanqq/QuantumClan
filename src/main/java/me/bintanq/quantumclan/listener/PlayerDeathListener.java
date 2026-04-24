@@ -101,6 +101,24 @@ public class PlayerDeathListener implements Listener {
 
             plugin.getWarManager().checkWarEnd(activeWar);
         }
+
+        // ── 4. Rivalry XP Multiplier ─────────────────────────
+        Player killer = dead.getKiller();
+        if (killer != null && !killer.equals(dead)) {
+            var social = plugin.getSocialManager();
+            var killerClan = plugin.getClanManager().getClanByPlayer(killer.getUniqueId());
+            var deadClan   = plugin.getClanManager().getClanByPlayer(uuid);
+            if (killerClan != null && deadClan != null
+                    && !killerClan.getId().equals(deadClan.getId())
+                    && social.isRival(killerClan.getId(), deadClan.getId())) {
+                double multiplier = social.getRivalXpMultiplier();
+                int baseXp = event.getDroppedExp();
+                int bonusXp = (int) Math.round(baseXp * (multiplier - 1.0));
+                if (bonusXp > 0) {
+                    event.setDroppedExp(baseXp + bonusXp);
+                }
+            }
+        }
     }
 
     // ── Bounty head helpers ───────────────────────────────────

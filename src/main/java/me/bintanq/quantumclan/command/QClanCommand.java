@@ -54,6 +54,8 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
         register("coins",        new CoinsCommand(plugin));
         register("hall",         new HallCommand(plugin));
         register("vault",        new VaultCommand(plugin));
+        register("ally",         new AllyCommand(plugin));
+        register("rival",        new RivalCommand(plugin));
     }
 
     private void register(String name, SubCommand cmd) {
@@ -135,6 +137,8 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                 { "contribution", "quantumclan.contribution.shop", msg.get("help.cmd-contribution") },
                 { "coins",        "quantumclan.coins.shop",        msg.get("help.cmd-coins") },
                 { "hall",         "quantumclan.use",               msg.get("help.cmd-hall", "{cmd}", "hall") },
+                { "ally",         "quantumclan.ally",              msg.get("help.cmd-ally") },
+                { "rival",        "quantumclan.rival",             msg.get("help.cmd-rival") },
         };
 
         final String finalEntry = entry;
@@ -163,7 +167,8 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                     "create", "invite", "accept", "decline", "kick", "leave", "info",
                     "home", "sethome", "delhome", "deposit", "shop", "bounty",
                     "war", "upgrade", "top", "role", "transfer", "disband",
-                    "announce", "contribution", "coins", "hall", "menu", "help", "vault"
+                    "announce", "contribution", "coins", "hall", "menu", "help", "vault",
+                    "ally", "rival"
             );
             String partial = args[0].toLowerCase();
             return subs.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
@@ -205,6 +210,34 @@ public class QClanCommand implements CommandExecutor, TabCompleter {
                     if (args.length == 4) {
                         yield plugin.getRolesConfigManager().getRoleNames().stream()
                                 .filter(r -> r.startsWith(args[3].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    yield List.of();
+                }
+                case "ally" -> {
+                    if (args.length == 2) {
+                        yield List.of("propose", "accept", "decline", "break", "list").stream()
+                                .filter(s -> s.startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    if (args.length == 3 && !args[1].equalsIgnoreCase("list")) {
+                        yield plugin.getClanManager().getAllClans().stream()
+                                .map(c -> c.getName())
+                                .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    yield List.of();
+                }
+                case "rival" -> {
+                    if (args.length == 2) {
+                        yield List.of("declare", "revoke", "list").stream()
+                                .filter(s -> s.startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    if (args.length == 3 && !args[1].equalsIgnoreCase("list")) {
+                        yield plugin.getClanManager().getAllClans().stream()
+                                .map(c -> c.getName())
+                                .filter(n -> n.toLowerCase().startsWith(args[2].toLowerCase()))
                                 .collect(Collectors.toList());
                     }
                     yield List.of();

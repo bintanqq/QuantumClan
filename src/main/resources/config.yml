@@ -162,3 +162,26 @@ level-requirements:
     vault-rows: 6
 
 max-level: 10
+
+# ── Social (Alliances & Rivalries) ────────────────────────────
+social:
+  # Friendly fire settings
+  friendly-fire:
+    # Disable PvP damage between members of the same clan (outside of war)
+    disabled: false
+    # Disable PvP damage between allied clan members
+    ally-disabled: true
+
+  # Alliance settings
+  alliances:
+    # Maximum number of alliances a clan can have
+    max-per-clan: 3
+
+  # Rivalry settings
+  rivalries:
+    # Maximum number of rivalries a clan can declare
+    max-per-clan: 5
+    # XP multiplier when killing a member of a rival clan
+    xp-multiplier: 1.5
+    # Reputation multiplier when winning war against a rival clan
+    reputation-multiplier: 1.5

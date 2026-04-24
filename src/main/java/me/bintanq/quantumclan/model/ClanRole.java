@@ -29,6 +29,8 @@ public class ClanRole {
     public static final String PERM_SET_ROLE       = "can-set-role";
     public static final String PERM_TRANSFER       = "can-transfer";
     public static final String PERM_DISBAND        = "can-disband";
+    public static final String PERM_ALLY           = "can-ally";
+    public static final String PERM_RIVAL          = "can-rival";
 
     private final String name;           // internal key, e.g. "leader"
     private final String displayName;    // MiniMessage, e.g. "<gold><bold>Leader"

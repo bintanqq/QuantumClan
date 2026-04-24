@@ -321,6 +321,26 @@ public class DatabaseManager {
                 )%s
                 """.formatted(now, opts));
 
+            // ── clan_alliances ─────────────────────────────────
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS clan_alliances (
+                    clan_id_a  VARCHAR(36) NOT NULL,
+                    clan_id_b  VARCHAR(36) NOT NULL,
+                    created_at VARCHAR(32) NOT NULL DEFAULT %s,
+                    PRIMARY KEY (clan_id_a, clan_id_b)
+                )%s
+                """.formatted(now, opts));
+
+            // ── clan_rivalries ─────────────────────────────────
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS clan_rivalries (
+                    declarer_clan_id VARCHAR(36) NOT NULL,
+                    target_clan_id   VARCHAR(36) NOT NULL,
+                    created_at       VARCHAR(32) NOT NULL DEFAULT %s,
+                    PRIMARY KEY (declarer_clan_id, target_clan_id)
+                )%s
+                """.formatted(now, opts));
+
             plugin.getLogger().info("[Database] All tables created/verified.");
         }
     }
@@ -390,6 +410,8 @@ public class DatabaseManager {
             createIndex(stmt, "idx_contribution_clan",      "contribution_log", "clan_id");
             createIndex(stmt, "idx_clans_reputation",       "clans", "reputation");
             createIndex(stmt, "idx_hall_access_active",     "clan_hall_access", "active");
+            createIndex(stmt, "idx_alliances_clan_b",        "clan_alliances", "clan_id_b");
+            createIndex(stmt, "idx_rivalries_target",        "clan_rivalries", "target_clan_id");
 
             plugin.getLogger().info("[Database] Indexes applied.");
         }

@@ -1,6 +1,8 @@
 package me.bintanq.quantumclan.listener;
 
 import me.bintanq.quantumclan.QuantumClan;
+import me.bintanq.quantumclan.manager.SocialManager;
+import me.bintanq.quantumclan.model.Clan;
 import me.bintanq.quantumclan.model.WarSession;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -33,35 +35,63 @@ public class WarListener implements Listener {
         if (!(event.getDamager() instanceof Player attacker)) return;
         if (!(event.getEntity()  instanceof Player victim))   return;
 
+        UUID attackerUuid = attacker.getUniqueId();
+        UUID victimUuid   = victim.getUniqueId();
+
+        // ── War-specific friendly fire ────────────────────────
         WarSession war = plugin.getWarManager().getActiveSession();
 
         if (war != null && war.isActive()) {
-            UUID attackerUuid = attacker.getUniqueId();
-            UUID victimUuid   = victim.getUniqueId();
-
             boolean attackerParticipates = war.isMemberParticipating(attackerUuid);
             boolean victimParticipates   = war.isMemberParticipating(victimUuid);
 
-            if (!attackerParticipates && !victimParticipates) return;
+            if (!attackerParticipates && !victimParticipates) {
+                // Neither in war — fall through to global checks below
+            } else {
+                if (!attackerParticipates || !victimParticipates) {
+                    event.setCancelled(true);
+                    return;
+                }
 
-            if (!attackerParticipates || !victimParticipates) {
-                event.setCancelled(true);
+                String attackerClan = war.getClanIdForMember(attackerUuid);
+                String victimClan   = war.getClanIdForMember(victimUuid);
+
+                if (attackerClan != null && attackerClan.equals(victimClan)) {
+                    event.setCancelled(true);
+                    attacker.sendActionBar(plugin.getMiniMessage().deserialize(
+                            plugin.getMessagesManager().get("war.friendly-fire")));
+                    return;
+                }
+
+                if (!war.isMemberAlive(victimUuid)) {
+                    event.setCancelled(true);
+                    return;
+                }
+                // War PvP is allowed — skip global checks
                 return;
             }
+        }
 
-            String attackerClan = war.getClanIdForMember(attackerUuid);
-            String victimClan   = war.getClanIdForMember(victimUuid);
+        // ── Global: Clan friendly fire ────────────────────────
+        SocialManager social = plugin.getSocialManager();
 
-            if (attackerClan != null && attackerClan.equals(victimClan)) {
+        Clan attackerClan = plugin.getClanManager().getClanByPlayer(attackerUuid);
+        Clan victimClan   = plugin.getClanManager().getClanByPlayer(victimUuid);
+
+        if (attackerClan != null && victimClan != null) {
+            // Same clan friendly fire
+            if (attackerClan.getId().equals(victimClan.getId()) && social.isClanFriendlyFireDisabled()) {
                 event.setCancelled(true);
                 attacker.sendActionBar(plugin.getMiniMessage().deserialize(
-                        plugin.getMessagesManager().get("war.friendly-fire")));
+                        plugin.getMessagesManager().get("social.friendly-fire-clan")));
                 return;
             }
-
-            if (!war.isMemberAlive(victimUuid)) {
+            // Allied clan friendly fire
+            if (social.isAllyFriendlyFireDisabled()
+                    && social.areAllied(attackerClan.getId(), victimClan.getId())) {
                 event.setCancelled(true);
-                return;
+                attacker.sendActionBar(plugin.getMiniMessage().deserialize(
+                        plugin.getMessagesManager().get("social.friendly-fire-ally")));
             }
         }
     }
